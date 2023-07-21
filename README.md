@@ -18,30 +18,12 @@ As for the storage of NFT data, reliable services such as nft.storage or Infura 
 
 # Bot commands
 
-Create new NFT
-    ```
-    new
-    ```
- 		
-Sell NFT
-    ```shell
-    sell
-    ```
- 		
-Buy NFT 		
- 		```
-    buy
-    ```
- 		
-List all NFTs
- 		```
-    list
-    ```
- 		
-Get secret key of your NFT 		
- 		```
-    secret
-    ```
+```new``` 		Create new NFT
+```sell``` 		Sell NFT
+```buy``` 		Buy NFT 		
+```list``` 		List all NFTs
+```secret``` 	Get secret key of your NFT 		
+
  		
 
 
