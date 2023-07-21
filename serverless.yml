@@ -1,0 +1,298 @@
+org: dfstio
+app: minanft-telegram-bot
+service: minanft-telegram-bot
+
+plugins:
+  - serverless-plugin-typescript
+
+provider:
+  name: aws
+  runtime: nodejs16.x
+  region: eu-west-1
+  logRetentionInDays: 3
+  environment:
+    TO: ${file(./env.json):TO, env:TO}
+    FROM: ${file(./env.json):FROM, env:FROM},
+    LANG: ${file(./env.json):LANG, env:LANG}
+    BOT_TOKEN: ${file(./env.json):BOT_TOKEN, env:BOT_TOKEN}
+    CHATGPT_TOKEN: ${file(./env.json):CHATGPT_TOKEN, env:CHATGPT_TOKEN}
+    DYNAMODB_TABLE: ${file(./env.json):DYNAMODB_TABLE, env:DYNAMODB_TABLE}
+    TASKS_TABLE: ${file(./env.json):TASKS_TABLE, env:TASKS_TABLE}
+    DOCS_TABLE: ${file(./env.json):DOCS_TABLE, env:DOCS_TABLE}
+    NAMES_TABLE: ${file(./env.json):NAMES_TABLE, env:NAMES_TABLE}
+    POSTS_TABLE: ${file(./env.json):POSTS_TABLE, env:POSTS_TABLE}
+    HISTORY_TABLE: ${file(./env.json):HISTORY_TABLE, env:HISTORY_TABLE}
+    HISTORY_HOURS: ${file(./env.json):HISTORY_HOURS, env:HISTORY_HOURS}
+    HISTORY_CHARS: ${file(./env.json):HISTORY_CHARS, env:HISTORY_CHARS}
+    BUCKET: ${file(./env.json):BUCKET_NAME, env:BUCKET_NAME}
+    BUCKET_VOICEIN: ${file(./env.json):BUCKET_VOICEIN, env:BUCKET_VOICEIN}
+    BUCKET_VOICEOUT: ${file(./env.json):BUCKET_VOICEOUT, env:BUCKET_VOICEOUT}
+    VOICE_PIPELINEID: ${file(./env.json):VOICE_PIPELINEID, env:VOICE_PIPELINEID}
+    SLS_ORG_TOKEN: ${file(./env.json):SLS_ORG_TOKEN, env:SLS_ORG_TOKEN}
+    SUPPORT_CHAT: ${file(./env.json):SUPPORT_CHAT, env:SUPPORT_CHAT}
+    MINAURL: ${file(./env.json):MINAURL, env:MINAURL}
+    MINAEXPLORER: ${file(./env.json):MINAEXPLORER, env:MINAEXPLORER}
+    PRIVATEKEY: ${file(./env.json):PRIVATEKEY, env:PRIVATEKEY}
+    PUBLICKEY: ${file(./env.json):PUBLICKEY, env:PUBLICKEY}
+    INSURERPRIVATEKEY: ${file(./env.json):INSURERPRIVATEKEY, env:INSURERPRIVATEKEY}
+    VERIFIERPRIVATEKEY: ${file(./env.json):VERIFIERPRIVATEKEY, env:VERIFIERPRIVATEKEY}
+    GASTANKPRIVATEKEY: ${file(./env.json):GASTANKPRIVATEKEY, env:GASTANKPRIVATEKEY}
+    CHATGPTPLUGINAUTH: ${file(./env.json):CHATGPTPLUGINAUTH, env:CHATGPTPLUGINAUTH}
+    NFT_SECRET: ${file(./env.json):NFT_SECRET, env:NFT_SECRET}
+    NFT_SALT: ${file(./env.json):NFT_SALT, env:NFT_SALT}
+    INFURA_IPFS_API_KEY: ${file(./env.json):INFURA_IPFS_API_KEY, env:INFURA_IPFS_API_KEY}
+    INFURA_IPFS_API_KEYSECRET: ${file(./env.json):INFURA_IPFS_API_KEYSECRET, env:INFURA_IPFS_API_KEYSECRET}
+    INFURA_IPFS_API_ENDPOINT: ${file(./env.json):INFURA_IPFS_API_ENDPOINT, env:INFURA_IPFS_API_ENDPOINT}
+    NFT_STORAGE_TOKEN: ${file(./env.json):NFT_STORAGE_TOKEN, env:NFT_STORAGE_TOKEN}
+    PINATA_JWT: ${file(./env.json):PINATA_JWT, env:PINATA_JWT}
+    STRIPE_KEY: ${file(./env.json):STRIPE_KEY, env:STRIPE_KEY}
+    ALGOLIA_KEY: ${file(./env.json):ALGOLIA_KEY, env:ALGOLIA_KEY}
+    ALGOLIA_PROJECT: ${file(./env.json):ALGOLIA_PROJECT, env:ALGOLIA_PROJECT}
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "ses:*"
+        - lambda:InvokeFunction
+      Resource:
+        - "*"
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.TASKS_TABLE}"
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.NAMES_TABLE}"
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.POSTS_TABLE}"
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DOCS_TABLE}"
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.HISTORY_TABLE}"
+    - Effect: Allow
+      Action:
+        - s3:PutObject
+        - s3:PutObjectAcl
+        - s3:GetObject 
+        - s3:GetObjectAcl
+        - s3:HeadObject
+      Resource: "arn:aws:s3:::${self:provider.environment.BUCKET}/*"
+    - Effect: Allow
+      Action:
+        - s3:PutObject
+        - s3:PutObjectAcl
+        - s3:GetObject 
+        - s3:GetObjectAcl
+        - s3:HeadObject
+      Resource: "arn:aws:s3:::${self:provider.environment.BUCKET_VOICEIN}/*"
+    - Effect: Allow
+      Action:
+        - s3:PutObject
+        - s3:PutObjectAcl
+        - s3:GetObject 
+        - s3:GetObjectAcl
+        - s3:HeadObject
+        - s3:ListBucket
+      Resource: "arn:aws:s3:::${self:provider.environment.BUCKET_VOICEOUT}/*"
+    - Effect: Allow
+      Action:
+        - elastictranscoder:CreateJob
+      Resource: 
+        - "arn:aws:elastictranscoder:${opt:region, self:provider.region}:*:pipeline/*"
+        - "arn:aws:elastictranscoder:${opt:region, self:provider.region}:*:preset/*"
+
+
+
+
+custom:
+  s3Bucket: formbucket-${self:provider.environment.BUCKET}
+
+
+functions:
+  send:
+    handler: telegram.send
+    timeout: 30
+    memorySize: 256
+    events:
+      - http:
+          path: send
+          method: post
+  ask:
+    handler: ask.chatgpt  
+    timeout: 900
+    memorySize: 192
+  image:
+    handler: ask.image  
+    timeout: 900
+    memorySize: 192
+  audio:
+    handler: audio.transcribe  
+    timeout: 900
+    memorySize: 256
+  test:
+    handler: test.tasks  
+    timeout: 900
+  tasks:
+    handler: tasks.check  
+    timeout: 300
+    memorySize: 192
+    events:
+      - schedule: 
+          rate: rate(5 minutes)
+          enabled: true
+          name: ts
+  deploy:
+    handler: mina.deploy     
+    timeout: 900
+    memorySize: 2048
+  topup:
+    handler: mina.topup     
+    timeout: 900
+    memorySize: 512
+  create:
+    handler: mina.create     
+    timeout: 900
+    memorySize: 2048
+  plugin:
+    handler: chatgpt.plugin
+    timeout: 30
+    events:
+      - http:
+          path: chatgpt
+          method: post
+
+
+resources:
+  Resources:
+    AnswersDynamoDbTable:
+      Type: "AWS::DynamoDB::Table"
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:provider.environment.DYNAMODB_TABLE}
+    TasksDynamoDbTable:
+      Type: "AWS::DynamoDB::Table"
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:provider.environment.TASKS_TABLE}
+    NamesDynamoDbTable:
+      Type: "AWS::DynamoDB::Table"
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: username
+            AttributeType: S
+        KeySchema:
+          - AttributeName: username
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:provider.environment.NAMES_TABLE}
+    PostsDynamoDbTable:
+      Type: "AWS::DynamoDB::Table"
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: username
+            AttributeType: S
+          - AttributeName: nonce
+            AttributeType: N
+        KeySchema:
+          - AttributeName: username
+            KeyType: HASH
+          - AttributeName: nonce
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:provider.environment.POSTS_TABLE}
+    DocsDynamoDbTable:
+      Type: "AWS::DynamoDB::Table"
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:provider.environment.DOCS_TABLE}        
+    HistoryDynamoDbTable:
+      Type: "AWS::DynamoDB::Table"
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: time
+            AttributeType: N
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+          - AttributeName: time
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:provider.environment.HISTORY_TABLE}    
+
+
+package:
+  exclude:
+    - src/tests/**
+    - jest.config.js
+    - tsconfig.json
+    - tslint.json
+    - env*.json
+    - .travis.yml
+    - .prettierrc
+    - node_modules/aws-sdk/**
