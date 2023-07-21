@@ -192,6 +192,89 @@ export default class BotLogic {
       return;
     }
 
+    if (
+      body.message.text &&
+      (body.message.text == "sell" || body.message.text == `/sell`)
+    ) {
+      this.bot.telegram
+        .sendMessage(
+          chatId,
+          "Let's sell your MINA NFT. Will implement selling functionality soon",
+        )
+        .catch((error) => {
+          console.error(`Telegraf error`, error);
+        });
+      return;
+    }
+
+    if (
+      body.message.text &&
+      (body.message.text == "buy" || body.message.text == `/buy`)
+    ) {
+      this.bot.telegram
+        .sendMessage(
+          chatId,
+          "Let's buy amazing MINA NFT. Will implement this functionality soon",
+        )
+        .catch((error) => {
+          console.error(`Telegraf error`, error);
+        });
+      return;
+    }
+
+    if (
+      body.message.text &&
+      (body.message.text == "list" || body.message.text == `/list`)
+    ) {
+      this.bot.telegram
+        .sendMessage(
+          chatId,
+          "Let's list amazing MINA NFTs. Will implement this functionality soon",
+        )
+        .catch((error) => {
+          console.error(`Telegraf error`, error);
+        });
+      return;
+    }
+
+    if (
+      body.message.text &&
+      (body.message.text == "secret" || body.message.text == `/secret`)
+    ) {
+      if (!(currState && currState.username)) {
+        console.log("secret - No username", currState);
+        this.bot.telegram
+          .sendMessage(chatId, "Please first create NFT")
+          .catch((error) => {
+            console.error(`Telegraf error`, error);
+          });
+        return;
+      }
+
+      const names = new Names(NAMES_TABLE);
+      const name = await names.get(currState.username);
+      if (name && name.deploy && name.deploy.secret)
+        this.bot.telegram
+          .sendMessage(
+            chatId,
+            `Secret key for you Mina Avatar NFT @${currState.username} is ${name.deploy.secret}`,
+          )
+          .catch((error) => {
+            console.error(`Telegraf error`, error);
+          });
+      else
+        this.bot.telegram
+          .sendMessage(
+            chatId,
+            `Secret key for you Mina Avatar NFT @${currState.username} is not created yet`,
+          )
+          .catch((error) => {
+            console.error(`Telegraf error`, error);
+          });
+
+      return;
+    }
+
     if (body.message.location) {
       this.bot.telegram
         .sendMessage(chatId, this.questions.typeError[LANGUAGE])
