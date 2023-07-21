@@ -1,0 +1,16 @@
+# package directories
+node_modules
+jspm_packages
+
+# Serverless directories
+.serverless
+
+# Test directories
+test
+
+env.json
+output.txt
+.DS_Store
+.eslintrc.json
+.yarn/
+.yarnrc.yml
