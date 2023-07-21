@@ -16,6 +16,34 @@ The user interface will be facilitated via a Telegram bot hosted on AWS. The bot
 
 As for the storage of NFT data, reliable services such as nft.storage or Infura will be employed, ensuring a secure and efficient infrastructure for our project.
 
+# Bot commands
+
+    ```shell
+    new
+    ```
+ 		Create new NFT
+
+    ```shell
+    sell
+    ```
+ 		Sell NFT
+ 		
+ 		```shell
+    buy
+    ```
+ 		Buy NFT
+
+ 		```shell
+    list
+    ```
+ 		List all NFTs
+ 		
+ 		```shell
+    secret
+    ```
+ 		Get secret key of your NFT
+
+
 # Used Technologies
 
 - AWS lambda, S3 and DynamoDB
