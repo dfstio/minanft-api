@@ -462,7 +462,6 @@ async function deploy(
         "https://berkeley.minaexplorer.com/transaction/" +
         hash,
     );
-
   }
   return hash;
 }
