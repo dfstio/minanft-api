@@ -242,14 +242,14 @@ Deploying your NFT smart contract to MINA blockchain...`,
     );
     console.log("verificationKey", verificationKey);
 	  */
-    const hash: string = await deploy(
+    const hash: string | undefined = await deploy(
       deployerPrivateKey,
       zkAppPrivateKey,
       zkApp,
       verificationKey,
       bot,
     );
-    if (hash == "") {
+    if (!hash || hash == "") {
       console.error("Error deploying contract");
       await bot.message(
         `NFT deployment: Error deploying contract to MINA blockchain. Please try again later by typing command "new"`,
