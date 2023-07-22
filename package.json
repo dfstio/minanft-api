@@ -4,7 +4,7 @@
     "test": "jest",
     "test-watch": "jest --watch",
     "deploy": "serverless deploy --aws-profile minanft",
-    "compile": "serverless package",
+    "compile": "serverless package --aws-profile minanft",
     "info": "serverless info --aws-profile minanft",
     "org": "serverless --org=dfstio --aws-profile minanft",
     "push": "git status && git push -u originminanft master",
@@ -33,6 +33,7 @@
   "dependencies": {
     "aws-lambda": "^1.0.7",
     "aws-sdk": "^2.1419.0",
+    "crypto": "^1.0.1",
     "form-data": "^4.0.0",
     "openai": "^3.3.0",
     "snarkyjs": "^0.9.8",

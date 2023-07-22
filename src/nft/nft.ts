@@ -7,10 +7,12 @@ async function startDeployment(
   filename: string,
   username: string,
 ): Promise<void> {
+  console.log("startDeployment", id, username, timeNow, filename );
   const bot = new BotMessage(id);
 
   let uri = {
     name: username,
+    description: "",
     type: "object",
     image: filename,
     external_url: "minanft.io",

@@ -19,23 +19,23 @@ function nftPrice(username: string): NFTPriceData {
 
 const prices = [
   {
-    price: 10000,
+    price: 999,
     description:
-      "Exclusive Mina NFT name - simple, elegant, and very sought-after, consisting of common words or phrases that are easy to remember or brand name",
+      "Exclusive Avatar NFT name"
   },
   {
-    price: 1000,
+    price: 99,
     description:
-      "Short Mina NFT Name with less than 3 characters: short, sweet, and highly memorable, this username is the digital equivalent of prime real estate",
+      "Short Avatar NFT Name"
   },
   {
     price: 49,
     description:
-      "Short Mina NFT name 5 characters or less: the backbone of the digital world, offering a blend of personalization",
+      "Short Avatar NFT name"
   },
   {
     price: 19,
-    description: "Reservation of Mina NFT Avatar name for 1 year",
+    description: "Avatar NFT name",
   },
 ];
 

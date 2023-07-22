@@ -650,6 +650,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"crypto@npm:^1.0.1":
+  version: 1.0.1
+  resolution: "crypto@npm:1.0.1"
+  checksum: 087fe3165bd94c333a49e6ed66a0193911f63eac38a24f379b3001a5fe260a59c413646e53a0f67875ba13902b2686d81dc703cb2c147a4ec727dcdc04e5645e
+  languageName: node
+  linkType: hard
+
 "debug@npm:^3.2.7":
   version: 3.2.7
   resolution: "debug@npm:3.2.7"
@@ -2223,6 +2230,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": ^5.62.0
     aws-lambda: ^1.0.7
     aws-sdk: ^2.1419.0
+    crypto: ^1.0.1
     eslint: ^8.45.0
     eslint-config-standard-with-typescript: latest
     eslint-plugin-import: ^2.27.5

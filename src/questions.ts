@@ -16,7 +16,7 @@ export default class Questions {
     it: "Benvenuto a MinaNFT. Ti aiuterò a creare Avatar NFT sulla blockchain di MINA",
   };
   private _finalWords: Translation = {
-    en: "Thank you! Your NFT is created and will be deployed to the MINA blockchain. Meantime you can ask me the questions about Mina NFT, and I will answer with the help of AI and founder of the project",
+    en: "Thank you! Your NFT is being created and will be deployed to the MINA blockchain. Meantime you can ask me the questions about Mina NFT, and I will answer with the help of AI and founder of the project",
     it: "Grazie! Il tuo NFT è stato creato e verrà implementato sulla blockchain di MINA. Nel frattempo puoi farmi delle domande riguardo gli NFT di Mina, e risponderò con l'aiuto dell'IA e del fondatore del progetto",
   };
   private _afterFinalWords = {

@@ -48,6 +48,7 @@ provider:
     STRIPE_KEY: ${file(./env.json):STRIPE_KEY, env:STRIPE_KEY}
     ALGOLIA_KEY: ${file(./env.json):ALGOLIA_KEY, env:ALGOLIA_KEY}
     ALGOLIA_PROJECT: ${file(./env.json):ALGOLIA_PROJECT, env:ALGOLIA_PROJECT}
+    AWS_KMS_ENCRYPTION_KEY_ID: ${file(./env.json):AWS_KMS_ENCRYPTION_KEY_ID, env:AWS_KMS_ENCRYPTION_KEY_ID}
   iamRoleStatements:
     - Effect: "Allow"
       Action:
@@ -288,7 +289,7 @@ resources:
 
 package:
   exclude:
-    - src/tests/**
+    - test/**
     - jest.config.js
     - tsconfig.json
     - tslint.json
