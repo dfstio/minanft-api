@@ -6,7 +6,7 @@ sell - Sell NFT
 buy - Buy NFT 		
 list - List all NFTs
 secret - Get secret key of your NFT 		
-ticket - Buy support ticket 
+support - Buy support ticket 
 */
 
 async function supportTicket(id: string): Promise<void> {

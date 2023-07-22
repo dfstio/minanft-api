@@ -241,6 +241,15 @@ export default class BotLogic {
 
     if (
       body.message.text &&
+      (body.message.text == "support" || body.message.text == `/support`)
+    ) {
+      await supportTicket();
+      return;
+    }
+
+
+    if (
+      body.message.text &&
       (body.message.text == "secret" || body.message.text == `/secret`)
     ) {
       if (!(currState && currState.username)) {
@@ -253,14 +262,6 @@ export default class BotLogic {
         return;
       }
 
-      if (
-        body.message.text &&
-        (body.message.text == "ticket" || body.message.text == `/ticket`)
-      ) {
-      	console.log("Support ticket command");
-        await supportTicket(chatId);
-        return;
-      }
       const names = new Names(NAMES_TABLE);
       const name = await names.get(currState.username);
       if (name && name.deploy && name.deploy.secret)
