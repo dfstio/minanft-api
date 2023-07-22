@@ -3,102 +3,102 @@ import axios from "axios";
 import FormData from "form-data";
 
 export default class IPFS {
-  private auth: string;
+    private auth: string;
 
-  constructor(token: string) {
-    this.auth = "Bearer " + token;
-  }
-
-  public async add(params: any): Promise<string | undefined> {
-    try {
-      var data = JSON.stringify(params);
-
-      var config = {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: this.auth,
-        },
-      };
-
-      const res = await axios.post(
-        "https://api.pinata.cloud/pinning/pinJSONToIPFS",
-        data,
-        config,
-      );
-
-      return res.data.IpfsHash;
-    } catch (err) {
-      console.error(err);
-      return undefined;
+    constructor(token: string) {
+        this.auth = "Bearer " + token;
     }
-  }
 
-  public async addLink(file: string): Promise<string | undefined> {
-    try {
-      console.log("addLink", file);
-      const auth: string = this.auth;
-      const s3 = new S3();
+    public async add(params: any): Promise<string | undefined> {
+        try {
+            var data = JSON.stringify(params);
 
-      const params = {
-        Bucket: process.env.BUCKET!,
-        Key: file,
-      };
+            var config = {
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: this.auth,
+                },
+            };
 
-      let finished: boolean = false;
-      const start = Date.now();
-      const timeout = 60 * 1000; // 1 min
-      let s3data: any = undefined;
-      while (!finished) {
-        console.log("Waiting for S3", file);
-        s3.headObject(params, function (err: any, data: any) {
-          if (err) console.log("S3 is not ready yet");
-          else {
-            finished = true;
-            s3data = data;
-            console.log("S3 is ready", data);
-          }
-        });
-        if (start + timeout < Date.now()) {
-          console.error("addLink timeout");
-          return undefined;
+            const res = await axios.post(
+                "https://api.pinata.cloud/pinning/pinJSONToIPFS",
+                data,
+                config,
+            );
+
+            return res.data.IpfsHash;
+        } catch (err) {
+            console.error(err);
+            return undefined;
         }
-        await sleep(1000);
-      }
+    }
 
-      console.log("s3data", s3data);
-      if (!s3data) return undefined;
+    public async addLink(file: string): Promise<string | undefined> {
+        try {
+            console.log("addLink", file);
+            const auth: string = this.auth;
+            const s3 = new S3();
 
-      // Get read object stream
-      const s3Stream = s3.getObject(params).createReadStream();
-      const formData = new FormData();
+            const params = {
+                Bucket: process.env.BUCKET!,
+                Key: file,
+            };
 
-      // append stream with a file
-      formData.append("file", s3Stream, {
-        contentType: s3data.ContentType,
-        knownLength: s3data.ContentLength,
-        filename: file,
-      });
+            let finished: boolean = false;
+            const start = Date.now();
+            const timeout = 60 * 1000; // 1 min
+            let s3data: any = undefined;
+            while (!finished) {
+                console.log("Waiting for S3", file);
+                s3.headObject(params, function (err: any, data: any) {
+                    if (err) console.log("S3 is not ready yet");
+                    else {
+                        finished = true;
+                        s3data = data;
+                        console.log("S3 is ready", data);
+                    }
+                });
+                if (start + timeout < Date.now()) {
+                    console.error("addLink timeout");
+                    return undefined;
+                }
+                await sleep(1000);
+            }
 
-      const response = await axios.post(
-        "https://api.pinata.cloud/pinning/pinFileToIPFS",
-        formData,
-        {
-          headers: {
-            Authorization: auth,
-            ...formData.getHeaders(),
-          },
-          maxBodyLength: 25 * 1024 * 1024,
-        },
-      );
+            console.log("s3data", s3data);
+            if (!s3data) return undefined;
 
-      console.log("addLink result:", response.data);
-      if (response && response.data && response.data.IpfsHash) {
-        return response.data.IpfsHash;
-      } else {
-        console.error("addLink error", response.data.error);
-        return undefined;
-      }
-      /*
+            // Get read object stream
+            const s3Stream = s3.getObject(params).createReadStream();
+            const formData = new FormData();
+
+            // append stream with a file
+            formData.append("file", s3Stream, {
+                contentType: s3data.ContentType,
+                knownLength: s3data.ContentLength,
+                filename: file,
+            });
+
+            const response = await axios.post(
+                "https://api.pinata.cloud/pinning/pinFileToIPFS",
+                formData,
+                {
+                    headers: {
+                        Authorization: auth,
+                        ...formData.getHeaders(),
+                    },
+                    maxBodyLength: 25 * 1024 * 1024,
+                },
+            );
+
+            console.log("addLink result:", response.data);
+            if (response && response.data && response.data.IpfsHash) {
+                return response.data.IpfsHash;
+            } else {
+                console.error("addLink error", response.data.error);
+                return undefined;
+            }
+            /*
           .then((response) => {
             console.log("addLink result:", response.data);
             if (response && response.data && response.data.IpfsHash) {
@@ -113,17 +113,17 @@ export default class IPFS {
             return undefined;
           });
           */
-      //});
-    } catch (err) {
-      console.error("addLink error 2 - catch", err);
-      return undefined;
+            //});
+        } catch (err) {
+            console.error("addLink error 2 - catch", err);
+            return undefined;
+        }
+        return undefined;
     }
-    return undefined;
-  }
 }
 
 function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /*

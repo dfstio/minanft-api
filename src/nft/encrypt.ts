@@ -1,54 +1,48 @@
 import { KMS } from "aws-sdk";
-import crypto from 'crypto';
+import crypto from "crypto";
 
 // TODO : encrypt all private keys and secrets and fine-tune AWS permissions
 
-async function getKey(context: any)
-{
-   try {     
-     var params = {
-            KeyId: process.env.AWS_KMS_ENCRYPTION_KEY_ID!, /* required */
-            KeyPairSpec:  'RSA_4096', /* required */
-            EncryptionContext: context
-          };
-          
-          
-      const kms = new KMS();    
-      console.log("getKey params", params);
-      let result = await kms.generateDataKeyPairWithoutPlaintext(params).promise();
-      
-      console.log("getKey", result);
-      return result;
-           
+async function getKey(context: any) {
+    try {
+        var params = {
+            KeyId: process.env.AWS_KMS_ENCRYPTION_KEY_ID! /* required */,
+            KeyPairSpec: "RSA_4096" /* required */,
+            EncryptionContext: context,
+        };
+
+        const kms = new KMS();
+        console.log("getKey params", params);
+        let result = await kms
+            .generateDataKeyPairWithoutPlaintext(params)
+            .promise();
+
+        console.log("getKey", result);
+        return result;
     } catch (error) {
-       console.error("catch", {error});
-       return error;
+        console.error("catch", { error });
+        return error;
     }
-   
 }
 
-async function getPrivateKey(encryptedKey: any, context : any)
-{
-
-   try {     
-     var params = {            
+async function getPrivateKey(encryptedKey: any, context: any) {
+    try {
+        var params = {
             CiphertextBlob: encryptedKey,
             EncryptionContext: context,
-            KeyId: process.env.AWS_KMS_ENCRYPTION_KEY_ID!
-          };
-      
-      const kms = new KMS();    
-      //if(DEBUG) console.log("getPrivateKey params:", params);
-      let result = await kms.decrypt(params).promise();
-      
-      //if(DEBUG) console.log("getPrivateKey result:", result);
-      return result.Plaintext;
-           
+            KeyId: process.env.AWS_KMS_ENCRYPTION_KEY_ID!,
+        };
+
+        const kms = new KMS();
+        //if(DEBUG) console.log("getPrivateKey params:", params);
+        let result = await kms.decrypt(params).promise();
+
+        //if(DEBUG) console.log("getPrivateKey result:", result);
+        return result.Plaintext;
     } catch (error) {
-       console.error("catch", {error});
-       return error;
+        console.error("catch", { error });
+        return error;
     }
-   
 }
 
 /*
@@ -84,5 +78,5 @@ export {
     getKey,
     //encrypt,
     //decrypt,
-    getPrivateKey
-}
+    getPrivateKey,
+};

@@ -7,13 +7,13 @@
     "compile": "serverless package --aws-profile minanft",
     "info": "serverless info --aws-profile minanft",
     "org": "serverless --org=dfstio --aws-profile minanft",
-    "push": "git status && git push -u originminanft master",
+    "push": "git status && git push -u originminanft algolia",
     "gitcreate": "git remote add originminanft https://github.com/dfstio/minanft",
     "githubcleartoken": "git config --global --unset credential.helper",
-    "checkout": "git checkout -b nft",
+    "checkout": "git checkout -b algolia",
     "commit": "git commit -a -S -m",
     "lint": "eslint 'src/*.{ts,tsx}' handler.ts",
-    "style": "prettier --write {,!(node_modules)/**/}*.ts",
+    "style": "prettier --tab-width 4 --write {,!(node_modules)/**/}*.ts",
     "upgradeinteractive": "yarn upgrade-interactive",
     "ipfs": "ts-node test/ipfs3.ts"
   },
@@ -31,11 +31,14 @@
     "typescript": "*"
   },
   "dependencies": {
+    "@types/remove-markdown": "^0.3.1",
+    "algoliasearch": "^4.19.1",
     "aws-lambda": "^1.0.7",
     "aws-sdk": "^2.1419.0",
     "crypto": "^1.0.1",
     "form-data": "^4.0.0",
     "openai": "^3.3.0",
+    "remove-markdown": "^0.5.0",
     "snarkyjs": "^0.9.8",
     "telegraf": "^4.12.2",
     "typegram": "^4.3.0"
