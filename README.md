@@ -27,6 +27,8 @@ As for the storage of NFT data, reliable services such as nft.storage or Infura 
 ```list``` 		List all NFTs
 
 ```secret``` 	Get secret key of your NFT 		
+
+```support``` Buy support ticket 		
  		
 
 

@@ -1,5 +1,5 @@
 import { Telegraf, Context } from "telegraf";
-import { stripeInvoice } from "../payments/stripe";
+import { mintInvoice, postInvoice, supportInvoice } from "../payments/stripe";
 
 export default class BotMessage {
   bot: Telegraf<Context>;
@@ -48,7 +48,19 @@ export default class BotMessage {
     });
 
     this.bot.telegram
-      .sendInvoice(this.id, stripeInvoice(this.id, username, image))
+      .sendInvoice(this.id, mintInvoice(this.id, username, image))
+      .catch((error) => {
+        console.error(`Telegraf error`, error);
+      });
+  }
+
+  public async support(): Promise<void> {
+    this.bot.catch((err, ctx) => {
+      console.error(`Telegraf error for ${ctx.updateType}`, err);
+    });
+
+    this.bot.telegram
+      .sendInvoice(this.id, supportInvoice(this.id))
       .catch((error) => {
         console.error(`Telegraf error`, error);
       });

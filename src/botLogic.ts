@@ -19,6 +19,8 @@ import AWS from "aws-sdk";
 import nodemailer from "nodemailer";
 import ChatGPTMessage from "./chatgpt/chatgpt";
 import { context } from "./chatgpt/context";
+import { reservedNames } from "./nft/reservednames";
+import { support } from "./payments/botcommands";
 
 const CHATGPT_TOKEN = process.env.CHATGPT_TOKEN!;
 const CHATGPTPLUGINAUTH = process.env.CHATGPTPLUGINAUTH!;
@@ -251,6 +253,13 @@ export default class BotLogic {
         return;
       }
 
+      if (
+        body.message.text &&
+        (body.message.text == "support" || body.message.text == `/support`)
+      ) {
+        support(chatId);
+        return;
+      }
       const names = new Names(NAMES_TABLE);
       const name = await names.get(currState.username);
       if (name && name.deploy && name.deploy.secret)
@@ -538,6 +547,18 @@ export default class BotLogic {
                 .sendMessage(
                   chatId,
                   `This name is already taken. Please choose another Mina NFT avatar name`,
+                )
+                .catch((error) => {
+                  console.error(`Telegraf error`, error);
+                });
+              return;
+            }
+            if (reservedNames.includes(userInput.toLowerCase())) {
+              console.log("Name is reserved", name);
+              this.bot.telegram
+                .sendMessage(
+                  chatId,
+                  `This name is reserved. Please choose another Mina NFT avatar name`,
                 )
                 .catch((error) => {
                   console.error(`Telegraf error`, error);
