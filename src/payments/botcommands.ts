@@ -6,12 +6,12 @@ sell - Sell NFT
 buy - Buy NFT 		
 list - List all NFTs
 secret - Get secret key of your NFT 		
-support - Buy support ticket 
+ticket - Buy support ticket 
 */
 
-async function support(id: string): Promise<void> {
+async function supportTicket(id: string): Promise<void> {
   const bot = new BotMessage(id);
   await bot.support();
 }
 
-export { support };
+export { supportTicket };

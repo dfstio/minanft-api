@@ -20,7 +20,7 @@ import nodemailer from "nodemailer";
 import ChatGPTMessage from "./chatgpt/chatgpt";
 import { context } from "./chatgpt/context";
 import { reservedNames } from "./nft/reservednames";
-import { support } from "./payments/botcommands";
+import { supportTicket } from "./payments/botcommands";
 
 const CHATGPT_TOKEN = process.env.CHATGPT_TOKEN!;
 const CHATGPTPLUGINAUTH = process.env.CHATGPTPLUGINAUTH!;
@@ -255,9 +255,10 @@ export default class BotLogic {
 
       if (
         body.message.text &&
-        (body.message.text == "support" || body.message.text == `/support`)
+        (body.message.text == "ticket" || body.message.text == `/ticket`)
       ) {
-        support(chatId);
+      	console.log("Support ticket command");
+        await supportTicket(chatId);
         return;
       }
       const names = new Names(NAMES_TABLE);
