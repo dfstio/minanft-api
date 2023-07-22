@@ -243,7 +243,7 @@ export default class BotLogic {
       body.message.text &&
       (body.message.text == "support" || body.message.text == `/support`)
     ) {
-      await supportTicket();
+      await supportTicket(chatId);
       return;
     }
 
