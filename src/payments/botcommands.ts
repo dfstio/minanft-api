@@ -10,8 +10,8 @@ support - Buy support ticket
 */
 
 async function supportTicket(id: string): Promise<void> {
-  const bot = new BotMessage(id);
-  await bot.support();
+    const bot = new BotMessage(id);
+    await bot.supportTicket();
 }
 
 export { supportTicket };

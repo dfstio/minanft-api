@@ -288,6 +288,7 @@ resources:
 
 
 package:
+  individually: true
   exclude:
     - test/**
     - jest.config.js
