@@ -122,7 +122,7 @@ export class AvatarNFT extends SmartContract {
         this.pwd.set(Poseidon.hash([Field.fromJSON(NFT_SALT), newsecret]));
     }
 
-		// put NFT to escrow before the transfer in case NFT is sold for fiat money
+    // put NFT to escrow before the transfer in case NFT is sold for fiat money
     @method toEscrow(secret: Field, escrowhash: Field) {
         this.account.provedState.assertEquals(this.account.provedState.get());
         this.account.provedState.get().assertTrue();
@@ -136,13 +136,12 @@ export class AvatarNFT extends SmartContract {
         const nonce = this.nonce.get();
         this.nonce.assertEquals(nonce);
         this.nonce.set(nonce.add(Field(1)));
-        
+
         this.escrow.assertEquals(Field(0));
         this.escrow.set(escrowhash);
     }
-		
-		
-		// get NFT from escrow in case NFT is sold for fiat money
+
+    // get NFT from escrow in case NFT is sold for fiat money
     @method fromEscrow(newsecret: Field, escrowSecret: Field) {
         this.account.provedState.assertEquals(this.account.provedState.get());
         this.account.provedState.get().assertTrue();
@@ -159,8 +158,6 @@ export class AvatarNFT extends SmartContract {
 
         this.pwd.set(Poseidon.hash([Field.fromJSON(NFT_SALT), newsecret]));
     }
-
-
 
     // Change username
     @method changeUsername(secret: Field, username: Field) {

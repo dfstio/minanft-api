@@ -22,13 +22,13 @@ export default class DynamoDbConnector {
         return this.client;
     }
 
-    public createForm(
+    public async createForm(
         id: string,
         username: string,
         message_id: string,
         user: any,
         language_code: string,
-    ): void {
+    ): Promise<void> {
         const emptyForm: FormAnswer = {
             id,
             username: "",

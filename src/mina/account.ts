@@ -24,6 +24,7 @@ import NamesData from "../model/namesData";
 import FormQuestion from "../model/formQuestion";
 import Questions from "../questions";
 import IPFS from "../nft/ipfs";
+import { algoliaWriteToken } from "../nft/algolia";
 
 const MINAURL = process.env.MINAURL
     ? process.env.MINAURL
@@ -221,6 +222,7 @@ async function deployContract(id: string, nft: NamesData): Promise<void> {
 
         console.log("Writing deployment to Names");
         await names.create(deployedNFT);
+        await algoliaWriteToken(deployedNFT);
 
         const deployerPrivateKey = PrivateKey.fromBase58(GASTANKPRIVATEKEY);
         const deployerPublicKey = deployerPrivateKey.toPublicKey();

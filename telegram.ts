@@ -12,7 +12,7 @@ const send: Handler = async (
         console.log("Bot request:", body);
         const botLogic = new BotLogic();
         await botLogic.activate(body);
-
+        await sleep(1000);
         callback(null, {
             statusCode: 200,
             body: "ok",
@@ -25,5 +25,7 @@ const send: Handler = async (
         });
     }
 };
-
+function sleep(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
 export { send };

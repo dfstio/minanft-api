@@ -1,7 +1,10 @@
 import AWS, { AWSError } from "aws-sdk";
 import { DocumentClient, GetItemOutput } from "aws-sdk/clients/dynamodb";
 import HistoryData from "../model/historyData";
-import { ChatCompletionRequestMessage } from "openai";
+import {
+    ChatCompletionRequestMessage,
+    ChatCompletionRequestMessageRoleEnum,
+} from "openai";
 const HISTORY_HOURS: number = Number(process.env.HISTORY_HOURS!);
 const HISTORY_CHARS: number = Number(process.env.HISTORY_CHARS!);
 
@@ -21,10 +24,16 @@ export default class History {
         return this.client;
     }
 
-    public add(msg: ChatCompletionRequestMessage): void {
+    public async add(msg: string, isUser: boolean = false): Promise<void> {
+        const message = {
+            role: isUser
+                ? ChatCompletionRequestMessageRoleEnum.User
+                : ChatCompletionRequestMessageRoleEnum.Assistant,
+            content: msg,
+        };
         const params = {
             TableName: this.tableName,
-            Item: { id: this.id, time: Date.now(), message: msg },
+            Item: { id: this.id, time: Date.now(), message },
         };
         console.log("History - add msg", params);
         this._client.put(params, (error) => {

@@ -2,6 +2,7 @@ import { Telegraf, Context } from "telegraf";
 import Questions from "./questions";
 import DynamoDbConnector from "./connector/dynamoDbConnector";
 import Names from "./connector/names";
+import History from "./connector/history";
 import { startDeployment, generateFilename } from "./nft/nft";
 import DocumentData from "./model/documentData";
 import AccountData from "./model/accountData";
@@ -21,11 +22,16 @@ import ChatGPTMessage from "./chatgpt/chatgpt";
 import { context } from "./chatgpt/context";
 import { reservedNames } from "./nft/reservednames";
 import { algoliaWriteTokens } from "./nft/algolia";
-import { supportTicket } from "./payments/botcommands";
+import {
+    supportTicket,
+    botCommandList,
+    botCommandCallback,
+} from "./payments/botcommands";
 
 const CHATGPT_TOKEN = process.env.CHATGPT_TOKEN!;
 const CHATGPTPLUGINAUTH = process.env.CHATGPTPLUGINAUTH!;
 const NAMES_TABLE = process.env.NAMES_TABLE!;
+const HISTORY_TABLE = process.env.HISTORY_TABLE!;
 const LANG = process.env.LANG ? process.env.LANG : "en";
 console.log("Language", LANG);
 
@@ -49,24 +55,66 @@ interface ReplyKeyboardRemove {
 
 export default class BotLogic {
     bot: Telegraf<Context>;
+    id: string | undefined;
+    supportId: string;
+    history: History | undefined;
     chat: ChatGPTMessage;
     dbConnector: DynamoDbConnector;
     validator: Validator;
     questions: Questions;
 
-    constructor() {
-        this.bot = new Telegraf(process.env.BOT_TOKEN!);
+    constructor(
+        token: string = process.env.BOT_TOKEN!,
+        supportId: string = process.env.SUPPORT_CHAT!,
+    ) {
+        this.bot = new Telegraf(token);
+        this.supportId = supportId;
+        this.bot.on("callback_query", async (ctx: any) => {
+            await botCommandCallback(ctx);
+        });
+        this.bot.hears("name", async (ctx: any) => {
+            return await ctx.reply("MinaNFT");
+        });
+        this.bot.hears("link", async (ctx: any) => {
+            return await ctx.reply("https://minanft.io");
+        });
+        this.bot.hears("Name", (ctx: any) => ctx.reply("MinaNFT"));
+        this.bot.hears("Link", (ctx: any) => ctx.reply("https://minanft.io"));
+        this.bot.on("message", async (ctx) => {
+            return await this.handleMessage(ctx);
+        });
+        this.bot.catch((err, ctx: any) => {
+            console.error(`Telegraf error for ${ctx.updateType}`, err);
+        });
         this.chat = new ChatGPTMessage(CHATGPT_TOKEN, context);
         this.questions = new Questions();
         this.dbConnector = new DynamoDbConnector(process.env.DYNAMODB_TABLE!);
         this.validator = new Validator();
+        this.id = undefined;
     }
 
-    public async activate(body: any): Promise<void> {
-        this.bot.catch((err, ctx) => {
-            console.error(`Telegraf error for ${ctx.updateType}`, err);
-        });
+    public async activate(body: any) {
+        return await this.bot.handleUpdate(body);
+    }
 
+    public async message(msg: string): Promise<void> {
+        if (this.id) {
+            this.bot.telegram.sendMessage(this.id, msg).catch((error) => {
+                console.error(`Telegraf error`, error);
+            });
+            if (this.history) await this.history.add(msg);
+        } else console.error("No id for message:", msg);
+
+        const supportMsg: string = `Message for ${this.id}: ${msg}`;
+        this.bot.telegram
+            .sendMessage(this.supportId, supportMsg)
+            .catch((error) => {
+                console.error(`Telegraf error`, error);
+            });
+        console.log(supportMsg);
+    }
+
+    public async handleMessage(body: any): Promise<void> {
         if (body.pre_checkout_query) {
             console.log("pre_checkout_query", body.pre_checkout_query.id);
             this.bot.telegram
@@ -81,28 +129,29 @@ export default class BotLogic {
             return;
         }
 
-        if (body.message && body.message.successful_payment) {
-            console.log("successful_payment");
-            if (body.message.chat && body.message.chat.id)
-                this.bot.telegram
-                    .sendMessage(body.message.chat.id, "Thank you for payment")
-                    .catch((error) => {
-                        console.error(`Telegraf error`, error);
-                    });
-            return;
-        }
-
         const formQuestions = this.questions.questions;
         const chatId =
             body.message && body.message.chat && body.message.chat.id;
+
         let username =
             body.message && body.message.from && body.message.from.username;
-        let userInput = body.message && body.message.text;
+        let userInput: string | undefined = body.message && body.message.text;
         if (!username) username = "";
         if (!chatId) {
             console.log("No message", body);
             return;
         }
+        const chatIdString: string = chatId.toString();
+        this.id = chatIdString;
+        this.history = new History(HISTORY_TABLE, chatIdString);
+        if (userInput) await this.history.add(userInput, true);
+
+        if (body.message && body.message.successful_payment) {
+            console.log("successful_payment");
+            await this.message("Thank you for payment");
+            return;
+        }
+
         if (chatId == process.env.SUPPORT_CHAT) {
             console.log("Support message", body);
             //TODO: If message === "approve" then call lambda to add verifier's signature to the smart contract
@@ -160,7 +209,6 @@ export default class BotLogic {
                 console.error(`Telegraf error`, error);
             });
 
-        const chatIdString = chatId.toString();
         let currState = await this.dbConnector.getCurrentState(chatIdString);
         let currIndexAnswer = currState && currState.currentAnswer;
         if (!currIndexAnswer) currIndexAnswer = 0;
@@ -192,14 +240,9 @@ export default class BotLogic {
                 body.message.text == `/new`)
         ) {
             await this.dbConnector.resetAnswer(chatIdString);
-            this.bot.telegram
-                .sendMessage(
-                    chatId,
-                    "Let's create another MINA NFT. Please choose your Mina NFT avatar name",
-                )
-                .catch((error) => {
-                    console.error(`Telegraf error`, error);
-                });
+            await this.message(
+                "Let's create another MINA NFT. Please choose your Mina NFT avatar name",
+            );
             return;
         }
 
@@ -207,14 +250,9 @@ export default class BotLogic {
             body.message.text &&
             (body.message.text == "sell" || body.message.text == `/sell`)
         ) {
-            this.bot.telegram
-                .sendMessage(
-                    chatId,
-                    "Let's sell your MINA NFT. Will implement selling functionality soon",
-                )
-                .catch((error) => {
-                    console.error(`Telegraf error`, error);
-                });
+            await this.message(
+                "Let's sell your MINA NFT. Will implement selling functionality soon",
+            );
             return;
         }
 
@@ -222,14 +260,9 @@ export default class BotLogic {
             body.message.text &&
             (body.message.text == "buy" || body.message.text == `/buy`)
         ) {
-            this.bot.telegram
-                .sendMessage(
-                    chatId,
-                    "Let's buy amazing MINA NFT. Will implement this functionality soon",
-                )
-                .catch((error) => {
-                    console.error(`Telegraf error`, error);
-                });
+            await this.message(
+                "Let's buy amazing MINA NFT. Will implement this functionality soon",
+            );
             return;
         }
 
@@ -237,14 +270,7 @@ export default class BotLogic {
             body.message.text &&
             (body.message.text == "list" || body.message.text == `/list`)
         ) {
-            this.bot.telegram
-                .sendMessage(
-                    chatId,
-                    "Let's list amazing MINA NFTs. Will implement this functionality soon",
-                )
-                .catch((error) => {
-                    console.error(`Telegraf error`, error);
-                });
+            await botCommandList(chatIdString);
             return;
         }
 
@@ -252,7 +278,7 @@ export default class BotLogic {
             body.message.text &&
             (body.message.text == "support" || body.message.text == `/support`)
         ) {
-            await supportTicket(chatId);
+            await supportTicket(chatIdString);
             return;
         }
 
@@ -262,44 +288,29 @@ export default class BotLogic {
         ) {
             if (!(currState && currState.username)) {
                 console.log("secret - No username", currState);
-                this.bot.telegram
-                    .sendMessage(chatId, "Please first create NFT")
-                    .catch((error) => {
-                        console.error(`Telegraf error`, error);
-                    });
+                await this.message("Please first create NFT");
                 return;
             }
 
             const names = new Names(NAMES_TABLE);
             const name = await names.get(currState.username);
             if (name && name.deploy && name.deploy.secret)
+                // we do not add to history
                 this.bot.telegram
-                    .sendMessage(
-                        chatId,
-                        `Secret key for you Mina Avatar NFT @${currState.username} is ${name.deploy.secret}`,
-                    )
+                    .sendMessage(chatIdString, name.deploy.secret)
                     .catch((error) => {
                         console.error(`Telegraf error`, error);
                     });
             else
-                this.bot.telegram
-                    .sendMessage(
-                        chatId,
-                        `Secret key for you Mina Avatar NFT @${currState.username} is not created yet`,
-                    )
-                    .catch((error) => {
-                        console.error(`Telegraf error`, error);
-                    });
+                await this.message(
+                    `Secret key for you Mina Avatar NFT @${currState.username} is not created yet`,
+                );
 
             return;
         }
 
         if (body.message.location) {
-            this.bot.telegram
-                .sendMessage(chatId, this.questions.typeError[LANGUAGE])
-                .catch((error) => {
-                    console.error(`Telegraf error`, error);
-                });
+            await this.message(this.questions.typeError[LANGUAGE]);
             return;
         }
 
@@ -317,28 +328,15 @@ export default class BotLogic {
                 remove_keyboard: true,
                 selective: false,
             };
-            this.bot.telegram
-                .sendMessage(
-                    chatId,
-                    this.questions.questions[currIndexAnswer].text[LANGUAGE],
-                    { reply_markup: optionsRemove },
-                )
-                .catch((error) => {
-                    console.error(`Telegraf error`, error);
-                });
+            await this.message(
+                this.questions.questions[currIndexAnswer].text[LANGUAGE],
+            );
         }
 
         if (body.message.photo) {
             if (!(currState && currState.username)) {
                 console.log("No username", currState);
-                this.bot.telegram
-                    .sendMessage(
-                        chatId,
-                        "Please choose your Mina NFT avatar name",
-                    )
-                    .catch((error) => {
-                        console.error(`Telegraf error`, error);
-                    });
+                await this.message("Please choose your Mina NFT avatar name");
                 return;
             }
             if (currIndexAnswer == 1) {
@@ -359,17 +357,7 @@ export default class BotLogic {
                         currIndexAnswer,
                         "image uploaded",
                     );
-                    this.bot.telegram.sendMessage(
-                        chatId,
-                        this.questions.finalWords[LANGUAGE],
-                    );
-                    /*
-        this.bot.telegram
-          .sendMessage(chatIdString, this.questions.imageSuccess[LANGUAGE])
-          .catch((error) => {
-            console.error(`Telegraf error`, error);
-          });
-*/
+                    await this.message(this.questions.finalWords[LANGUAGE]);
                 } catch (error) {
                     console.error("Image catch", (<any>error).toString());
                 }
@@ -433,28 +421,6 @@ export default class BotLogic {
                 }),
             );
             return;
-            /*
-      try {
-      const audioData = <VoiceData>{
-        mime_type: audio.mime_type,
-        file_id: audio.file_id,
-        file_size: audio.file_size,
-      };
-        const audioHandler = new AudioHandler(audioData);
-        await audioHandler.copyAudioToS3(chatIdString, audio.file_name);
-        
-        this.bot.telegram
-          .sendMessage(chatIdString, this.questions.voiceSuccess[LANGUAGE])
-          .catch((error) => {
-            console.error(`Telegraf error`, error);
-          });
-		
-        return;
-      } catch (error) {
-        console.error("Audio catch", (<any>error).toString());
-        return;
-      }
-    */
         }
 
         if (body.message.document) {
@@ -465,24 +431,10 @@ export default class BotLogic {
                 //const item = await this.dbConnector.getItem(chatIdString);
                 const fileHandler = new FileHandler(documentData);
                 await fileHandler.copyFileToS3(chatIdString); //, this.parseObjectToHtml(item));
-                this.bot.telegram
-                    .sendMessage(
-                        chatIdString,
-                        this.questions.fileSuccess[LANGUAGE],
-                    )
-                    .catch((error) => {
-                        console.error(`Telegraf error`, error);
-                    });
+                await this.message(this.questions.fileSuccess[LANGUAGE]);
                 //currIndexAnswer++;
             } else {
-                this.bot.telegram
-                    .sendMessage(
-                        chatIdString,
-                        this.questions.typeError[LANGUAGE],
-                    )
-                    .catch((error) => {
-                        console.error(`Telegraf error`, error);
-                    });
+                await this.message(this.questions.typeError[LANGUAGE]);
             }
         }
 
@@ -533,15 +485,9 @@ export default class BotLogic {
       										  
       		add it back if the phone number is needed for KYC								  
         */
-                this.bot.telegram
-                    .sendMessage(
-                        chatId,
-                        `${this.questions.welcomeWords[LANGUAGE]}\n\n${currQuestion.text[LANGUAGE]}`,
-                        /*,{ reply_markup: options } */
-                    )
-                    .catch((error) => {
-                        console.error(`Telegraf error`, error);
-                    });
+                await this.message(
+                    `${this.questions.welcomeWords[LANGUAGE]}\n\n${currQuestion.text[LANGUAGE]}`,
+                );
                 this.bot.telegram
                     .sendMessage(
                         process.env.SUPPORT_CHAT!,
@@ -565,26 +511,16 @@ export default class BotLogic {
                         const name = await names.get(userInput.toLowerCase());
                         if (name) {
                             console.log("Found the same name", name);
-                            this.bot.telegram
-                                .sendMessage(
-                                    chatId,
-                                    `This name is already taken. Please choose another Mina NFT avatar name`,
-                                )
-                                .catch((error) => {
-                                    console.error(`Telegraf error`, error);
-                                });
+                            await this.message(
+                                `This name is already taken. Please choose another Mina NFT avatar name`,
+                            );
                             return;
                         }
                         if (reservedNames.includes(userInput.toLowerCase())) {
                             console.log("Name is reserved", name);
-                            this.bot.telegram
-                                .sendMessage(
-                                    chatId,
-                                    `This name is reserved. Please choose another Mina NFT avatar name`,
-                                )
-                                .catch((error) => {
-                                    console.error(`Telegraf error`, error);
-                                });
+                            await this.message(
+                                `This name is reserved. Please choose another Mina NFT avatar name`,
+                            );
                             return;
                         }
                     }
@@ -597,25 +533,19 @@ export default class BotLogic {
                     );
                     currIndexAnswer++;
                     if (currIndexAnswer < formQuestions.length)
-                        this.bot.telegram.sendMessage(
-                            chatId,
+                        await this.message(
                             this.questions.questions[currIndexAnswer].text[
                                 LANGUAGE
                             ],
                         );
                 } else {
-                    this.bot.telegram
-                        .sendMessage(
-                            chatId,
-                            `${
-                                currQuestion.error
-                                    ? currQuestion.error[LANGUAGE]
-                                    : this.questions.commonError[LANGUAGE]
-                            }`,
-                        )
-                        .catch((error) => {
-                            console.error(`Telegraf error`, error);
-                        });
+                    await this.message(
+                        `${
+                            currQuestion.error
+                                ? currQuestion.error[LANGUAGE]
+                                : this.questions.commonError[LANGUAGE]
+                        }`,
+                    );
                 }
             }
 
@@ -638,10 +568,7 @@ export default class BotLogic {
                         }),
                     );
 
-                this.bot.telegram.sendMessage(
-                    chatId,
-                    this.questions.finalWords[LANGUAGE],
-                );
+                await this.message(this.questions.finalWords[LANGUAGE]);
                 await this.dbConnector.increaseCounter(
                     chatIdString,
                     ++currIndexAnswer,
@@ -650,13 +577,6 @@ export default class BotLogic {
                     chatIdString,
                     body.message.message_id.toString(),
                 );
-                //const item = await this.dbConnector.getItem(chatIdString);
-                /*
-        const htmlText = this.parseObjectToHtml(item);
-        if (htmlText) {
-          this.mailSender(process.env.TO!, process.env.FROM!, htmlText);
-        }
-        */
             }
             return;
         }
