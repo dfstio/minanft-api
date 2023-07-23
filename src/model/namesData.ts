@@ -7,4 +7,7 @@ export default interface NamesData {
     deploy?: DeployData;
     ipfs?: string;
     uri?: any;
+    onSale?: boolean;
+    price?: number;
+    currency?: string;
 }

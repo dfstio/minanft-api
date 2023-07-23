@@ -16,43 +16,121 @@ async function algoliaWriteTokens(): Promise<void> {
     const tokens: NamesData[] = await names.scan();
     tokens.sort((a, b) => b.timeCreated - a.timeCreated);
     let success: boolean = true;
+    console.log("alWriteTokens, number of tokens: ", tokens.length);
+    await index.clearObjects();
 
     for (const token of tokens) {
-        if (token.username !== token.uri.name) console.error("name mismatch");
-        console.log("alWriteToken", token.username);
-
-        let params = token.uri;
-        const description = removeMarkdown(token.uri.description);
-        let shortdescription = description;
-        if (shortdescription.length > 70) {
-            shortdescription = description.slice(0, 70) + "...";
-        }
-
-        params.objectID = token.uri.name;
-        params.updated = Date.now();
-        params.description = description;
-        params.shortdescription = shortdescription;
-        params.markdown = token.uri.description;
-        params.uri = "https://ipfs.io/ipfs/" + token.ipfs;
-
-        console.log("Algolia write ", token.username, params);
-
-        try {
-            const result = await index.saveObject(params);
-            console.log(
-                "Algolia write result for token",
-                token.username,
-                "is ",
-                result,
-            );
-        } catch (error) {
-            console.error(" alWriteToken error: ", error);
-            success = false;
-        }
+        const ok = await algoliaWriteTokenHelper(token, index, bot);
+        if (!ok) success = false;
     }
     await bot.support(
-        success ? "Algolia index updated" : "Error. Algolia index NOT updated",
+        success
+            ? `Algolia index updated, ${tokens.length} written`
+            : "Error. Algolia index NOT updated",
     );
 }
 
-export { algoliaWriteTokens };
+async function algoliaWriteToken(token: NamesData): Promise<void> {
+    const client = algoliasearch(ALGOLIA_PROJECT, ALGOLIA_KEY);
+    const index = client.initIndex("minanft");
+    const bot = new BotMessage(process.env.SUPPORT_CHAT!);
+
+    console.log("alWriteToken");
+
+    const success = await algoliaWriteTokenHelper(token, index, bot);
+
+    await bot.support(
+        success
+            ? `Algolia index updated, token ${token.username} written`
+            : "Error. Algolia index NOT updated",
+    );
+}
+
+async function algoliaWriteTokenHelper(
+    token: NamesData,
+    index: any,
+    bot: BotMessage,
+): Promise<boolean> {
+    if (token.username !== token.uri.name) console.error("name mismatch");
+
+    let params = token.uri;
+    const description = removeMarkdown(token.uri.description);
+    let shortdescription = description;
+    if (shortdescription.length > 70) {
+        shortdescription = description.slice(0, 70) + "...";
+    }
+
+    params.objectID = token.uri.name;
+    params.updated = Date.now();
+    params.description = description;
+    params.shortdescription = shortdescription;
+    params.markdown = token.uri.description;
+    params.uri = "https://ipfs.io/ipfs/" + token.ipfs;
+    params.onSale = token.onSale ? true : false;
+    params.saleStatus = token.onSale ? "on sale" : "";
+    params.price = token.price ? token.price : 0;
+    params.currency = token.currency ? token.currency.toUpperCase() : "";
+
+    //console.log("Algolia write ", token.username, params);
+
+    try {
+        const result = await index.saveObject(params);
+        console.log(
+            "Algolia write result for token",
+            token.username,
+            "is ",
+            result,
+        );
+        return true;
+    } catch (error) {
+        console.error(" alWriteToken error: ", error);
+        return false;
+    }
+}
+
+async function getToken(name: string) {
+    const client = algoliasearch(ALGOLIA_PROJECT, ALGOLIA_KEY);
+    const index = client.initIndex("minanft");
+    const filterStr = name ? `` : `name:${name}`;
+    const objects = await index.search("", { filters: filterStr });
+    console.log("Objects", objects, "filter", filterStr);
+
+    if (objects.hits.length > 0) return objects.hits[0];
+    else return undefined;
+}
+
+async function getTokenByIndex(id = 0) {
+    const client = algoliasearch(ALGOLIA_PROJECT, ALGOLIA_KEY);
+    const index = client.initIndex("minanft");
+    const filterStr = ``;
+    const objects = await index.search("", {
+        filters: filterStr,
+        offset: id,
+        length: 1,
+    });
+    console.log("id", id, "Objects", objects, "filter", filterStr);
+    if (objects.hits.length === 1) return objects.hits[0];
+    else return undefined;
+}
+
+async function getSaleTokenByIndex(id = 0) {
+    const client = algoliasearch(ALGOLIA_PROJECT, ALGOLIA_KEY);
+    const index = client.initIndex("minanft");
+    const filterStr = `(onSale:true)`;
+    const objects = await index.search("", {
+        filters: filterStr,
+        offset: id,
+        length: 1,
+    });
+    console.log("id", id, "Objects", objects, "filter", filterStr);
+    if (objects.hits.length === 1) return objects.hits[0];
+    else return undefined;
+}
+
+export {
+    algoliaWriteTokens,
+    algoliaWriteToken,
+    getToken,
+    getTokenByIndex,
+    getSaleTokenByIndex,
+};

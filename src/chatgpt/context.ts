@@ -1,3 +1,3 @@
-const context: string = `Mina NFT - the telegram bot @minanft_bot built for MINA blockchain`;
+const context: string = `MinaNFT - NFT with AI-generated avatar art on MINA blockchain. Telegram: @minanft_bot`;
 
 export { context };

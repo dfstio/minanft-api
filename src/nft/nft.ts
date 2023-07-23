@@ -27,7 +27,7 @@ async function startDeployment(
     };
     await bot.image(
         `https://minanft-storage.s3.eu-west-1.amazonaws.com/${filename}`,
-        "@" + username,
+        { caption: "@" + username },
     );
     await bot.invoice(username, filename);
     await callLambda("deploy", JSON.stringify(nft));

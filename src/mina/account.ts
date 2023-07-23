@@ -10,6 +10,7 @@ import {
     Encoding,
     UInt64,
 } from "snarkyjs";
+import axios from "axios";
 
 import BotMessage from "./message";
 import callLambda from "./lambda";
@@ -24,6 +25,7 @@ import NamesData from "../model/namesData";
 import FormQuestion from "../model/formQuestion";
 import Questions from "../questions";
 import IPFS from "../nft/ipfs";
+import { algoliaWriteToken } from "../nft/algolia";
 
 const MINAURL = process.env.MINAURL
     ? process.env.MINAURL
@@ -75,7 +77,6 @@ async function checkBalance(id: string, data: AccountData): Promise<void> {
         console.error("Wrong topup data");
         return;
     }
-    const bot = new BotMessage(id);
 
     await minaInit();
     const accountPrivateKeyMina = PrivateKey.fromBase58(data.privateKey);
@@ -302,7 +303,17 @@ async function createNFT(id: string, nft: NamesData): Promise<void> {
         );
         return;
     }
-
+    axios
+        .get(
+            `https://res.cloudinary.com/minanft/image/fetch/h_300,q_100,f_auto/${nft.uri.image}`,
+            {
+                responseType: "arraybuffer",
+            },
+        )
+        .then((response: any) => {
+            console.log("cloudinary ping");
+        })
+        .catch((e: any) => console.error("cloudinary ping", e));
     await minaInit();
     const address = PublicKey.fromBase58(nft.deploy.publicKey);
     let check = await Mina.hasAccount(address);
@@ -372,15 +383,19 @@ async function createNFT(id: string, nft: NamesData): Promise<void> {
     let sentTx = await tx.send();
 
     if (sentTx.hash() !== undefined) {
-        const successMsg = `Success! NFT deployment (3/3): NFT is written to MINA blockchain: 
+        await algoliaWriteToken(nft);
+        const successMsg = `Success! NFT deployment (3/3): NFT @${
+            nft.uri.name
+        } is written to MINA blockchain: 
 https://berkeley.minaexplorer.com/transaction/${sentTx.hash()}
 
 If you want to create one more NFT, type command "new"`;
         console.log(successMsg);
-        await bot.message(successMsg);
+
         const table = new Tasks(TASKS_TABLE);
         await table.remove(id);
         await sleep(1000);
+        await bot.message(successMsg);
     } else {
         console.error("Send fail", sentTx);
         await bot.message(`Send fail`);

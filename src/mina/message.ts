@@ -1,10 +1,14 @@
 import { Telegraf, Context } from "telegraf";
 import { mintInvoice, postInvoice, supportInvoice } from "../payments/stripe";
+import HistoryData from "../model/historyData";
+import History from "../connector/history";
+const HISTORY_TABLE = process.env.HISTORY_TABLE!;
 
 export default class BotMessage {
     bot: Telegraf<Context>;
     id: string;
     supportId: string;
+    history: History;
 
     constructor(
         id: string,
@@ -14,16 +18,17 @@ export default class BotMessage {
         this.bot = new Telegraf(token);
         this.id = id;
         this.supportId = supportId;
-    }
-
-    public async message(msg: string): Promise<void> {
+        this.history = new History(HISTORY_TABLE, id);
         this.bot.catch((err, ctx) => {
             console.error(`Telegraf error for ${ctx.updateType}`, err);
         });
+    }
 
+    public async message(msg: string): Promise<void> {
         this.bot.telegram.sendMessage(this.id, msg).catch((error) => {
             console.error(`Telegraf error`, error);
         });
+        await this.history.add(msg);
 
         const supportMsg: string = `Message for ${this.id}: ${msg}`;
         this.bot.telegram
@@ -35,33 +40,19 @@ export default class BotMessage {
     }
 
     public async support(msg: string): Promise<void> {
-        this.bot.catch((err, ctx) => {
-            console.error(`Telegraf error for ${ctx.updateType}`, err);
-        });
-
         this.bot.telegram.sendMessage(this.supportId, msg).catch((error) => {
             console.error(`Telegraf error`, error);
         });
         console.log("Support msg", msg);
     }
 
-    public async image(image: string, caption: string): Promise<void> {
-        this.bot.catch((err, ctx) => {
-            console.error(`Telegraf error for ${ctx.updateType}`, err);
+    public async image(image: string, params: any): Promise<void> {
+        this.bot.telegram.sendPhoto(this.id, image, params).catch((error) => {
+            console.error(`Telegraf error`, error);
         });
-
-        this.bot.telegram
-            .sendPhoto(this.id, image, { caption })
-            .catch((error) => {
-                console.error(`Telegraf error`, error);
-            });
     }
 
     public async invoice(username: string, image: string): Promise<void> {
-        this.bot.catch((err, ctx) => {
-            console.error(`Telegraf error for ${ctx.updateType}`, err);
-        });
-
         this.bot.telegram
             .sendInvoice(this.id, mintInvoice(this.id, username, image))
             .catch((error) => {
@@ -70,10 +61,6 @@ export default class BotMessage {
     }
 
     public async supportTicket(): Promise<void> {
-        this.bot.catch((err, ctx) => {
-            console.error(`Telegraf error for ${ctx.updateType}`, err);
-        });
-
         this.bot.telegram
             .sendInvoice(this.id, supportInvoice(this.id))
             .catch((error) => {

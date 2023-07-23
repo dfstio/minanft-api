@@ -23,6 +23,25 @@ function mintInvoice(id: string, username: string, image: string) {
     return invoice;
 }
 
+function buyInvoice(token: any) {
+    const invoice = {
+        provider_token: process.env.STRIPE_KEY!,
+        //start_parameter: 'time-machine-sku',
+        title: "Mina NFT @" + token.name,
+        description: "Purchase of the MINA Avatar NFT name on MINA blockchain",
+        currency: token.currency.toLowerCase(),
+        photo_url: `https://res.cloudinary.com/minanft/image/fetch/h_300,q_100,f_auto/${token.image}`,
+        //is_flexible: true,
+        prices: [
+            { label: "Mina NFT @" + token.name, amount: token.price * 100 },
+        ],
+        payload: JSON.stringify({ name: token.name }),
+    };
+
+    console.log("Invoice", invoice);
+    return invoice;
+}
+
 function postInvoice(
     id: string,
     postId: string,
@@ -63,4 +82,4 @@ function supportInvoice(id: string) {
     return invoice;
 }
 
-export { mintInvoice, postInvoice, supportInvoice };
+export { mintInvoice, postInvoice, supportInvoice, buyInvoice };
