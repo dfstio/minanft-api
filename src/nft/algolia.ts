@@ -17,6 +17,7 @@ async function algoliaWriteTokens(): Promise<void> {
     tokens.sort((a, b) => b.timeCreated - a.timeCreated);
     let success: boolean = true;
     console.log("alWriteTokens, number of tokens: ", tokens.length);
+    await index.clearObjects();
 
     for (const token of tokens) {
         const ok = await algoliaWriteTokenHelper(token, index, bot);
@@ -107,7 +108,7 @@ async function getTokenByIndex(id = 0) {
         offset: id,
         length: 1,
     });
-    console.log("Objects", objects, "filter", filterStr);
+    console.log("id", id, "Objects", objects, "filter", filterStr);
     if (objects.hits.length === 1) return objects.hits[0];
     else return undefined;
 }
@@ -115,13 +116,13 @@ async function getTokenByIndex(id = 0) {
 async function getSaleTokenByIndex(id = 0) {
     const client = algoliasearch(ALGOLIA_PROJECT, ALGOLIA_KEY);
     const index = client.initIndex("minanft");
-    const filterStr = `onSale:true`;
+    const filterStr = `(onSale:true)`;
     const objects = await index.search("", {
         filters: filterStr,
         offset: id,
         length: 1,
     });
-    console.log("Objects", objects, "filter", filterStr);
+    console.log("id", id, "Objects", objects, "filter", filterStr);
     if (objects.hits.length === 1) return objects.hits[0];
     else return undefined;
 }

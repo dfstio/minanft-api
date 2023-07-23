@@ -29,8 +29,8 @@ function buyInvoice(token: any) {
         //start_parameter: 'time-machine-sku',
         title: "Mina NFT @" + token.name,
         description: "Purchase of the MINA Avatar NFT name on MINA blockchain",
-        currency: token.currency.toLoweCase(),
-        photo_url: `https://res.cloudinary.com/minanft/image/fetch/h_300,q_100,f_auto/https://minanft-storage.s3.eu-west-1.amazonaws.com/${token.image}`,
+        currency: token.currency.toLowerCase(),
+        photo_url: `https://res.cloudinary.com/minanft/image/fetch/h_300,q_100,f_auto/${token.image}`,
         //is_flexible: true,
         prices: [
             { label: "Mina NFT @" + token.name, amount: token.price * 100 },
