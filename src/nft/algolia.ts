@@ -65,6 +65,10 @@ async function algoliaWriteTokenHelper(
     params.shortdescription = shortdescription;
     params.markdown = token.uri.description;
     params.uri = "https://ipfs.io/ipfs/" + token.ipfs;
+    params.onSale = token.onSale ? true : false;
+    params.saleStatus = token.onSale ? "on sale" : "";
+    params.price = token.price ? token.price : 0;
+    params.currency = token.currency ? token.currency.toUpperCase() : "";
 
     //console.log("Algolia write ", token.username, params);
 
@@ -83,13 +87,15 @@ async function algoliaWriteTokenHelper(
     }
 }
 
-async function getTokens(name: string | undefined = undefined) {
+async function getToken(name: string) {
     const client = algoliasearch(ALGOLIA_PROJECT, ALGOLIA_KEY);
     const index = client.initIndex("minanft");
     const filterStr = name ? `` : `name:${name}`;
     const objects = await index.search("", { filters: filterStr });
     console.log("Objects", objects, "filter", filterStr);
-    return objects;
+
+    if (objects.hits.length > 0) return objects.hits[0];
+    else return undefined;
 }
 
 async function getTokenByIndex(id = 0) {
@@ -106,4 +112,24 @@ async function getTokenByIndex(id = 0) {
     else return undefined;
 }
 
-export { algoliaWriteTokens, algoliaWriteToken, getTokens, getTokenByIndex };
+async function getSaleTokenByIndex(id = 0) {
+    const client = algoliasearch(ALGOLIA_PROJECT, ALGOLIA_KEY);
+    const index = client.initIndex("minanft");
+    const filterStr = `onSale:true`;
+    const objects = await index.search("", {
+        filters: filterStr,
+        offset: id,
+        length: 1,
+    });
+    console.log("Objects", objects, "filter", filterStr);
+    if (objects.hits.length === 1) return objects.hits[0];
+    else return undefined;
+}
+
+export {
+    algoliaWriteTokens,
+    algoliaWriteToken,
+    getToken,
+    getTokenByIndex,
+    getSaleTokenByIndex,
+};

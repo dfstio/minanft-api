@@ -18,13 +18,15 @@ import FormAnswer from "./model/formAnswer";
 import callLambda from "./mina/lambda";
 import AWS from "aws-sdk";
 import nodemailer from "nodemailer";
-import ChatGPTMessage from "./chatgpt/chatgpt";
-import { context } from "./chatgpt/context";
+//import ChatGPTMessage from "./chatgpt/chatgpt";
+//import { context } from "./chatgpt/context";
+//import { functions } from "./chatgpt/functions";
 import { reservedNames } from "./nft/reservednames";
 import { algoliaWriteTokens } from "./nft/algolia";
 import {
     supportTicket,
     botCommandList,
+    botCommandBuy,
     botCommandCallback,
 } from "./payments/botcommands";
 
@@ -58,7 +60,7 @@ export default class BotLogic {
     id: string | undefined;
     supportId: string;
     history: History | undefined;
-    chat: ChatGPTMessage;
+    //chat: ChatGPTMessage;
     dbConnector: DynamoDbConnector;
     validator: Validator;
     questions: Questions;
@@ -86,7 +88,7 @@ export default class BotLogic {
         this.bot.catch((err, ctx: any) => {
             console.error(`Telegraf error for ${ctx.updateType}`, err);
         });
-        this.chat = new ChatGPTMessage(CHATGPT_TOKEN, context);
+        //this.chat = new ChatGPTMessage(CHATGPT_TOKEN, context, functions);
         this.questions = new Questions();
         this.dbConnector = new DynamoDbConnector(process.env.DYNAMODB_TABLE!);
         this.validator = new Validator();
@@ -250,8 +252,18 @@ export default class BotLogic {
             body.message.text &&
             (body.message.text == "sell" || body.message.text == `/sell`)
         ) {
-            await this.message(
-                "Let's sell your MINA NFT. Will implement selling functionality soon",
+            console.log("Sell function calling");
+            await callLambda(
+                "ask",
+                JSON.stringify({
+                    id: chatIdString,
+                    message: `I want to sell my Mina NFT`,
+                    parentMessage: parentMessage,
+                    image: "",
+                    //function_call: "sell",
+                    //role: "assistant",
+                    auth: CHATGPTPLUGINAUTH,
+                }),
             );
             return;
         }
@@ -261,8 +273,10 @@ export default class BotLogic {
             (body.message.text == "buy" || body.message.text == `/buy`)
         ) {
             await this.message(
-                "Let's buy amazing MINA NFT. Will implement this functionality soon",
+                "Let's buy an amazing MINA NFT. Look what NFTs are available for sale",
             );
+
+            await botCommandBuy(chatIdString);
             return;
         }
 
@@ -455,6 +469,10 @@ export default class BotLogic {
                         message: askChatGPT,
                         parentMessage: parentMessage,
                         image: "",
+                        username:
+                            currState && currState.username
+                                ? currState.username
+                                : "",
                         auth: CHATGPTPLUGINAUTH,
                     }),
                 );

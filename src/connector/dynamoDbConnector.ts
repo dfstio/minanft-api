@@ -63,6 +63,7 @@ export default class DynamoDbConnector {
     public async getItem(id: string): Promise<FormAnswer> {
         const params = {
             TableName: this.tableName,
+            ConsistentRead: true,
             Key: {
                 id: id,
             },
@@ -84,6 +85,7 @@ export default class DynamoDbConnector {
     public async getFullItem(id: string) {
         const params = {
             TableName: this.tableName,
+            ConsistentRead: true,
             Key: {
                 id: id,
             },
@@ -105,6 +107,7 @@ export default class DynamoDbConnector {
     public async getCurrentState(id: string): Promise<FormAnswer> {
         const params = {
             TableName: this.tableName,
+            ConsistentRead: true,
             Key: {
                 id: id,
             },
@@ -144,6 +147,7 @@ export default class DynamoDbConnector {
     public async getAccount(id: string): Promise<AccountData | undefined> {
         const params = {
             TableName: this.tableName,
+            ConsistentRead: true,
             Key: {
                 id: id,
             },
@@ -173,6 +177,7 @@ export default class DynamoDbConnector {
     public async getDeployment(id: string): Promise<DeployData | undefined> {
         const params = {
             TableName: this.tableName,
+            ConsistentRead: true,
             Key: {
                 id: id,
             },
@@ -202,6 +207,7 @@ export default class DynamoDbConnector {
     public async getCurrentLanguage(id: string): Promise<string> {
         const params = {
             TableName: this.tableName,
+            ConsistentRead: true,
             Key: {
                 id: id,
             },

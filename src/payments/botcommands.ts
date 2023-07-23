@@ -1,6 +1,7 @@
 import { Telegraf, Markup } from "telegraf";
 import BotMessage from "../mina/message";
-import { getTokens, getTokenByIndex } from "../nft/algolia";
+import { getToken, getTokenByIndex, getSaleTokenByIndex } from "../nft/algolia";
+import { buyInvoice } from "../payments/stripe";
 
 /*
 new - Create new NFT
@@ -16,21 +17,95 @@ async function supportTicket(id: string): Promise<void> {
     await bot.supportTicket();
 }
 
-async function botCommandList(chatId: string): Promise<void> {
+async function botCommandList(
+    chatId: string,
+    name: string | undefined = undefined,
+): Promise<void> {
     const bot = new BotMessage(chatId);
     // await bot.supportTicket();
 
     const id: number = 0;
-    let token: any = await getTokenByIndex(id);
+    let token: any = undefined;
+    if (name)
+        token = await getToken(
+            name.substr(0, 1) == "@" ? name.substr(1, 31) : name.substr(0, 30),
+        );
+    if (!token) token = await getTokenByIndex(id);
     if (token && token.image && token.name) {
         const prev = id === 0 ? 0 : id - 1;
         const next = id + 1;
         await bot.image(
             `https://res.cloudinary.com/minanft/image/fetch/h_300,q_100,f_auto/${token.image}`,
             {
-                caption: `MinaNFT @${token.name}`,
+                caption: token.onSale
+                    ? `MinaNFT @${
+                          token.name
+                      }\nPrice: ${token.currency.toUpperCase()} ${token.price}`
+                    : `MinaNFT @${token.name}`,
+                parse_mode: "Markdown",
+                ...Markup.inlineKeyboard(
+                    token.onSale
+                        ? [
+                              Markup.button.callback(
+                                  "Buy",
+                                  JSON.stringify({ a: "by", id: id }),
+                              ),
+                              Markup.button.callback(
+                                  "<️",
+                                  JSON.stringify({ a: "list", id: prev }),
+                                  id === 0 ? true : false,
+                              ),
+                              Markup.button.callback(
+                                  ">️",
+                                  JSON.stringify({ a: "list", id: next }),
+                              ),
+                          ]
+                        : [
+                              Markup.button.callback(
+                                  "<️",
+                                  JSON.stringify({ a: "list", id: prev }),
+                                  id === 0 ? true : false,
+                              ),
+                              Markup.button.callback(
+                                  ">️",
+                                  JSON.stringify({ a: "list", id: next }),
+                              ),
+                          ],
+                ),
+            },
+        );
+    } else await bot.message("Error loading NFT");
+}
+
+async function botCommandBuy(
+    chatId: string,
+    name: string | undefined = undefined,
+): Promise<void> {
+    const bot = new BotMessage(chatId);
+    // await bot.supportTicket();
+
+    const id: number = 0;
+    let token: any = undefined;
+    if (name)
+        token = await getToken(
+            name.substr(0, 1) == "@" ? name.substr(1, 31) : name.substr(0, 30),
+        );
+    if (!token) token = await getSaleTokenByIndex(id);
+    if (token && token.image && token.name) {
+        const prev = id === 0 ? 0 : id - 1;
+        const next = id + 1;
+        await bot.image(
+            `https://res.cloudinary.com/minanft/image/fetch/h_300,q_100,f_auto/${token.image}`,
+            {
+                caption: `MinaNFT @${
+                    token.name
+                }\nPrice: ${token.currency.toUpperCase()} ${token.price}`,
                 parse_mode: "Markdown",
                 ...Markup.inlineKeyboard([
+                    Markup.button.callback(
+                        "Buy",
+                        JSON.stringify({ a: "buy", id: id }),
+                    ),
                     Markup.button.callback(
                         "<️",
                         JSON.stringify({ a: "load", id: prev }),
@@ -62,7 +137,10 @@ async function botCommandCallback(ctx: any): Promise<void> {
         let id = parseInt(data.id);
         const action = data.a;
         let tokenId = 0;
-        let token: any = await getTokenByIndex(id);
+        const isList: boolean = action == "by" || action == "list";
+        let token: any = isList
+            ? await getTokenByIndex(id)
+            : await getSaleTokenByIndex(id);
         console.log("show token", id, token);
         if (!token) {
             id = 0;
@@ -78,32 +156,71 @@ async function botCommandCallback(ctx: any): Promise<void> {
                 const prev = id === 0 ? 0 : id - 1;
                 const next = id + 1;
 
-                const replyOptions = Markup.inlineKeyboard([
-                    Markup.button.callback(
-                        "<️",
-                        JSON.stringify({ a: "load", id: prev }),
-                        id === 0 ? true : false,
-                    ),
-                    Markup.button.callback(
-                        ">️",
-                        JSON.stringify({ a: "load", id: next }),
-                    ),
-                ]);
+                const replyOptions = Markup.inlineKeyboard(
+                    token.onSale
+                        ? [
+                              Markup.button.callback(
+                                  "Buy",
+                                  JSON.stringify({
+                                      a: isList ? "by" : "buy",
+                                      id: id,
+                                  }),
+                              ),
+                              Markup.button.callback(
+                                  "<️",
+                                  JSON.stringify({
+                                      a: isList ? "list" : "load",
+                                      id: prev,
+                                  }),
+                                  id === 0 ? true : false,
+                              ),
+                              Markup.button.callback(
+                                  ">️",
+                                  JSON.stringify({
+                                      a: isList ? "list" : "load",
+                                      id: next,
+                                  }),
+                              ),
+                          ]
+                        : [
+                              Markup.button.callback(
+                                  "<️",
+                                  JSON.stringify({
+                                      a: isList ? "list" : "load",
+                                      id: prev,
+                                  }),
+                                  id === 0 ? true : false,
+                              ),
+                              Markup.button.callback(
+                                  ">️",
+                                  JSON.stringify({
+                                      a: isList ? "list" : "load",
+                                      id: next,
+                                  }),
+                              ),
+                          ],
+                );
 
                 await ctx.editMessageMedia(
                     {
                         type: "photo",
                         media: `https://res.cloudinary.com/minanft/image/fetch/h_300,q_100,f_auto/${token.image}`,
-                        caption: `MinaNFT @${token.name}`,
+                        caption: token.onSale
+                            ? `MinaNFT @${
+                                  token.name
+                              }\nPrice: ${token.currency.toUpperCase()} ${
+                                  token.price
+                              }`
+                            : `MinaNFT @${token.name}`,
                         parse_mode: "Markdown",
                     },
                     replyOptions,
                 );
             } else if (action === "buy") {
-                //const stripeMsg = await ctx.replyWithInvoice(stripeInvoice(token));
+                const stripeMsg = await ctx.replyWithInvoice(buyInvoice(token));
             }
         }
     }
 }
 
-export { supportTicket, botCommandList, botCommandCallback };
+export { supportTicket, botCommandList, botCommandBuy, botCommandCallback };

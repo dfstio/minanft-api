@@ -76,7 +76,6 @@ async function checkBalance(id: string, data: AccountData): Promise<void> {
         console.error("Wrong topup data");
         return;
     }
-    const bot = new BotMessage(id);
 
     await minaInit();
     const accountPrivateKeyMina = PrivateKey.fromBase58(data.privateKey);

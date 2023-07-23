@@ -34,7 +34,16 @@ export default class Names {
     public async scan(): Promise<NamesData[]> {
         const params = {
             TableName: this.tableName,
-            AttributesToGet: ["username", "id", "timeCreated", "uri", "ipfs"],
+            AttributesToGet: [
+                "username",
+                "id",
+                "timeCreated",
+                "uri",
+                "ipfs",
+                "onSale",
+                "price",
+                "currency",
+            ],
         };
 
         return this._client
@@ -49,6 +58,7 @@ export default class Names {
     public async get(username: string): Promise<NamesData | undefined> {
         const params = {
             TableName: this.tableName,
+            ConsistentRead: true,
             Key: {
                 username: username,
             },
@@ -111,6 +121,33 @@ export default class Names {
             },
             UpdateExpression: `set ipfs = :ipfs, uri = :uri`,
             ExpressionAttributeValues: { ":ipfs": ipfs, ":uri": uri },
+            ReturnValues: "UPDATED_NEW",
+        };
+        console.log("update", params);
+        this._client.update(params, (error, data) => {
+            if (error) {
+                console.error(error);
+                return;
+            }
+        });
+    }
+
+    public async sell(
+        username: string,
+        price: number,
+        currency: string,
+    ): Promise<void> {
+        const params = {
+            TableName: this.tableName,
+            Key: {
+                username: username,
+            },
+            UpdateExpression: `set price = :p, currency = :c, onSale = :s`,
+            ExpressionAttributeValues: {
+                ":p": price,
+                ":c": currency.toLowerCase(),
+                ":s": true,
+            },
             ReturnValues: "UPDATED_NEW",
         };
         console.log("update", params);

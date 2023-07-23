@@ -5,10 +5,15 @@ import {
     ChatCompletionRequestMessageRoleEnum,
     ChatCompletionRequestMessage,
     CreateImageRequest,
+    ChatCompletionFunctions,
 } from "openai";
 import ImageGPT from "../model/imageGPT";
 import AIUsage from "../model/aiusage";
 import DynamoDbConnector from "../connector/dynamoDbConnector";
+import HistoryData from "../model/historyData";
+import History from "../connector/history";
+import { handleFunctionCall } from "./functions";
+const HISTORY_TABLE = process.env.HISTORY_TABLE!;
 
 interface InputParams extends CreateImageRequest {
     prompt: string; // make this mandatory for the function params
@@ -18,26 +23,39 @@ interface InputParams extends CreateImageRequest {
 export default class ChatGPTMessage {
     api: OpenAIApi;
     context: string;
+    functions: ChatCompletionFunctions[];
 
-    constructor(token: string, context: string = "") {
+    constructor(
+        token: string,
+        context: string = "",
+        functions: ChatCompletionFunctions[] = [],
+    ) {
         const configuration = new Configuration({
             //organization: "YOUR_ORG_ID",
             apiKey: token,
         });
         this.api = new OpenAIApi(configuration);
         this.context = context;
+        this.functions = functions;
     }
 
-    public async message(
-        msg: string,
-        parentMessage: string,
-        id: string,
-        image: string,
-    ): Promise<ImageGPT> {
+    public async message(params: any): Promise<ImageGPT> {
+        const {
+            message,
+            parentMessage,
+            id,
+            image,
+            function_call,
+            role,
+            username,
+        } = params;
+
         const dbConnector = new DynamoDbConnector(process.env.DYNAMODB_TABLE!);
+        const history: History = new History(HISTORY_TABLE, id);
         const pMessage: string = parentMessage ? parentMessage : "";
         let isImage: boolean = false;
-        let prompt = msg;
+
+        let prompt = message;
         const errorMsg = "ChatGPT error. Please try again in few minutes";
         let answer: ImageGPT = <ImageGPT>{
             image: "",
@@ -45,20 +63,19 @@ export default class ChatGPTMessage {
             text: errorMsg,
         };
         if (image !== "") isImage = true;
-        if (msg.length > 6 && msg.substr(0, 5).toLowerCase() === "image") {
-            isImage = true;
-            prompt = msg.substr(6);
-        }
-        if (msg.length > 9 && msg.substr(0, 8).toLowerCase() === "immagine") {
-            isImage = true;
-            prompt = msg.substr(9);
-        }
         if (
-            msg.length > 12 &&
-            msg.substr(0, 11).toLowerCase() === "изображение"
+            message.length > 6 &&
+            message.substr(0, 5).toLowerCase() === "image"
         ) {
             isImage = true;
-            prompt = msg.substr(12);
+            prompt = message.substr(6);
+        }
+        if (
+            message.length > 9 &&
+            message.substr(0, 8).toLowerCase() === "immagine"
+        ) {
+            isImage = true;
+            prompt = message.substr(9);
         }
 
         if (isImage) {
@@ -107,25 +124,6 @@ export default class ChatGPTMessage {
                 }
                 return answer;
             }
-            /*  
-
-  const response = await openai.createImageVariation(
-    fs.createReadStream("image.png"),
-    1,
-    "1024x1024"
-  );
-  
-  const buffer: Buffer = [your image data];
-// Cast the buffer to `any` so that we can set the `name` property
-const file: any = buffer;
-// Set a `name` that ends with .png so that the API knows it's a PNG image
-file.name = "image.png";
-const response = await openai.createImageVariation(
-  file,
-  1,
-  "1024x1024"
-);
-  */
 
             return <ImageGPT>{
                 image: image_url,
@@ -133,50 +131,79 @@ const response = await openai.createImageVariation(
                 text: prompt,
             };
         }
-        const chatGptMessages =
-            pMessage == ""
+
+        const chatcontext: ChatCompletionRequestMessage[] = [
+            {
+                role: ChatCompletionRequestMessageRoleEnum.Assistant,
+                content: this.context,
+            },
+        ];
+
+        const request: ChatCompletionRequestMessage[] =
+            role == "assistant"
                 ? [
                       {
                           role: ChatCompletionRequestMessageRoleEnum.Assistant,
-                          content: this.context,
-                      },
-                      {
-                          role: ChatCompletionRequestMessageRoleEnum.User,
-                          content: msg,
+                          content: message,
                       },
                   ]
-                : [
-                      {
-                          role: ChatCompletionRequestMessageRoleEnum.Assistant,
-                          content: this.context,
-                      },
-                      {
-                          role: ChatCompletionRequestMessageRoleEnum.User,
-                          content: pMessage,
-                      },
-                      {
-                          role: ChatCompletionRequestMessageRoleEnum.User,
-                          content: msg,
-                      },
-                  ];
+                : [];
 
         try {
+            const messages: ChatCompletionRequestMessage[] =
+                await history.build(chatcontext, request);
+            console.log("Request chatGptMessages", messages);
+
             const completion = await this.api.createChatCompletion({
                 model: "gpt-4", // "gpt-3.5-turbo"
-                messages: chatGptMessages,
+                messages,
+                functions: this.functions,
+                function_call: function_call
+                    ? { name: function_call }
+                    : undefined,
                 user: id,
             });
-            console.log("ChatGPT", completion.data.choices[0].message?.content);
-            if (
-                completion.data.choices[0].message &&
-                completion.data.choices[0].message.content &&
-                completion.data.usage
-            )
-                answer.text = completion.data.choices[0].message.content;
-            await dbConnector.updateUsage(id, <AIUsage>completion.data.usage);
+            console.log("ChatGPT full log", completion.data);
+
+            if (completion.data.usage)
+                await dbConnector.updateUsage(
+                    id,
+                    <AIUsage>completion.data.usage,
+                );
+            const message: ChatCompletionRequestMessage | undefined = <
+                ChatCompletionRequestMessage
+            >completion.data.choices[0].message;
+            if (message) {
+                console.log("ChatGPT", message);
+                await history.addAnswer(
+                    <ChatCompletionRequestMessage>(
+                        completion.data.choices[0].message
+                    ),
+                );
+                if (message.function_call) {
+                    await handleFunctionCall(
+                        id,
+                        message.function_call,
+                        username,
+                    );
+                    answer.answerType = "function";
+                    answer.text = "";
+                }
+                if (message.content) answer.text = message.content;
+            }
+
             return answer;
-        } catch (err) {
-            console.error(err);
+        } catch (error: any) {
+            if (error.response.data.error.message) {
+                console.error(
+                    "ChatGPT error",
+                    error.response.data.error.message,
+                );
+                answer.text =
+                    answer.text +
+                    " : " +
+                    error.response.data.error.message.toString();
+            } else console.error("ChatGPT error", error);
             return answer;
         }
     }

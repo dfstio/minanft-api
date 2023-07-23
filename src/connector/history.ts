@@ -25,12 +25,20 @@ export default class History {
     }
 
     public async add(msg: string, isUser: boolean = false): Promise<void> {
-        const message = {
+        const message: ChatCompletionRequestMessage = <
+            ChatCompletionRequestMessage
+        >{
             role: isUser
                 ? ChatCompletionRequestMessageRoleEnum.User
                 : ChatCompletionRequestMessageRoleEnum.Assistant,
             content: msg,
         };
+        await this.addAnswer(message);
+    }
+
+    public async addAnswer(
+        message: ChatCompletionRequestMessage,
+    ): Promise<void> {
         const params = {
             TableName: this.tableName,
             Item: { id: this.id, time: Date.now(), message },
@@ -44,11 +52,12 @@ export default class History {
         });
     }
 
-    public async query(id: string): Promise<HistoryData[]> {
+    public async query(): Promise<HistoryData[]> {
         const params = {
             TableName: this.tableName,
+            ConsistentRead: true,
             KeyConditionExpression: "id = :id",
-            ExpressionAttributeValues: { ":id": id },
+            ExpressionAttributeValues: { ":id": this.id },
         };
 
         return this._client
@@ -60,11 +69,11 @@ export default class History {
             });
     }
 
-    public async remove(id: string, time: number): Promise<void> {
+    public async remove(time: number): Promise<void> {
         const params = {
             TableName: this.tableName,
             Key: {
-                id: id,
+                id: this.id,
                 time: time,
             },
         };
@@ -77,31 +86,43 @@ export default class History {
         });
     }
 
-    public async get(id: string): Promise<ChatCompletionRequestMessage[]> {
-        let history: HistoryData[] = await this.query(id);
+    public async build(
+        context: ChatCompletionRequestMessage[],
+        request: ChatCompletionRequestMessage[],
+    ): Promise<ChatCompletionRequestMessage[]> {
+        let history: HistoryData[] = await this.query();
         let messages: ChatCompletionRequestMessage[] = [];
+        let size: number = 0;
+        for (const msg of context) {
+            const msgSize: number = (msg.content || "").length;
+            size += msgSize;
+            messages.push(msg);
+        }
+        for (const msg of request) {
+            const msgSize: number = (msg.content || "").length;
+            size += msgSize;
+        }
+
         const count = history.length;
         history.sort((a, b) => b.time - a.time);
-        console.log(history);
-        let i: number = count - 1;
-        let size: number = 0;
+        console.log("history: ", history);
+
         const timeLimit: number = Date.now() - HISTORY_HOURS * 60 * 60 * 1000;
-        let msgSize: number = (history[i].message.content || "").length;
-        while (
-            i > 0 &&
-            history[i].time > timeLimit &&
-            size + msgSize < HISTORY_CHARS
-        ) {
-            size += msgSize;
-            i--;
-            msgSize = (history[i].message.content || "").length;
+        let subset: HistoryData[] = [];
+        for (const item of history) {
+            const msgSize: number = (item.message.content || "").length;
+            if (item.time > timeLimit && size + msgSize < HISTORY_CHARS) {
+                size += msgSize;
+                subset.push(item);
+            } else await this.remove(item.time);
         }
-        let k: number;
-        for (k = 0; k < i; k++) {
-            await this.remove(id, history[k].time);
+
+        subset.sort((a, b) => a.time - b.time);
+        for (const item of subset) {
+            messages.push(item.message);
         }
-        for (k = i; k < count; k++) {
-            messages.push(history[k].message);
+        for (const msg of request) {
+            messages.push(msg);
         }
         return messages;
     }
