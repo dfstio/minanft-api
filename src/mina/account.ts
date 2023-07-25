@@ -170,7 +170,19 @@ async function deployContract(id: string, nft: NamesData): Promise<void> {
         console.log("name", name);
 
         const bot = new BotMessage(id);
-
+        if (nft.ipfs === "") {
+            axios
+                .get(
+                    `https://res.cloudinary.com/minanft/image/fetch/h_300,q_100,f_auto/https://minanft-storage.s3.eu-west-1.amazonaws.com/${nft.uri.image}`,
+                    {
+                        responseType: "arraybuffer",
+                    },
+                )
+                .then((response: any) => {
+                    console.log("cloudinary ping - aws");
+                })
+                .catch((e: any) => console.error("cloudinary ping - aws", e));
+        }
         await minaInit();
         await checkGasTank();
 
@@ -192,10 +204,14 @@ async function deployContract(id: string, nft: NamesData): Promise<void> {
             secret: Field.toJSON(secret),
         };
         console.log("NFT deployment (1/3): created NFT account", result);
-        const ipfs = new IPFS(PINATA_JWT);
-        let cidImage: string | undefined = await ipfs.addLink(nft.uri.image);
+        let cidImage: string | undefined;
+        if (!nft.ipfs || nft.ipfs === "") {
+            const ipfs = new IPFS(PINATA_JWT);
+            cidImage = await ipfs.addLink(nft.uri.image);
+            if (cidImage) cidImage = `https://ipfs.io/ipfs/` + cidImage;
+        } else cidImage = nft.uri.image;
         console.log("cidImage", cidImage);
-        if (!cidImage) {
+        if (!cidImage || cidImage === "") {
             console.error("deployContract - addLink error");
             await bot.message(
                 `NFT deployment: IPFS error. Cannot upload image. Please try again later by typing command "new"`,
@@ -205,11 +221,15 @@ async function deployContract(id: string, nft: NamesData): Promise<void> {
 
         let deployedNFT: NamesData = nft;
         deployedNFT.deploy = result;
-        deployedNFT.uri.image = `https://ipfs.io/ipfs/` + cidImage;
+        deployedNFT.uri.image = cidImage;
         deployedNFT.uri.minaPublicKey = zkAppAddressString;
         deployedNFT.uri.minaExplorer = `${MINAEXPLORER}${zkAppAddressString}`;
 
-        let cidURI: string | undefined = await ipfs.add(deployedNFT.uri);
+        let cidURI: string | undefined;
+        if (!nft.ipfs || nft.ipfs === "") {
+            const ipfs = new IPFS(PINATA_JWT);
+            cidURI = await ipfs.add(deployedNFT.uri);
+        } else cidURI = nft.ipfs;
         console.log("cidURI", cidURI);
         if (!cidURI) {
             console.error("deployContract - add error");
@@ -365,7 +385,7 @@ async function createNFT(id: string, nft: NamesData): Promise<void> {
             zkApp.createNFT(
                 Field.fromJSON(process.env.NFT_SECRET!), // secret:
                 newsecret, //newsecret:
-                Encoding.stringToFields("@" + nft.username)[0], //username:
+                Encoding.stringToFields(nft.username)[0], //username:
                 ipfsFields[0], //uri1:
                 ipfsFields[1], //uri2:
             );
@@ -384,11 +404,12 @@ async function createNFT(id: string, nft: NamesData): Promise<void> {
 
     if (sentTx.hash() !== undefined) {
         await algoliaWriteToken(nft);
-        const successMsg = `Success! NFT deployment (3/3): NFT @${
+        const successMsg = `Success! NFT deployment (3/3): NFT ${
             nft.uri.name
         } is written to MINA blockchain: 
 https://berkeley.minaexplorer.com/transaction/${sentTx.hash()}
 
+You can see it at https://minanft.io/${nft.username}
 If you want to create one more NFT, type command "new"`;
         console.log(successMsg);
 
