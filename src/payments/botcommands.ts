@@ -29,9 +29,7 @@ async function botCommandList(
         let token: any = undefined;
         if (name)
             token = await getToken(
-                name.substr(0, 1) == "@"
-                    ? name.substr(1, 31)
-                    : name.substr(0, 30),
+                name.substr(0, 1) == "@" ? name : "@" + name,
             );
         if (!token) token = await getTokenByIndex(id);
         if (token && token.image && token.name) {

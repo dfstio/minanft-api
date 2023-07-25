@@ -248,12 +248,12 @@ resources:
         AttributeDefinitions:
           - AttributeName: username
             AttributeType: S
-          - AttributeName: nonce
-            AttributeType: N
+          - AttributeName: postname
+            AttributeType: S
         KeySchema:
           - AttributeName: username
             KeyType: HASH
-          - AttributeName: nonce
+          - AttributeName: postname
             KeyType: RANGE
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:provider.environment.POSTS_TABLE}

@@ -25,7 +25,7 @@ async function algoliaWriteTokens(): Promise<void> {
     }
     await bot.support(
         success
-            ? `Algolia index updated, ${tokens.length} written`
+            ? `Algolia index updated, ${tokens.length} tokens written`
             : "Error. Algolia index NOT updated",
     );
 }
@@ -60,16 +60,31 @@ async function algoliaWriteTokenHelper(
         shortdescription = description.slice(0, 70) + "...";
     }
 
-    params.objectID = token.uri.name;
-    params.updated = Date.now();
+    const name = token.uri.name;
+
+    params.objectID = name;
+
+    params.name = name;
     params.description = description;
+    params.url = token.url ? token.url : "";
+    params.category = "Mina NFT token";
+    params.contract = "v1";
+    params.chainId = "berkeley";
+    params.tokenId = name;
+    params.owner = name;
+    params.updated = Date.now();
+
     params.shortdescription = shortdescription;
     params.markdown = token.uri.description;
     params.uri = "https://ipfs.io/ipfs/" + token.ipfs;
     params.onSale = token.onSale ? true : false;
-    params.saleStatus = token.onSale ? "on sale" : "";
+    params.saleID = "";
+    params.saleStatus = token.onSale ? "on sale" : "not on sale";
     params.price = token.price ? token.price : 0;
     params.currency = token.currency ? token.currency.toUpperCase() : "";
+    params.sale = "";
+    params.creator =
+        token.creator && token.creator !== "" ? token.creator : "@MinaNFT_bot";
 
     //console.log("Algolia write ", token.username, params);
 

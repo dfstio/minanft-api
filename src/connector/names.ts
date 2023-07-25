@@ -43,6 +43,7 @@ export default class Names {
                 "onSale",
                 "price",
                 "currency",
+                "creator",
             ],
         };
 

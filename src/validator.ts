@@ -51,7 +51,7 @@ export default class Validator {
     private validateName(value: string): boolean {
         if (value.length > 30) return false;
         const regExp = /^[a-zA-Z]\w+$/g;
-        return regExp.test(value);
+        return regExp.test(value[0] == "@" ? value.substr(1, 30) : value);
     }
 
     private validateShortString(value: string): boolean {

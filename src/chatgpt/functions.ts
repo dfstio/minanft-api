@@ -78,24 +78,28 @@ async function handleFunctionCall(
                     ) {
                         const names = new Names(NAMES_TABLE);
                         await bot.message(
-                            `Selling NFT ${
-                                username ? "@" + username : ""
-                            } for ${request.currency} ${request.price}`,
+                            `Selling NFT ${username ? username : ""} for ${
+                                request.currency
+                            } ${request.price}`,
                         );
                         await names.sell(
                             username,
                             Number(request.price),
                             request.currency,
                         );
+                        await sleep(1000);
                         const nft: NamesData | undefined = await names.get(
                             username,
                         );
-                        if (nft) await algoliaWriteToken(nft);
+                        console.log("NFT sale handleFunctionCall", nft);
+                        if (nft && nft.onSale == true)
+                            await algoliaWriteToken(nft);
+                        else console.error("Error NFT sale handleFunctionCall");
                     } else
                         await bot.message(
-                            `Cannot sell NFT ${
-                                username ? "@" + username : ""
-                            } for ${request.currency} ${request.price}`,
+                            `Cannot sell NFT ${username ? username : ""} for ${
+                                request.currency
+                            } ${request.price}`,
                         );
                     return;
                 }
@@ -105,6 +109,10 @@ async function handleFunctionCall(
             return;
         }
     }
+}
+
+function sleep(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export { functions, handleFunctionCall };

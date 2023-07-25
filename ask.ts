@@ -94,6 +94,7 @@ const image: Handler = async (
                     timeNow,
                     filename,
                     event.username,
+                    event.creator,
                 );
             }
         }

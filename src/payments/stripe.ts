@@ -6,11 +6,11 @@ function mintInvoice(id: string, username: string, image: string) {
     const invoice = {
         provider_token: process.env.STRIPE_KEY!,
         //start_parameter: 'time-machine-sku',
-        title: "Mina NFT @" + username,
+        title: "Mina NFT " + username,
         description:
             "Reservation of the MINA Avatar NFT name on MINA blockchain for 1 year and deployment of Mina NFT",
         currency: "usd",
-        photo_url: `https://res.cloudinary.com/minanft/image/fetch/h_300,q_100,f_auto/https://minanft-storage.s3.eu-west-1.amazonaws.com/${image}`,
+        photo_url: `https://res.cloudinary.com/minanft/image/fetch/h_300,q_100,f_auto/${image}`,
         //is_flexible: true,
         prices: [
             { label: price.description, amount: price.price * 100 },
@@ -27,7 +27,7 @@ function buyInvoice(token: any) {
     const invoice = {
         provider_token: process.env.STRIPE_KEY!,
         //start_parameter: 'time-machine-sku',
-        title: "Mina NFT @" + token.name,
+        title: "Mina NFT " + token.name,
         description: "Purchase of the MINA Avatar NFT name on MINA blockchain",
         currency: token.currency.toLowerCase(),
         photo_url: `https://res.cloudinary.com/minanft/image/fetch/h_300,q_100,f_auto/${token.image}`,
@@ -51,7 +51,7 @@ function postInvoice(
     const invoice = {
         provider_token: process.env.STRIPE_KEY!,
         //start_parameter: 'time-machine-sku',
-        title: "Mina NFT post @" + username,
+        title: "Mina NFT post " + username,
         description: "Deployment of Mina NFT post to MINA blockchain",
         currency: "usd",
         photo_url: `https://res.cloudinary.com/minanft/image/fetch/h_300,q_100,f_auto/https://minanft-storage.s3.eu-west-1.amazonaws.com/${image}`,

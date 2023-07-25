@@ -3,7 +3,11 @@ import Questions from "./questions";
 import DynamoDbConnector from "./connector/dynamoDbConnector";
 import Names from "./connector/names";
 import History from "./connector/history";
-import { startDeployment, generateFilename } from "./nft/nft";
+import {
+    startDeployment,
+    startDeploymentIpfs,
+    generateFilename,
+} from "./nft/nft";
 import DocumentData from "./model/documentData";
 import AccountData from "./model/accountData";
 import FileHandler from "./fileHandler";
@@ -138,6 +142,7 @@ export default class BotLogic {
         let username =
             body.message && body.message.from && body.message.from.username;
         let userInput: string | undefined = body.message && body.message.text;
+        const command = userInput ? userInput.toLowerCase() : "";
         if (!username) username = "";
         if (!chatId) {
             console.log("No message", body);
@@ -157,7 +162,7 @@ export default class BotLogic {
         if (chatId == process.env.SUPPORT_CHAT) {
             console.log("Support message", body);
             //TODO: If message === "approve" then call lambda to add verifier's signature to the smart contract
-            if (body.message.reply_to_message) {
+            if (body.message && body.message.reply_to_message) {
                 const reply = body.message.reply_to_message;
                 console.log("Support reply", reply);
                 const replyChat = parseInt(reply.text.split("\n")[0]);
@@ -175,7 +180,12 @@ export default class BotLogic {
                 }
             }
 
-            if (body.message.text && body.message.text == "algolia") {
+            if (
+                body.message &&
+                body.message.text &&
+                (body.message.text.toLowerCase() == "algolia" ||
+                    body.message.text.toLowerCase() == "list")
+            ) {
                 await algoliaWriteTokens();
                 return;
             }
@@ -235,11 +245,10 @@ export default class BotLogic {
         const currQuestion: FormQuestion = formQuestions[currIndexAnswer];
 
         if (
-            body.message.text &&
-            (body.message.text == "new" ||
-                body.message.text == `"new"` ||
-                body.message.text == `\new` ||
-                body.message.text == `/new`)
+            command == "new" ||
+            command == `"new"` ||
+            command == `\new` ||
+            command == `/new`
         ) {
             await this.dbConnector.resetAnswer(chatIdString);
             await this.message(
@@ -248,10 +257,7 @@ export default class BotLogic {
             return;
         }
 
-        if (
-            body.message.text &&
-            (body.message.text == "sell" || body.message.text == `/sell`)
-        ) {
+        if (command == "sell" || command == `/sell`) {
             console.log("Sell function calling");
             await callLambda(
                 "ask",
@@ -268,10 +274,7 @@ export default class BotLogic {
             return;
         }
 
-        if (
-            body.message.text &&
-            (body.message.text == "buy" || body.message.text == `/buy`)
-        ) {
+        if (command == "buy" || command == `/buy`) {
             await this.message(
                 "Let's buy an amazing MINA NFT. Look what NFTs are available for sale",
             );
@@ -280,26 +283,17 @@ export default class BotLogic {
             return;
         }
 
-        if (
-            body.message.text &&
-            (body.message.text == "list" || body.message.text == `/list`)
-        ) {
+        if (command == "list" || command == `/list`) {
             await botCommandList(chatIdString);
             return;
         }
 
-        if (
-            body.message.text &&
-            (body.message.text == "support" || body.message.text == `/support`)
-        ) {
+        if (command == "support" || body.message.text == `/support`) {
             await supportTicket(chatIdString);
             return;
         }
 
-        if (
-            body.message.text &&
-            (body.message.text == "secret" || body.message.text == `/secret`)
-        ) {
+        if (command == "secret" || command == `/secret`) {
             if (!(currState && currState.username)) {
                 console.log("secret - No username", currState);
                 await this.message("Please first create NFT");
@@ -365,6 +359,9 @@ export default class BotLogic {
                         timeNow,
                         filename,
                         currState.username,
+                        currState.user && currState.user.username
+                            ? currState.user.username
+                            : "",
                     );
                     this.dbConnector.updateAnswer(
                         chatIdString,
@@ -452,7 +449,11 @@ export default class BotLogic {
             }
         }
 
-        if (currIndexAnswer >= formQuestions.length) {
+        if (
+            currIndexAnswer >= formQuestions.length &&
+            userInput &&
+            userInput.substr(0, 6) !== "/start"
+        ) {
             console.log("currIndexAnswer", currIndexAnswer);
             const askChatGPT = userInput;
             if (askChatGPT) {
@@ -481,7 +482,7 @@ export default class BotLogic {
         }
 
         if (userInput) {
-            if (userInput === "/start" && currIndexAnswer === 0) {
+            if (userInput.substr(0, 6) === "/start" && currIndexAnswer === 0) {
                 console.log(
                     "New user",
                     body.message.chat,
@@ -521,12 +522,29 @@ export default class BotLogic {
                     });
             } else {
                 if (
+                    userInput.substr(0, 6) === "/start" &&
+                    userInput.length > 6
+                ) {
+                    console.log("Deep link ", userInput);
+                    await startDeploymentIpfs(
+                        chatIdString,
+                        userInput.substring(7),
+                        username ? username : "",
+                    );
+                    return;
+                }
+                if (
                     userInput &&
                     this.validator.validate(currQuestion.type, userInput)
                 ) {
                     if (currIndexAnswer == 0) {
+                        userInput =
+                            userInput[0] == "@"
+                                ? userInput.toLowerCase()
+                                : "@" + userInput.toLowerCase();
+
                         const names = new Names(NAMES_TABLE);
-                        const name = await names.get(userInput.toLowerCase());
+                        const name = await names.get(userInput);
                         if (name) {
                             console.log("Found the same name", name);
                             await this.message(
@@ -534,7 +552,11 @@ export default class BotLogic {
                             );
                             return;
                         }
-                        if (reservedNames.includes(userInput.toLowerCase())) {
+                        if (
+                            reservedNames.includes(
+                                userInput.toLowerCase().substr(1, 30),
+                            )
+                        ) {
                             console.log("Name is reserved", name);
                             await this.message(
                                 `This name is reserved. Please choose another Mina NFT avatar name`,
@@ -580,6 +602,10 @@ export default class BotLogic {
                             id: chatIdString,
                             message: askChatGPT,
                             username: currState.username,
+                            creator:
+                                currState.user && currState.user.username
+                                    ? currState.user.username
+                                    : "",
                             parentMessage: parentMessage,
                             image: "",
                             auth: CHATGPTPLUGINAUTH,
