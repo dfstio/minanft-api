@@ -26,6 +26,7 @@ import FormQuestion from "../model/formQuestion";
 import Questions from "../questions";
 import IPFS from "../nft/ipfs";
 import { algoliaWriteToken } from "../nft/algolia";
+import { ipfsToFields, fieldsToIPFS } from "./conversions";
 
 const MINAURL = process.env.MINAURL
     ? process.env.MINAURL
@@ -293,26 +294,6 @@ Deploying your NFT smart contract to MINA blockchain...`,
     }
 }
 
-function ipfsToFields(ipfs: string): Field[] {
-    const fields: Field[] = Encoding.stringToFields(ipfs);
-    console.log("ipfsToFields length", fields.length, ipfs);
-    const answer = [fields[0], fields.length > 1 ? fields[1] : Field(0)];
-    //const restored = fieldsToIPFS(answer);
-    //console.log("Restored: ", restored);
-    if (fields.length > 2)
-        console.error("ipfsToFields error, length is", fields.length);
-
-    return answer;
-}
-
-/*
-function fieldsToIPFS(fields: Field[]): string {
-  return fields[1].equals(Field(0))
-    ? Encoding.stringFromFields([fields[0]])
-    : Encoding.stringFromFields(fields);
-}
-*/
-
 async function createNFT(id: string, nft: NamesData): Promise<void> {
     console.log("createNFT", id, nft);
     const bot = new BotMessage(id);
@@ -363,7 +344,14 @@ async function createNFT(id: string, nft: NamesData): Promise<void> {
     await fetchAccount({ publicKey: deployerPublicKey });
 
     let sender = deployerPrivateKey.toPublicKey();
-    const ipfsFields: Field[] = ipfsToFields(nft.ipfs);
+    const ipfsFields: Field[] | undefined = ipfsToFields(nft.ipfs);
+    if (!ipfsFields) {
+        console.error("Error converting IPFS hash");
+        await bot.message(
+            `NFT deployment: Error converting IPFS hash of the NFT. Please try again later by typing command "new"`,
+        );
+        return;
+    }
     let newsecret: Field;
     if (nft.deploy && nft.deploy.secret)
         newsecret = Field.fromJSON(nft.deploy.secret);

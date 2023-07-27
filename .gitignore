@@ -6,7 +6,7 @@ jspm_packages
 .serverless
 
 # Test directories
-test
+
 
 env.json
 output.txt
