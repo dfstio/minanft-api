@@ -18,17 +18,19 @@ As for the storage of NFT data, reliable services such as nft.storage or Infura 
 
 # Bot commands
 
-```new``` 		Create new NFT
+```new``` 		- Create new NFT
 
-```sell``` 		Sell NFT
+```sell``` 		- Sell NFT
 
-```buy``` 		Buy NFT 		
+```buy``` 		- Buy NFT 		
 
-```list``` 		List all NFTs
+```list``` 		- List all NFTs	
 
-```secret``` 	Get secret key of your NFT 		
+```auth``` 		- Get authorisation code for minanft.io	
 
-```support``` Buy support ticket 		
+```secret``` 	- Get secret key of your NFT 	
+
+```support``` - Buy support ticket 		
  		
 
 
