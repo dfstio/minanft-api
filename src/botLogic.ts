@@ -26,6 +26,7 @@ import nodemailer from "nodemailer";
 //import { context } from "./chatgpt/context";
 //import { functions } from "./chatgpt/functions";
 import { reservedNames } from "./nft/reservednames";
+import { generateJWT } from "./api/jwt";
 import { algoliaWriteTokens } from "./nft/algolia";
 import {
     supportTicket,
@@ -103,21 +104,23 @@ export default class BotLogic {
         return await this.bot.handleUpdate(body);
     }
 
-    public async message(msg: string): Promise<void> {
+    public async message(msg: string, logHistory = true): Promise<void> {
         if (this.id) {
             this.bot.telegram.sendMessage(this.id, msg).catch((error) => {
                 console.error(`Telegraf error`, error);
             });
-            if (this.history) await this.history.add(msg);
+            if (this.history && logHistory) await this.history.add(msg);
         } else console.error("No id for message:", msg);
 
-        const supportMsg: string = `Message for ${this.id}: ${msg}`;
-        this.bot.telegram
-            .sendMessage(this.supportId, supportMsg)
-            .catch((error) => {
-                console.error(`Telegraf error`, error);
-            });
-        console.log(supportMsg);
+        if (logHistory) {
+            const supportMsg: string = `Message for ${this.id}: ${msg}`;
+            this.bot.telegram
+                .sendMessage(this.supportId, supportMsg)
+                .catch((error) => {
+                    console.error(`Telegraf error`, error);
+                });
+            console.log(supportMsg);
+        }
     }
 
     public async handleMessage(body: any): Promise<void> {
@@ -290,6 +293,14 @@ export default class BotLogic {
 
         if (command == "support" || body.message.text == `/support`) {
             await supportTicket(chatIdString);
+            return;
+        }
+
+        if (command == "auth" || body.message.text == `/auth`) {
+            await this.message(generateJWT(chatIdString), false);
+            await this.message(
+                `This authorization code you can use in minanft.io or minanft nodejs library`,
+            );
             return;
         }
 
@@ -526,11 +537,18 @@ export default class BotLogic {
                     userInput.length > 6
                 ) {
                     console.log("Deep link ", userInput);
-                    await startDeploymentIpfs(
-                        chatIdString,
-                        userInput.substring(7),
-                        username ? username : "",
-                    );
+                    if (userInput.substring(7) == "auth") {
+                        await this.message(generateJWT(chatIdString), false);
+                        await this.message(
+                            `This authorization code you can use in minanft.io or minanft nodejs library`,
+                        );
+                    } else {
+                        await startDeploymentIpfs(
+                            chatIdString,
+                            userInput.substring(7),
+                            username ? username : "",
+                        );
+                    }
                     return;
                 }
                 if (

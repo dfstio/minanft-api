@@ -34,6 +34,8 @@ provider:
     MINAEXPLORER: ${file(./env.json):MINAEXPLORER, env:MINAEXPLORER}
     PRIVATEKEY: ${file(./env.json):PRIVATEKEY, env:PRIVATEKEY}
     PUBLICKEY: ${file(./env.json):PUBLICKEY, env:PUBLICKEY}
+    JWT_PRIVATEKEY: ${file(./env.json):JWT_PRIVATEKEY, env:JWT_PRIVATEKEY}
+    BOTAPIAUTH: ${file(./env.json):BOTAPIAUTH, env:BOTAPIAUTH}
     INSURERPRIVATEKEY: ${file(./env.json):INSURERPRIVATEKEY, env:INSURERPRIVATEKEY}
     VERIFIERPRIVATEKEY: ${file(./env.json):VERIFIERPRIVATEKEY, env:VERIFIERPRIVATEKEY}
     GASTANKPRIVATEKEY: ${file(./env.json):GASTANKPRIVATEKEY, env:GASTANKPRIVATEKEY}
@@ -157,6 +159,14 @@ functions:
     events:
       - http:
           path: send
+          method: post
+  api:
+    handler: api.botapi
+    timeout: 30
+    memorySize: 1024
+    events:
+      - http:
+          path: api
           method: post
   ask:
     handler: ask.chatgpt  

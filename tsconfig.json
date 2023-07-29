@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    "target": "es6",
+    "target": "es2021",
     "module": "commonjs",
-    "lib": ["es6", "dom"],
+    "lib": ["es2021", "dom"],
     "sourceMap": true,
     "allowJs": true,
     "removeComments": true,
