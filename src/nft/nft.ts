@@ -1,6 +1,7 @@
 import callLambda from "../mina/lambda";
 import BotMessage from "../mina/message";
 import axios from "axios";
+import { verifyJWT } from "../api/jwt";
 
 async function startDeployment(
     id: string,
@@ -82,6 +83,17 @@ async function startDeploymentIpfs(
     }
 }
 
+async function startDeploymentApi(body: any): Promise<void> {
+    console.log("startDeploymentApi", body);
+    const { jwtToken, ipfs } = body;
+
+    const id: string | undefined = verifyJWT(jwtToken);
+    if (id) {
+        console.log("startDeploymentApi", id, ipfs);
+        await startDeploymentIpfs(id, ipfs, "");
+    }
+}
+
 function generateFilename(timeNow: number): string {
     let outString: string = "";
     let inOptions: string = "abcdefghijklmnopqrstuvwxyz0123456789_";
@@ -94,4 +106,9 @@ function generateFilename(timeNow: number): string {
     return timeNow.toString() + "-" + outString;
 }
 
-export { startDeployment, startDeploymentIpfs, generateFilename };
+export {
+    startDeployment,
+    startDeploymentIpfs,
+    startDeploymentApi,
+    generateFilename,
+};

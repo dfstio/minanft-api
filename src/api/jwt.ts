@@ -3,9 +3,9 @@ const JWT_PRIVATEKEY = process.env.JWT_PRIVATEKEY!;
 
 export function generateJWT(
     id: string,
-    expires_sec: number = 365 * 24 * 60 * 60,
+    expires_sec: number = 365 * 24 * 60 * 60, // one year
 ) {
-    // one year
+    
     const options = {
         expiresIn: expires_sec,
     };

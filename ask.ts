@@ -67,7 +67,6 @@ const image: Handler = async (
 ) => {
     try {
         //console.log("event", event);
-        //const body = JSON.parse(event.body);
         console.log("ChatGPT ask request:", event);
         let result: ImageGPT = <ImageGPT>{
             image: "",
