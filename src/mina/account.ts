@@ -9,6 +9,7 @@ import {
     shutdown,
     Encoding,
     UInt64,
+    MerkleMap,
 } from "snarkyjs";
 import axios from "axios";
 
@@ -363,6 +364,21 @@ async function createNFT(id: string, nft: NamesData): Promise<void> {
         return;
     }
 
+    /*
+    @method createNFT(
+        username: Field,
+        publicRoot: Field,
+        privateRoot: Field,
+        postsRoot: Field,
+        uri1: Field,
+        uri2: Field,
+        salt: Field,
+        secret: Field,
+    ) 
+*/
+    const map: MerkleMap = new MerkleMap();
+    const root: Field = map.getRoot();
+
     const tx = await Mina.transaction(
         {
             sender,
@@ -371,11 +387,14 @@ async function createNFT(id: string, nft: NamesData): Promise<void> {
         },
         () => {
             zkApp.createNFT(
-                Field.fromJSON(process.env.NFT_SECRET!), // secret:
-                newsecret, //newsecret:
                 Encoding.stringToFields(nft.username)[0], //username:
+                root,
+                root,
+                root,
                 ipfsFields[0], //uri1:
                 ipfsFields[1], //uri2:
+                Field.fromJSON(process.env.NFT_SALT!),
+                Field.fromJSON(process.env.NFT_SECRET!),
             );
         },
     );
