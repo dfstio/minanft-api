@@ -17,13 +17,13 @@ const NFT_SECRET = process.env.NFT_SECRET!;
 
 export class AvatarNFT extends SmartContract {
     @state(Field) username = State<Field>();
-    @state(Field) uri1 = State<Field>();
-    @state(Field) uri2 = State<Field>();
-    @state(Field) posturi1 = State<Field>();
-    @state(Field) posturi2 = State<Field>();
-    @state(Field) pwd = State<Field>();
-    @state(Field) escrow = State<Field>();
-    @state(Field) nonce = State<Field>();
+    @state(Field) publicRoot = State<Field>(); // Merkle root of publicData
+    @state(Field) privateRoot = State<Field>(); // Merkle root of privateData
+    @state(Field) postsRoot = State<Field>(); // Merkle root of posts
+    @state(Field) uri1 = State<Field>(); // First part of uri IPFS hash
+    @state(Field) uri2 = State<Field>(); // Second part of uri IPFS hash
+    @state(Field) pwdHash = State<Field>(); // Hash of password used to prove transactions
+    @state(Field) version = State<Field>(); // Version of state
 
     deploy(args: DeployArgs) {
         super.deploy(args);
@@ -45,83 +45,90 @@ export class AvatarNFT extends SmartContract {
         this.account.provedState.get().assertFalse();
 
         super.init();
-
-        this.pwd.set(
-            Poseidon.hash([
-                Field.fromJSON(NFT_SALT),
-                Field.fromJSON(NFT_SECRET),
-            ]),
-        );
     }
 
     // Create NFT on the MINA blockchain
 
     @method createNFT(
-        secret: Field,
-        newsecret: Field,
         username: Field,
+        publicRoot: Field,
+        privateRoot: Field,
+        postsRoot: Field,
         uri1: Field,
         uri2: Field,
+        salt: Field,
+        secret: Field,
     ) {
         this.account.provedState.assertEquals(this.account.provedState.get());
         this.account.provedState.get().assertTrue();
 
-        const pwd = this.pwd.get();
-        this.pwd.assertEquals(pwd);
-        this.pwd.assertEquals(
-            Poseidon.hash([Field.fromJSON(NFT_SALT), secret]),
-        );
+        const usernameOld = this.version.get();
+        this.username.assertEquals(usernameOld);
+        this.username.assertEquals(Field(0));
 
-        const nonce = this.nonce.get();
-        this.nonce.assertEquals(nonce);
-        this.nonce.assertEquals(Field(0));
-        this.nonce.set(nonce.add(Field(1)));
+        const pwdHash = this.pwdHash.get();
+        this.pwdHash.assertEquals(pwdHash);
+        this.pwdHash.assertEquals(Field(0));
 
-        this.pwd.set(Poseidon.hash([Field.fromJSON(NFT_SALT), newsecret]));
+        const publicRootOld = this.publicRoot.get();
+        this.publicRoot.assertEquals(publicRootOld);
+        this.publicRoot.assertEquals(Field(0));
+
+        const privateRootOld = this.privateRoot.get();
+        this.privateRoot.assertEquals(privateRootOld);
+        this.privateRoot.assertEquals(Field(0));
+
+        const postsRootOld = this.postsRoot.get();
+        this.postsRoot.assertEquals(postsRootOld);
+        this.postsRoot.assertEquals(Field(0));
+
+        const uri1Old = this.uri1.get();
+        this.uri1.assertEquals(uri1Old);
+        this.uri1.assertEquals(Field(0));
+
+        const uri2Old = this.uri2.get();
+        this.uri2.assertEquals(uri2Old);
+        this.uri2.assertEquals(Field(0));
+
+        const version = this.version.get();
+        this.version.assertEquals(version);
+        this.version.assertEquals(Field(0));
+
         this.username.set(username);
+        this.publicRoot.set(publicRoot);
+        this.privateRoot.set(privateRoot);
+        this.postsRoot.set(postsRoot);
         this.uri1.set(uri1);
         this.uri2.set(uri2);
-        this.posturi1.set(Field(0));
-        this.posturi2.set(Field(0));
+        this.pwdHash.set(Poseidon.hash([salt, secret]));
+        this.version.set(Field(1));
     }
 
     // Make a post
-    @method post(secret: Field, posturi1: Field, posturi2: Field) {
+    @method post(salt: Field, secret: Field, postsRoot: Field) {
         this.account.provedState.assertEquals(this.account.provedState.get());
         this.account.provedState.get().assertTrue();
 
-        const pwd = this.pwd.get();
-        this.pwd.assertEquals(pwd);
-        this.pwd.assertEquals(
-            Poseidon.hash([Field.fromJSON(NFT_SALT), secret]),
-        );
+        const pwdHash = this.pwdHash.get();
+        this.pwdHash.assertEquals(pwdHash);
+        this.pwdHash.assertEquals(Poseidon.hash([salt, secret]));
 
-        const nonce = this.nonce.get();
-        this.nonce.assertEquals(nonce);
-        this.nonce.set(nonce.add(Field(1)));
-
-        this.posturi1.set(posturi1);
-        this.posturi2.set(posturi2);
+        // TODO add checks and proofs
+        this.postsRoot.set(postsRoot);
     }
 
     // Change password
-    @method changePassword(secret: Field, newsecret: Field) {
+    @method changePassword(salt: Field, secret: Field, newsecret: Field) {
         this.account.provedState.assertEquals(this.account.provedState.get());
         this.account.provedState.get().assertTrue();
 
-        const pwd = this.pwd.get();
-        this.pwd.assertEquals(pwd);
-        this.pwd.assertEquals(
-            Poseidon.hash([Field.fromJSON(NFT_SALT), secret]),
-        );
+        const pwdHash = this.pwdHash.get();
+        this.pwdHash.assertEquals(pwdHash);
+        this.pwdHash.assertEquals(Poseidon.hash([salt, secret]));
 
-        const nonce = this.nonce.get();
-        this.nonce.assertEquals(nonce);
-        this.nonce.set(nonce.add(Field(1)));
-
-        this.pwd.set(Poseidon.hash([Field.fromJSON(NFT_SALT), newsecret]));
+        this.pwdHash.set(Poseidon.hash([salt, newsecret]));
     }
-
+    /*
     // put NFT to escrow before the transfer in case NFT is sold for fiat money
     @method toEscrow(secret: Field, escrowhash: Field) {
         this.account.provedState.assertEquals(this.account.provedState.get());
@@ -176,4 +183,5 @@ export class AvatarNFT extends SmartContract {
 
         this.username.set(username);
     }
+*/
 }

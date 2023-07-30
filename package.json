@@ -19,6 +19,7 @@
     "faucet": "ts-node test/faucet.ts",
     "account": "ts-node test/account.ts",
     "verify": "ts-node test/verify.ts",
+    "deploytest": "ts-node test/deploy.ts",
     "generate": "ts-node test/generate.ts"
   },
   "devDependencies": {
