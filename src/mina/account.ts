@@ -345,7 +345,7 @@ async function createNFT(id: string, nft: NamesData): Promise<void> {
     await fetchAccount({ publicKey: deployerPublicKey });
 
     let sender = deployerPrivateKey.toPublicKey();
-    const ipfsFields: Field[] | undefined = ipfsToFields(nft.ipfs);
+    const ipfsFields: Field[] | undefined = ipfsToFields("ipfs:" + nft.ipfs);
     if (!ipfsFields) {
         console.error("Error converting IPFS hash");
         await bot.message(
@@ -367,17 +367,19 @@ async function createNFT(id: string, nft: NamesData): Promise<void> {
     /*
     @method createNFT(
         username: Field,
-        publicRoot: Field,
-        privateRoot: Field,
-        postsRoot: Field,
+        publicMapRoot: Field,
+        publicFilesRoot: Field,
+        privateMapRoot: Field,
+        privateFilesRoot: Field,
         uri1: Field,
         uri2: Field,
         salt: Field,
         secret: Field,
-    ) 
+    ) {
+ 
 */
     const map: MerkleMap = new MerkleMap();
-    const root: Field = map.getRoot();
+    const root: Field = map.getRoot(); // TODO: calculate real roots for all data structures
 
     const tx = await Mina.transaction(
         {
@@ -391,10 +393,11 @@ async function createNFT(id: string, nft: NamesData): Promise<void> {
                 root,
                 root,
                 root,
+                root,
                 ipfsFields[0], //uri1:
                 ipfsFields[1], //uri2:
-                Field.fromJSON(process.env.NFT_SALT!),
-                Field.fromJSON(process.env.NFT_SECRET!),
+                Field.fromJSON(process.env.NFT_SALT!), //TODO: change to random salt
+                Field.fromJSON(process.env.NFT_SECRET!), //TODO: change to random secret
             );
         },
     );
