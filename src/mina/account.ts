@@ -26,6 +26,16 @@ import NamesData from "../model/namesData";
 import FormQuestion from "../model/formQuestion";
 import Questions from "../questions";
 import IPFS from "../nft/ipfs";
+
+/* gastanks.ts - private keys of gas tanks
+	export const GASTANKS : string[] = [
+			 "EKE...",
+			 "EKE...",
+			 ...
+			];
+
+*/
+import { GASTANKS } from "./gastanks"; //
 import { algoliaWriteToken } from "../nft/algolia";
 import { ipfsToFields, fieldsToIPFS } from "./conversions";
 
@@ -37,14 +47,16 @@ const MINAEXPLORER = process.env.MINAEXPLORER
     : "https://berkeley.minaexplorer.com/wallet/";
 
 const PRIVATEKEY = process.env.PRIVATEKEY!;
-const GASTANKPRIVATEKEY = process.env.GASTANKPRIVATEKEY!;
 const FEE = 0.1e9;
-const GASTANK_MINLIMIT = 100;
+const GASTANK_MINLIMIT = 5;
 const TASKS_TABLE = process.env.TASKS_TABLE!;
 const NAMES_TABLE = process.env.NAMES_TABLE!;
 const PINATA_JWT = process.env.PINATA_JWT!;
 
-async function generateAccount(id: string): Promise<void> {
+async function generateAccount(
+    id: string,
+    gastank: string = "",
+): Promise<void> {
     console.log("generateAccount", id);
 
     const zkAppPrivateKey = PrivateKey.random();
@@ -68,14 +80,18 @@ async function generateAccount(id: string): Promise<void> {
         id,
         task: "topup",
         startTime: Date.now() + MIN_IN_MS,
-        taskdata: result,
+        taskdata: { account: result, gastank },
     };
     await table.create(task);
 }
 
-async function checkBalance(id: string, data: AccountData): Promise<void> {
+async function checkBalance(
+    id: string,
+    data: AccountData,
+    gastank: string,
+): Promise<void> {
     console.log("Checking balance...", id, data);
-    if (!data) {
+    if (!data || !gastank || gastank == "") {
         console.error("Wrong topup data");
         return;
     }
@@ -83,7 +99,7 @@ async function checkBalance(id: string, data: AccountData): Promise<void> {
     await minaInit();
     const accountPrivateKeyMina = PrivateKey.fromBase58(data.privateKey);
     const accountPublicKeyMina = accountPrivateKeyMina.toPublicKey();
-    const gasTankPrivateKeyMina = PrivateKey.fromBase58(GASTANKPRIVATEKEY);
+    const gasTankPrivateKeyMina = PrivateKey.fromBase58(gastank);
     const gasTankPublicKeyMina = gasTankPrivateKeyMina.toPublicKey();
     const balanceAccount = await accountBalance(accountPublicKeyMina);
     const balanceAccountMina = Number(balanceAccount.toBigInt()) / 1e9;
@@ -106,7 +122,7 @@ async function checkBalance(id: string, data: AccountData): Promise<void> {
         let sentTx = await tx.send();
 
         const table = new Tasks(TASKS_TABLE);
-        await table.remove("topup");
+        await table.remove("topup"); //TODO for specific gastank
 
         if (sentTx.hash() !== undefined) {
             console.log(`
@@ -134,8 +150,8 @@ https://berkeley.minaexplorer.com/transaction/${sentTx.hash()}
 */
 }
 
-async function checkGasTank(): Promise<void> {
-    const gasTankPrivateKeyMina = PrivateKey.fromBase58(GASTANKPRIVATEKEY);
+async function checkGasTank(gastank: string): Promise<boolean> {
+    const gasTankPrivateKeyMina = PrivateKey.fromBase58(gastank);
     const gasTankPublicKeyMina = gasTankPrivateKeyMina.toPublicKey();
 
     const balanceGasTank = await accountBalance(gasTankPublicKeyMina);
@@ -144,19 +160,53 @@ async function checkGasTank(): Promise<void> {
     console.log(
         "Balance of gas tank",
         balanceGasTankMina.toLocaleString("en"),
-        "needs replenishing:",
+        ", needs replenishing:",
         replenishGasTank,
     );
 
+    return replenishGasTank;
+    /*
     if (replenishGasTank) {
         const table = new Tasks(TASKS_TABLE);
         const topupTask = await table.get("topup");
         if (topupTask) {
-            console.log("Already startet topup");
+            console.log("Already started topup");
             return;
         }
-        await generateAccount("topup");
+      
+        //await generateAccount("topup", gastank);
+        return true;
+    } else return false;
+    */
+}
+
+var deployer1: number | undefined;
+var deployer2: number | undefined;
+var deployer3: number | undefined;
+
+//TODO stop relying on AWS saving state in short term and replace with DynamoDB table logic
+async function getDeployer(): Promise<PrivateKey> {
+    let i: number = Math.floor(Math.random() * (GASTANKS.length - 1));
+    let replenish: boolean = await checkGasTank(GASTANKS[i]);
+    while (i === deployer1 || i === deployer2 || i === deployer3 || replenish) {
+        console.error("Deployer was recently used or empty, finding another");
+        i = Math.floor(Math.random() * (GASTANKS.length - 1));
+        replenish = await checkGasTank(GASTANKS[i]);
     }
+    // shifting last deployers
+    deployer3 = deployer2;
+    deployer2 = deployer1;
+    deployer1 = i;
+
+    const gastank = GASTANKS[i];
+    console.log(
+        `Using gas tank no ${i} with private key ${gastank}, last deployers:`,
+        deployer1,
+        deployer2,
+        deployer3,
+    );
+    const deployerPrivateKey = PrivateKey.fromBase58(gastank);
+    return deployerPrivateKey;
 }
 
 async function deployContract(id: string, nft: NamesData): Promise<void> {
@@ -186,7 +236,6 @@ async function deployContract(id: string, nft: NamesData): Promise<void> {
                 .catch((e: any) => console.error("cloudinary ping - aws", e));
         }
         await minaInit();
-        await checkGasTank();
 
         const zkAppPrivateKey = PrivateKey.random();
         const zkAppPrivateKeyString = PrivateKey.toBase58(zkAppPrivateKey);
@@ -244,8 +293,7 @@ async function deployContract(id: string, nft: NamesData): Promise<void> {
 
         console.log("Writing deployment to Names");
         await names.create(deployedNFT);
-
-        const deployerPrivateKey = PrivateKey.fromBase58(GASTANKPRIVATEKEY);
+        const deployerPrivateKey = await getDeployer();
         const deployerPublicKey = deployerPrivateKey.toPublicKey();
 
         let zkApp = new AvatarNFT(zkAppPublicKey);
@@ -340,7 +388,7 @@ async function createNFT(id: string, nft: NamesData): Promise<void> {
     //await bot.message(`Creating Avatar NFT on MINA blockchain...`);
 
     console.log("Creating tx...");
-    const deployerPrivateKey = PrivateKey.fromBase58(GASTANKPRIVATEKEY);
+    const deployerPrivateKey = await getDeployer();
     const deployerPublicKey = deployerPrivateKey.toPublicKey();
     await fetchAccount({ publicKey: deployerPublicKey });
 

@@ -9,6 +9,8 @@ jspm_packages
 
 
 env.json
+src/mina/gastanks.ts
+proof.json
 output.txt
 .DS_Store
 .eslintrc.json
