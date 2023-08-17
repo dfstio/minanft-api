@@ -24,8 +24,12 @@ const deploy: Handler = async (event: any, context: Context) => {
 const topup: Handler = async (event: any, context: Context) => {
     try {
         console.log("topup", event);
-        if (event.id && event.data)
-            await checkBalance(event.id, <AccountData>event.data);
+        if (event.id && event.data && event.data.account && event.data.gastank)
+            await checkBalance(
+                event.id,
+                <AccountData>event.data.account,
+                event.data.gastank,
+            );
         else console.error("no event.id");
 
         //context.succeed(event.id);
