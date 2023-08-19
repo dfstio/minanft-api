@@ -86,6 +86,13 @@ async function algoliaWriteTokenHelper(
     params.creator =
         token.creator && token.creator !== "" ? token.creator : "@MinaNFT_bot";
 
+    // Put @minanft first in index always
+    if (name == "@minanft") {
+        params.time = token.uri.time + 1000 * 60 * 60 * 24 * 365 * 10;
+        params.shortdescription =
+            "Click here to see rich diverse content of @minanft";
+    }
+
     //console.log("Algolia write ", token.username, params);
 
     try {
