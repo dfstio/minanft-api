@@ -90,7 +90,7 @@ async function algoliaWriteTokenHelper(
     if (name == "@minanft") {
         params.time = token.uri.time + 1000 * 60 * 60 * 24 * 365 * 10;
         params.shortdescription =
-            "Click here to see rich diverse content of @minanft";
+            "Click here to view the rich and diverse content of @minanft";
     }
 
     //console.log("Algolia write ", token.username, params);
