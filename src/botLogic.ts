@@ -543,11 +543,23 @@ export default class BotLogic {
                             `This authorization code you can use in minanft.io or minanft nodejs library`,
                         );
                     } else {
+                        await callLambda(
+                            "deployipfs",
+                            JSON.stringify({
+                                id: chatIdString,
+                                command: userInput.substring(7),
+                                creator: username ? username : "",
+                                auth: CHATGPTPLUGINAUTH,
+                            }),
+                        );
+
+                        /*
                         await startDeploymentIpfs(
                             chatIdString,
                             userInput.substring(7),
                             username ? username : "",
                         );
+                    */
                     }
                     return;
                 }

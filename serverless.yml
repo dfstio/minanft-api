@@ -199,6 +199,10 @@ functions:
     handler: mina.topup     
     timeout: 900
     memorySize: 512
+  deployipfs:
+    handler: mina.deployipfs     
+    timeout: 900
+    memorySize: 2048
   create:
     handler: mina.create     
     timeout: 900

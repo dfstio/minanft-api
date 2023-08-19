@@ -1,4 +1,10 @@
 const reservedNames: string[] = [
+    "minanft",
+    "mike",
+    "dfst",
+    "dfstio",
+    "mina",
+    "minaprotocol",
     "elonmusk",
     "billgates",
     "jeffbezos",

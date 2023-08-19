@@ -88,9 +88,9 @@ async function algoliaWriteTokenHelper(
 
     // Put @minanft first in index always
     if (name == "@minanft") {
-        params.time = token.uri.time + 1000 * 60 * 60 * 24 * 365 * 10;
+        params.time = Date.now() + 1000 * 60 * 60 * 24 * 365 * 10;
         params.shortdescription =
-            "Click here to view the rich and diverse content of @minanft";
+            "Click here to explore @minanft's rich and diverse content, which includes video and AI-produced audio, as well as a PDF attachment of the MinaNFT pitch deck";
     }
 
     //console.log("Algolia write ", token.username, params);

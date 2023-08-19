@@ -1,5 +1,7 @@
 import { Handler, Context } from "aws-lambda";
 import { deployContract, checkBalance, createNFT } from "./src/mina/account";
+import { startDeploymentIpfs } from "./src/nft/nft";
+
 import AccountData from "./src/model/accountData";
 
 const deploy: Handler = async (event: any, context: Context) => {
@@ -62,6 +64,27 @@ const create: Handler = async (event: any, context: Context) => {
         return {
             statusCode: 200,
             body: "mina.create error",
+        };
+    }
+};
+
+const deployipfs: Handler = async (event: any, context: Context) => {
+    try {
+        console.log("deploymentIpfs", event);
+        if (event.id && event.command && event.creator)
+            await startDeploymentIpfs(event.id, event.command, event.creator);
+        else console.error("no event.id or event.command or event.creator");
+
+        //context.succeed(event.id);
+        return {
+            statusCode: 200,
+            body: event.id,
+        };
+    } catch (error) {
+        console.error("catch", (<any>error).toString());
+        return {
+            statusCode: 200,
+            body: "deploymentIpfs error",
         };
     }
 };
