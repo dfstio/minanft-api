@@ -89,4 +89,4 @@ const deployipfs: Handler = async (event: any, context: Context) => {
     }
 };
 
-export { deploy, topup, create };
+export { deploy, topup, create, deployipfs };
