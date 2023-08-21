@@ -549,7 +549,6 @@ export default class BotLogic {
                                 id: chatIdString,
                                 command: userInput.substring(7),
                                 creator: username ? username : "",
-                                auth: CHATGPTPLUGINAUTH,
                             }),
                         );
 

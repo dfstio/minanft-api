@@ -90,7 +90,15 @@ async function startDeploymentApi(body: any): Promise<void> {
     const id: string | undefined = verifyJWT(jwtToken);
     if (id) {
         console.log("startDeploymentApi", id, ipfs);
-        await startDeploymentIpfs(id, ipfs, "");
+        // await startDeploymentIpfs(id, ipfs, "");
+        await callLambda(
+            "deployipfs",
+            JSON.stringify({
+                id,
+                command: ipfs,
+                creator: "",
+            }),
+        );
     }
 }
 
