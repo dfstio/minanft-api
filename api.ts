@@ -28,13 +28,19 @@ const botapi: Handler = async (
                     console.error("Wrong command");
             }
 
-            await sleep(1000);
+            // await sleep(1000);
         }
 
-        return 200;
-    } catch (error) {
-        console.error("bot api catch", (<any>error).toString());
-        return 200;
+        callback(null, {
+            statusCode: 200,
+            body: "ok",
+        });
+    } catch (error: any) {
+        console.error("bot api catch", error.toString());
+        callback(null, {
+            statusCode: 200,
+            body: error.toString(),
+        });
     }
 };
 

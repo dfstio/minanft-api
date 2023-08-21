@@ -71,9 +71,9 @@ const create: Handler = async (event: any, context: Context) => {
 const deployipfs: Handler = async (event: any, context: Context) => {
     try {
         console.log("deploymentIpfs", event);
-        if (event.id && event.command && event.creator)
-            await startDeploymentIpfs(event.id, event.command, event.creator);
-        else console.error("no event.id or event.command or event.creator");
+        if (event.id && event.command)
+            await startDeploymentIpfs(event.id, event.command, event.creator? event.creator : "");
+        else console.error("no event.id or event.command");
 
         //context.succeed(event.id);
         return {
