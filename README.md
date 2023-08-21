@@ -42,6 +42,11 @@ As for the storage of NFT data, reliable services such as nft.storage or Infura 
 - SnarkyJS
 - Telegram bot
 
+## Website
+https://minanft.io
+
+## Library on NPM
+https://www.npmjs.com/package/minanft
 
 ## Setting api link AWS-telegram
 curl \
