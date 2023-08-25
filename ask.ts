@@ -38,8 +38,27 @@ const chatgpt: Handler = async (
             }
             if (event.id) {
                 const bot = new BotMessage(event.id);
-                if (result.answerType === "text")
-                    await bot.message(result.text);
+                if (result.answerType === "text") {
+                    if (result.text.length < 4000)
+                        await bot.message(result.text);
+                    else if (result.text.length < 4000 * 2) {
+                        await bot.message(result.text.substring(0, 4000));
+                        await sleep(1000);
+                        await bot.message(
+                            result.text.substring(4000, 4000 * 2),
+                        );
+                    } else {
+                        await bot.message(result.text.substring(0, 4000));
+                        await sleep(1000);
+                        await bot.message(
+                            result.text.substring(4000, 4000 * 2),
+                        );
+                        await sleep(1000);
+                        await bot.message(
+                            result.text.substring(4000 * 2, 4000 * 3),
+                        );
+                    }
+                }
                 if (result.answerType === "image")
                     await bot.image(result.image, result.text);
             }
