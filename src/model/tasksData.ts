@@ -1,6 +1,6 @@
 export default interface TasksData {
-    id: string;
-    task: string;
-    startTime: number;
-    taskdata?: any;
+  id: string;
+  task: string;
+  startTime: number;
+  taskdata?: any;
 }

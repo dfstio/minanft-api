@@ -170,11 +170,15 @@ functions:
   ask:
     handler: ask.chatgpt  
     timeout: 900
-    memorySize: 192
+    memorySize: 256
   image:
     handler: ask.image  
     timeout: 900
-    memorySize: 192
+    memorySize: 256
+  archetype:
+    handler: ask.archetype  
+    timeout: 900
+    memorySize: 256
   audio:
     handler: audio.transcribe  
     timeout: 900

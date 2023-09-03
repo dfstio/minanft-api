@@ -13,7 +13,7 @@
     "checkout": "git checkout -b contract",
     "commit": "git commit -a -S -m",
     "lint": "eslint 'src/*.{ts,tsx}' handler.ts",
-    "style": "prettier --tab-width 4 --write {,!(node_modules)/**/}*.ts",
+    "style": "prettier --write {,!(node_modules)/**/}*.ts",
     "upgradeinteractive": "yarn upgrade-interactive",
     "ipfs": "ts-node test/ipfs3.ts",
     "faucet": "ts-node test/faucet.ts",
