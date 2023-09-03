@@ -1,6 +1,6 @@
 export default interface NFTPriceData {
-    username: string;
-    price: number;
-    currency: string;
-    description: string;
+  username: string;
+  price: number;
+  currency: string;
+  description: string;
 }
