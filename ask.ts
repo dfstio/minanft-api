@@ -154,7 +154,7 @@ const archetype: Handler = async (
         const filename = generateFilename(timeNow) + ".jpg";
         await copyAIImageToS3(filename, result.image);
         await bot.message(
-          "Please run the Midjourney /imagine command using the prompt above to generate your NFT image",
+          "Please run the Midjourney discord bot's /imagine command using the prompt above to generate your NFT image",
         );
       }
     }
