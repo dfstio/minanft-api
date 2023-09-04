@@ -13,7 +13,7 @@ import DynamoDbConnector from "../connector/dynamoDbConnector";
 import HistoryData from "../model/historyData";
 import History from "../connector/history";
 import { handleFunctionCall } from "./functions";
-import { archetypes, midjourney } from "./archetypes";
+import { archetypes, midjourney, dalle } from "./archetypes";
 const HISTORY_TABLE = process.env.HISTORY_TABLE!;
 
 interface InputParams extends CreateImageRequest {
@@ -203,12 +203,7 @@ export default class ChatGPTMessage {
     let prompt: string = msg.substr(0, 999);
     let fullPrompt: string = msg;
 
-    const art: string = isArchetype
-      ? `You are a highly advanced AI model, DALL·E, capable of generating unique images from text descriptions. Based on the user's request, generate a detailed and creative description that will inspire you to create a compelling and imaginative image.
-Utilize your understanding of Carl Jung's theory of archetypes to craft an image description that will profoundly connect with the user's emotions and intellect.
-Maximum size of description should be strictly 1000 characters. Do not provide description with the size more than 1000 characters. 
-The image will be used as NFT of the user `
-      : archetypes;
+    const art: string = isArchetype ? dalle : archetypes;
     const chatGptMessages =
       pMessage == ""
         ? [
