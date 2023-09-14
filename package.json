@@ -19,6 +19,7 @@
     "faucet": "ts-node test/faucet.ts",
     "account": "ts-node test/account.ts",
     "verify": "ts-node test/verify.ts",
+    "lang": "ts-node test/lang.ts",
     "deploytest": "ts-node test/deploy.ts",
     "deployers": "ts-node test/deployers.ts",
     "generate": "ts-node test/generate.ts"
@@ -44,6 +45,7 @@
     "aws-sdk": "^2.1419.0",
     "crypto": "^1.0.1",
     "form-data": "^4.0.0",
+    "i18next": "^23.5.1",
     "jsonwebtoken": "^9.0.1",
     "openai": "^3.3.0",
     "remove-markdown": "^0.5.0",

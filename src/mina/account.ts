@@ -28,11 +28,11 @@ import Questions from "../questions";
 import IPFS from "../nft/ipfs";
 
 /* gastanks.ts - private keys of gas tanks
-	export const GASTANKS : string[] = [
-			 "EKE...",
-			 "EKE...",
-			 ...
-			];
+  export const GASTANKS : string[] = [
+       "EKE...",
+       "EKE...",
+       ...
+      ];
 
 */
 import { GASTANKS } from "./gastanks"; //
@@ -221,7 +221,7 @@ async function deployContract(id: string, nft: NamesData): Promise<void> {
     }
     console.log("name", name);
 
-    const bot = new BotMessage(id);
+    const bot = new BotMessage(id, nft.language);
     if (nft.ipfs === "") {
       axios
         .get(
@@ -312,7 +312,7 @@ async function deployContract(id: string, nft: NamesData): Promise<void> {
 Deploying your NFT smart contract to MINA blockchain...`,
     );
     console.log("verificationKey", verificationKey);
-	  */
+    */
     const hash: string | undefined = await deploy(
       deployerPrivateKey,
       zkAppPrivateKey,
@@ -345,7 +345,7 @@ Deploying your NFT smart contract to MINA blockchain...`,
 
 async function createNFT(id: string, nft: NamesData): Promise<void> {
   console.log("createNFT", id, nft);
-  const bot = new BotMessage(id);
+  const bot = new BotMessage(id, nft.language);
   if (!nft.deploy || !nft.ipfs || !nft.deploy.secret) {
     console.error("No nft.deploy or nft.ipfs or deploy.secret");
     await bot.message(
@@ -462,9 +462,8 @@ async function createNFT(id: string, nft: NamesData): Promise<void> {
 
   if (sentTx.hash() !== undefined) {
     await algoliaWriteToken(nft);
-    const successMsg = `Success! NFT deployment (3/3): NFT ${
-      nft.uri.name
-    } is written to MINA blockchain: 
+    const successMsg = `Success! NFT deployment (3/3): NFT ${nft.uri.name
+      } is written to MINA blockchain: 
 https://berkeley.minaexplorer.com/transaction/${sentTx.hash()}
 
 You can see it at https://minanft.io/${nft.username}
@@ -553,8 +552,8 @@ async function deploy(
 
     await bot.message(
       "NFT deployment (2/3): smart contract deployed: " +
-        "https://berkeley.minaexplorer.com/transaction/" +
-        hash,
+      "https://berkeley.minaexplorer.com/transaction/" +
+      hash,
     );
   }
   return hash;

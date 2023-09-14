@@ -5,6 +5,7 @@ export default interface NamesData {
   description?: string;
   url?: string;
   id: string;
+  language: string;
   timeCreated: number;
   deploy?: DeployData;
   ipfs?: string;

@@ -216,7 +216,7 @@ export default class DynamoDbConnector {
       .get(params, (error: AWSError, data: GetItemOutput) => {
         if (error) {
           console.error(error);
-          return;
+          return "en";
         }
         return data.Item;
       })

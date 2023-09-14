@@ -12,7 +12,7 @@ async function algoliaWriteTokens(): Promise<void> {
   const client = algoliasearch(ALGOLIA_PROJECT, ALGOLIA_KEY);
   const index = client.initIndex("minanft");
   const names = new Names(NAMES_TABLE);
-  const bot = new BotMessage(process.env.SUPPORT_CHAT!);
+  const bot = new BotMessage(process.env.SUPPORT_CHAT!, "en");
   const tokens: NamesData[] = await names.scan();
   tokens.sort((a, b) => b.timeCreated - a.timeCreated);
   let success: boolean = true;
@@ -33,7 +33,7 @@ async function algoliaWriteTokens(): Promise<void> {
 async function algoliaWriteToken(token: NamesData): Promise<void> {
   const client = algoliasearch(ALGOLIA_PROJECT, ALGOLIA_KEY);
   const index = client.initIndex("minanft");
-  const bot = new BotMessage(process.env.SUPPORT_CHAT!);
+  const bot = new BotMessage(process.env.SUPPORT_CHAT!, "en");
 
   console.log("alWriteToken");
 

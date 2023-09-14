@@ -25,9 +25,11 @@ export default class ChatGPTMessage {
   api: OpenAIApi;
   context: string;
   functions: ChatCompletionFunctions[];
+  language: string;
 
   constructor(
     token: string,
+    language: string,
     context: string = "",
     functions: ChatCompletionFunctions[] = [],
   ) {
@@ -38,6 +40,7 @@ export default class ChatGPTMessage {
     this.api = new OpenAIApi(configuration);
     this.context = context;
     this.functions = functions;
+    this.language = language;
   }
 
   public async message(params: any): Promise<ImageGPT> {
@@ -131,11 +134,11 @@ export default class ChatGPTMessage {
     const request: ChatCompletionRequestMessage[] =
       role == "assistant"
         ? [
-            {
-              role: ChatCompletionRequestMessageRoleEnum.Assistant,
-              content: message,
-            },
-          ]
+          {
+            role: ChatCompletionRequestMessageRoleEnum.Assistant,
+            content: message,
+          },
+        ]
         : [];
 
     try {
@@ -158,14 +161,14 @@ export default class ChatGPTMessage {
         await dbConnector.updateUsage(id, <AIUsage>completion.data.usage);
       const message: ChatCompletionRequestMessage | undefined = <
         ChatCompletionRequestMessage
-      >completion.data.choices[0].message;
+        >completion.data.choices[0].message;
       if (message) {
         console.log("ChatGPT", message);
         await history.addAnswer(
           <ChatCompletionRequestMessage>completion.data.choices[0].message,
         );
         if (message.function_call) {
-          await handleFunctionCall(id, message.function_call, username);
+          await handleFunctionCall(id, message.function_call, username, this.language);
           answer.answerType = "function";
           answer.text = "";
         }
@@ -207,29 +210,29 @@ export default class ChatGPTMessage {
     const chatGptMessages =
       pMessage == ""
         ? [
-            {
-              role: ChatCompletionRequestMessageRoleEnum.System,
-              content: isArchetype ? art : art + username,
-            },
-            {
-              role: ChatCompletionRequestMessageRoleEnum.User,
-              content: msg,
-            },
-          ]
+          {
+            role: ChatCompletionRequestMessageRoleEnum.System,
+            content: isArchetype ? art : art + username,
+          },
+          {
+            role: ChatCompletionRequestMessageRoleEnum.User,
+            content: msg,
+          },
+        ]
         : [
-            {
-              role: ChatCompletionRequestMessageRoleEnum.User,
-              content: pMessage,
-            },
-            {
-              role: ChatCompletionRequestMessageRoleEnum.System,
-              content: isArchetype ? art : art + username,
-            },
-            {
-              role: ChatCompletionRequestMessageRoleEnum.User,
-              content: msg,
-            },
-          ];
+          {
+            role: ChatCompletionRequestMessageRoleEnum.User,
+            content: pMessage,
+          },
+          {
+            role: ChatCompletionRequestMessageRoleEnum.System,
+            content: isArchetype ? art : art + username,
+          },
+          {
+            role: ChatCompletionRequestMessageRoleEnum.User,
+            content: msg,
+          },
+        ];
 
     try {
       const completion = await this.api.createChatCompletion({

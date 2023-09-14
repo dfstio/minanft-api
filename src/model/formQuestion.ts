@@ -1,11 +1,9 @@
-import Translation from "./translation";
-
 export default interface FormQuestion {
   name: string;
   shortName?: string;
-  text: Translation;
+  text: string;
   type: string;
   num: number;
-  error?: Translation;
-  success?: Translation;
+  error?: string;
+  success?: string;
 }
