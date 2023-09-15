@@ -39,5 +39,6 @@
   "sucessDeploymentMessage": "Success! NFT deployment (3/3): NFT {{nftname}} is written to the MINA blockchain: https://berkeley.minaexplorer.com/transaction/{{hash}}\n\nYou can view it at https://minanft.io/{{nftname}}\nIf you want to create another NFT, type the command \"new\"",
   "Transactionhasfailed": "The transaction has failed",
   "smartcontractdeployed": "NFT deployment (2/3): smart contract deployed: https://berkeley.minaexplorer.com/transaction/{{hash}}",
-  "ErrorloadingNFT": "Error loading NFT"
+  "ErrorloadingNFT": "Error loading NFT",
+  "Iwanttosell": "I want to sell my Mina NFT"
 }

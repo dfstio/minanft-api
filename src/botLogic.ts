@@ -6,26 +6,16 @@ import Names from "./connector/names";
 import History from "./connector/history";
 import {
   startDeployment,
-  startDeploymentIpfs,
   generateFilename,
 } from "./nft/nft";
 import DocumentData from "./model/documentData";
-import AccountData from "./model/accountData";
 import FileHandler from "./fileHandler";
-import ImageData from "./model/imageData";
 import VoiceData from "./model/voiceData";
 import { copyTelegramImageToS3 } from "./imageHandler";
 import VoiceHandler from "./voiceHandler";
-import AudioHandler from "./audioHandler";
 import Validator from "./validator";
 import FormQuestion from "./model/formQuestion";
-import FormAnswer from "./model/formAnswer";
 import callLambda from "./mina/lambda";
-import AWS from "aws-sdk";
-import nodemailer from "nodemailer";
-//import ChatGPTMessage from "./chatgpt/chatgpt";
-//import { context } from "./chatgpt/context";
-//import { functions } from "./chatgpt/functions";
 import { reservedNames } from "./nft/reservednames";
 import { generateJWT } from "./api/jwt";
 import { algoliaWriteTokens } from "./nft/algolia";
@@ -36,7 +26,6 @@ import {
   botCommandCallback,
 } from "./payments/botcommands";
 
-const CHATGPT_TOKEN = process.env.CHATGPT_TOKEN!;
 const CHATGPTPLUGINAUTH = process.env.CHATGPTPLUGINAUTH!;
 const NAMES_TABLE = process.env.NAMES_TABLE!;
 const HISTORY_TABLE = process.env.HISTORY_TABLE!;
@@ -49,12 +38,6 @@ interface KeyboardButton {
   request_location?: boolean;
 }
 
-interface ReplyKeyboardMarkup {
-  keyboard: KeyboardButton[][];
-  resize_keyboard?: boolean;
-  one_time_keyboard?: boolean;
-  selective?: boolean;
-}
 
 interface ReplyKeyboardRemove {
   remove_keyboard: true;
@@ -158,7 +141,7 @@ export default class BotLogic {
 
     if (body.message && body.message.successful_payment) {
       console.log("successful_payment");
-      await this.message("Thank you for payment");
+      await this.message("Thank you for payment"); //TODO: translate message and handle payment
       return;
     }
 
@@ -267,7 +250,7 @@ export default class BotLogic {
         "ask",
         JSON.stringify({
           id: chatIdString,
-          message: "I want to sell my Mina NFT",
+          message: T("Iwanttosell"), //  "Iwanttosell": "I want to sell my Mina NFT"
           parentMessage: parentMessage,
           image: "",
           //function_call: "sell",
@@ -560,14 +543,6 @@ export default class BotLogic {
                 language: LANGUAGE,
               }),
             );
-
-            /*
-            await startDeploymentIpfs(
-                chatIdString,
-                userInput.substring(7),
-                username ? username : "",
-            );
-        */
           }
           return;
         }
