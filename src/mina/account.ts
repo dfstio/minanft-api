@@ -158,7 +158,7 @@ async function checkGasTank(gastank: string): Promise<boolean> {
   const balanceGasTankMina = Number(balanceGasTank.toBigInt()) / 1e9;
   const replenishGasTank: boolean = balanceGasTankMina < GASTANK_MINLIMIT;
   console.log(
-    "Balance of gas tank",
+    "Balance of gas tank", PublicKey.toBase58(gasTankPublicKeyMina), "is",
     balanceGasTankMina.toLocaleString("en"),
     ", needs replenishing:",
     replenishGasTank,
@@ -457,7 +457,7 @@ If you want to create one more NFT, type command "new"`;
     await table.remove(id);
     await sleep(1000);
     //   "sucessDeploymentMessage": "Success! NFT deployment (3/3): NFT {{nftname}}\nis written to the MINA blockchain:\nhttps://berkeley.minaexplorer.com/transaction/{{hash}}\n\nYou can see it at https://minanft.io/{{nftname}}\nIf you want to create one more NFT, type command \"new\""
-    await bot.tmessage("sucessDeploymentMessage", { nftname: nft.username, hash: sentTx.hash() }))
+    await bot.tmessage("sucessDeploymentMessage", { nftname: nft.username, hash: sentTx.hash() })
   } else {
     console.error("Send fail", sentTx);
     //   "Transactionhasfailed": "Transaction has failed"

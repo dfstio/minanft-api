@@ -70,7 +70,7 @@ export default class BotMessage {
 
   public async invoice(username: string, image: string): Promise<void> {
     this.bot.telegram
-      .sendInvoice(this.id, mintInvoice(this.id, username, image))
+      .sendInvoice(this.id, mintInvoice(this.id, this.T, username, image))
       .catch((error) => {
         console.error(`Telegraf error`, error);
       });
@@ -78,7 +78,7 @@ export default class BotMessage {
 
   public async supportTicket(): Promise<void> {
     this.bot.telegram
-      .sendInvoice(this.id, supportInvoice(this.id))
+      .sendInvoice(this.id, supportInvoice(this.id, this.T))
       .catch((error) => {
         console.error(`Telegraf error`, error);
       });

@@ -40,5 +40,16 @@
   "Transactionhasfailed": "La transazione è fallita",
   "smartcontractdeployed": "Distribuzione NFT (2/3): contratto intelligente distribuito: https://berkeley.minaexplorer.com/transaction/{{hash}}",
   "ErrorloadingNFT": "Errore nel caricamento dell'NFT",
-  "Iwanttosell": "Voglio vendere il mio Mina NFT"
+  "Iwanttosell": "Voglio vendere il mio Mina NFT",
+  "ReservationNFTname": "Prenotazione del nome Avatar NFT MINA sulla blockchain MINA per 1 anno e distribuzione del Mina NFT",
+  "NFTtokendeployment": "Distribuzione del token NFT",
+  "ExclusiveAvatarNFTname": "Nome Avatar NFT Esclusivo",
+  "ShortAvatarNFTName": "Nome Avatar NFT Breve",
+  "AvatarNFTname": "Nome Avatar NFT",
+  "DeploymentofMinaNFTpost": "Distribuzione del post Mina NFT sulla blockchain MINA",
+  "NFTpostdeployment": "Distribuzione post-NFT",
+  "MinaNFT1hoursupport": "Supporto Mina NFT di 1 ora",
+  "SupportbyMinaNFTteam": "Supporto - un'ora di assistenza dal team MinaNFT tramite Zoom o chiamata/chat Telegram",
+  "Support1hour": "Supporto - 1 ora",
+  "PurchaseofAvatarNFT": "Acquisto del nome Avatar NFT MINA sulla blockchain MINA"
 }

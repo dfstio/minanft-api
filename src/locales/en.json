@@ -40,5 +40,16 @@
   "Transactionhasfailed": "The transaction has failed",
   "smartcontractdeployed": "NFT deployment (2/3): smart contract deployed: https://berkeley.minaexplorer.com/transaction/{{hash}}",
   "ErrorloadingNFT": "Error loading NFT",
-  "Iwanttosell": "I want to sell my Mina NFT"
+  "Iwanttosell": "I want to sell my Mina NFT",
+  "ReservationNFTname": "Reservation of the MINA Avatar NFT name on the MINA blockchain for 1 year and deployment of Mina NFT",
+  "NFTtokendeployment": "NFT token deployment",
+  "ExclusiveAvatarNFTname": "Exclusive Avatar NFT name",
+  "ShortAvatarNFTName": "Short Avatar NFT Name",
+  "AvatarNFTname": "Avatar NFT name",
+  "DeploymentofMinaNFTpost": "Deployment of Mina NFT post to the MINA blockchain",
+  "NFTpostdeployment": "NFT post-deployment",
+  "MinaNFT1hoursupport": "Mina NFT 1-hour support",
+  "SupportbyMinaNFTteam": "Support - one hour of support by the MinaNFT team through Zoom or Telegram call or chat",
+  "Support1hour": "Support - 1 hour",
+  "PurchaseofAvatarNFT": "Purchase of the MINA Avatar NFT name on the MINA blockchain"
 }

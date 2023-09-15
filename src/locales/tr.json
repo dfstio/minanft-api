@@ -40,5 +40,16 @@
   "Transactionhasfailed": "İşlem başarısız oldu",
   "smartcontractdeployed": "NFT dağıtımı (2/3): akıllı sözleşme dağıtıldı: https://berkeley.minaexplorer.com/transaction/{{hash}}",
   "ErrorloadingNFT": "NFT yüklenirken hata",
-  "Iwanttosell": "Mina NFT'mi satmak istiyorum"
+  "Iwanttosell": "Mina NFT'mi satmak istiyorum",
+  "ReservationNFTname": "MINA Avatar NFT adının MINA blockchain üzerinde 1 yıllığına rezervasyonu ve Mina NFT'nin dağıtımı",
+  "NFTtokendeployment": "NFT token dağıtımı",
+  "ExclusiveAvatarNFTname": "Özel Avatar NFT adı",
+  "ShortAvatarNFTName": "Kısa Avatar NFT Adı",
+  "AvatarNFTname": "Avatar NFT adı",
+  "DeploymentofMinaNFTpost": "Mina NFT gönderisinin MINA blockchain'e dağıtımı",
+  "NFTpostdeployment": "NFT gönderi-dağıtımı",
+  "MinaNFT1hoursupport": "Mina NFT 1 saat destek",
+  "SupportbyMinaNFTteam": "Destek - MinaNFT ekibi tarafından Zoom veya Telegram arama veya sohbet yoluyla 1 saat destek",
+  "Support1hour": "Destek - 1 saat",
+  "PurchaseofAvatarNFT": "MINA Avatar NFT adının MINA blockchain üzerinde satın alınması"
 }

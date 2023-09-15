@@ -1,20 +1,21 @@
 import NFTPriceData from "../model/nftPriceData";
 import { nftPrice } from "./pricing";
 
-function mintInvoice(id: string, username: string, image: string) {
+function mintInvoice(id: string, T: any, username: string, image: string) {
   const price: NFTPriceData = nftPrice(username);
   const invoice = {
     provider_token: process.env.STRIPE_KEY!,
     //start_parameter: 'time-machine-sku',
     title: "Mina NFT " + username,
     description:
-      "Reservation of the MINA Avatar NFT name on MINA blockchain for 1 year and deployment of Mina NFT",
+      // "ReservationNFTname": "Reservation of the MINA Avatar NFT name on MINA blockchain for 1 year and deployment of Mina NFT"
+      T("ReservationNFTname"),
     currency: "usd",
     photo_url: `https://res.cloudinary.com/minanft/image/fetch/h_300,q_100,f_auto/${image}`,
     //is_flexible: true,
     prices: [
       { label: price.description, amount: price.price * 100 },
-      { label: "NFT token deployment", amount: 9 * 100 },
+      { label: T("NFTtokendeployment"), amount: 9 * 100 }, // "NFTtokendeployment": "NFT token deployment",
     ],
     payload: JSON.stringify({ username, id }),
   };
@@ -23,16 +24,17 @@ function mintInvoice(id: string, username: string, image: string) {
   return invoice;
 }
 
-function buyInvoice(token: any) {
+function buyInvoice(token: any, T: any) {
   const invoice = {
     provider_token: process.env.STRIPE_KEY!,
     //start_parameter: 'time-machine-sku',
     title: "Mina NFT " + token.name,
-    description: "Purchase of the MINA Avatar NFT name on MINA blockchain",
+    // "PurchaseofAvatarNFT": "Purchase of the MINA Avatar NFT name on MINA blockchain"
+    description: T("PurchaseofAvatarNFT"),
     currency: token.currency.toLowerCase(),
     photo_url: `https://res.cloudinary.com/minanft/image/fetch/h_300,q_100,f_auto/${token.image}`,
     //is_flexible: true,
-    prices: [{ label: "Mina NFT @" + token.name, amount: token.price * 100 }],
+    prices: [{ label: "Mina NFT " + token.name, amount: token.price * 100 }],
     payload: JSON.stringify({ name: token.name }),
   };
 
@@ -42,6 +44,7 @@ function buyInvoice(token: any) {
 
 function postInvoice(
   id: string,
+  T: any,
   postId: string,
   username: string,
   image: string,
@@ -50,11 +53,11 @@ function postInvoice(
     provider_token: process.env.STRIPE_KEY!,
     //start_parameter: 'time-machine-sku',
     title: "Mina NFT post " + username,
-    description: "Deployment of Mina NFT post to MINA blockchain",
+    description: T("DeploymentofMinaNFTpost"), // "DeploymentofMinaNFTpost": "Deployment of Mina NFT post to MINA blockchain"
     currency: "usd",
     photo_url: `https://res.cloudinary.com/minanft/image/fetch/h_300,q_100,f_auto/https://minanft-storage.s3.eu-west-1.amazonaws.com/${image}`,
     //is_flexible: true,
-    prices: [{ label: "NFT post - deployment", amount: 5 * 100 }],
+    prices: [{ label: T("NFTpostdeployment"), amount: 5 * 100 }], // "NFTpostdeployment": "NFT post - deployment"
     payload: JSON.stringify({ username, id, postId }),
   };
 
@@ -62,17 +65,18 @@ function postInvoice(
   return invoice;
 }
 
-function supportInvoice(id: string) {
+function supportInvoice(id: string, T: any) {
   const invoice = {
     provider_token: process.env.STRIPE_KEY!,
     //start_parameter: 'time-machine-sku',
-    title: "Mina NFT 1 hour support",
+    title: T("MinaNFT1hoursupport"), // "MinaNFT1hoursupport": "Mina NFT 1 hour support"
     description:
-      "Support - one hour of the support by MinaNFT team thru zoom or telegram call or chat",
+      // "SupportbyMinaNFTteam": "Support - one hour of the support by MinaNFT team thru zoom or telegram call or chat"
+      T("SupportbyMinaNFTteam"),
     currency: "usd",
     photo_url: `https://res.cloudinary.com/minanft/image/fetch/h_300,q_100,f_auto/https://minanft-storage.s3.eu-west-1.amazonaws.com/minanft_profile_photo.jpg`,
     //is_flexible: true,
-    prices: [{ label: "Support - 1 hour", amount: 100 * 100 }],
+    prices: [{ label: T("Support1hour"), amount: 100 * 100 }], // "Support1hour": "Support - 1 hour"
     payload: JSON.stringify({ id }),
   };
 

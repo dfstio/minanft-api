@@ -2,6 +2,7 @@ import { Telegraf, Markup } from "telegraf";
 import BotMessage from "../mina/message";
 import { getToken, getTokenByIndex, getSaleTokenByIndex } from "../nft/algolia";
 import { buyInvoice } from "../payments/stripe";
+import { initLanguages, getLanguage, getT } from '../lang/lang'
 
 /*
 new - Create new NFT
@@ -130,7 +131,7 @@ async function botCommandBuy(
 
 async function botCommandCallback(ctx: any): Promise<void> {
   try {
-    console.log("botCommandCallback", ctx);
+    console.log("botCommandCallback", ctx, ctx.update.callback_query, ctx.update.callback_query.from);
     if (
       ctx &&
       ctx.update &&
@@ -139,8 +140,12 @@ async function botCommandCallback(ctx: any): Promise<void> {
       ctx.update.callback_query.from.id &&
       ctx.update.callback_query.data
     ) {
+      console.log("botCommandCallback data", ctx.update.callback_query.data, ctx.update.callback_query, ctx.update.callback_query.from);
       const data = JSON.parse(ctx.update.callback_query.data);
       console.log("callback_query data", data);
+      await initLanguages();
+      const language = await getLanguage(ctx.update.callback_query.from.id);
+      const T = getT(language);
 
       let id = parseInt(data.id);
       const action = data.a;
@@ -224,7 +229,7 @@ async function botCommandCallback(ctx: any): Promise<void> {
             replyOptions,
           );
         } else if (action === "buy" || action === "by") {
-          const stripeMsg = await ctx.replyWithInvoice(buyInvoice(token));
+          const stripeMsg = await ctx.replyWithInvoice(buyInvoice(token, T));
         }
       }
     }
