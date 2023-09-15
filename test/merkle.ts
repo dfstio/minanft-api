@@ -26,7 +26,7 @@ import {
   SelfProof,
   Experimental,
   verify,
-} from "snarkyjs";
+} from "o1js";
 import AccountData from "../src/model/accountData";
 import {
   MINAURL,
@@ -37,7 +37,7 @@ import {
 } from "../env.json";
 //const NFT_SECRET : Field = Field(27);
 
-class MerkleWitness10 extends MerkleWitness(10) {}
+class MerkleWitness10 extends MerkleWitness(10) { }
 
 export class NFT extends SmartContract {
   @state(Field) username = State<Field>();
@@ -155,7 +155,7 @@ async function minaInit() {
   await isReady;
   const Network = Mina.Network(MINAURL);
   await Mina.setActiveInstance(Network);
-  console.log("SnarkyJS loaded");
+  console.log("o1js loaded");
 }
 
 const deployTransactionFee = 100_000_000;
@@ -220,7 +220,7 @@ async function main() {
   const height: number = 10; //calculateMerkleTreeHeight(text.length);
 
   const tree: MerkleTree = new MerkleTree(height);
-  class MyMerkleWitness extends MerkleWitness(height) {}
+  class MyMerkleWitness extends MerkleWitness(height) { }
   let i: number;
   let textFields: Field[] = [];
   for (i = 0; i < text.length; i++)
@@ -255,15 +255,15 @@ async function main() {
  
     try{
     const p1 = await MT.mint(Field(0));
-		const ok1 = await verify(p1.toJSON(), verificationKey);
-		console.log("ok1", ok1);
-		} catch (error: any) { console.log("not ok1");}
-		
-		    try{
-		const p2 = await MT.mint(Field(1));
-		const ok2 = await verify(p2.toJSON(), verificationKey);
-		console.log("ok2", ok2);
-    		} catch (error: any) { console.log("not ok2");}
+    const ok1 = await verify(p1.toJSON(), verificationKey);
+    console.log("ok1", ok1);
+    } catch (error: any) { console.log("not ok1");}
+  	
+        try{
+    const p2 = await MT.mint(Field(1));
+    const ok2 = await verify(p2.toJSON(), verificationKey);
+    console.log("ok2", ok2);
+        } catch (error: any) { console.log("not ok2");}
   
     //const f: Field = Field.random();
     //console.log("f", Field.toJSON(f));
@@ -367,12 +367,12 @@ Your private key is EKE6fs4PPpeJU5dwJS9v4KCXGHzjVJS5sWTTj6iz34AMxGSM17Mv
 
     if (sentTx.hash() !== undefined) {
         console.log(`
-	Success! Update transaction sent.
+  Success! Update transaction sent.
 
-	Your smart contract state will be updated
-	as soon as the transaction is included in a block:
-	https://berkeley.minaexplorer.com/transaction/${sentTx.hash()}
-	`);
+  Your smart contract state will be updated
+  as soon as the transaction is included in a block:
+  https://berkeley.minaexplorer.com/transaction/${sentTx.hash()}
+  `);
         await sentTx.wait();
     } else console.error("Send fail", sentTx);
     /*
@@ -393,13 +393,13 @@ Your private key is EKE6fs4PPpeJU5dwJS9v4KCXGHzjVJS5sWTTj6iz34AMxGSM17Mv
 
   if (sentTx2.hash() !== undefined) {
     console.log(`
-	Success! Update transaction sent.
+  Success! Update transaction sent.
 
-	Your smart contract state will be updated
-	as soon as the transaction is included in a block:
-	https://berkeley.minaexplorer.com/transaction/${sentTx2.hash()}
-	`);
-	await sentTx2.wait();
+  Your smart contract state will be updated
+  as soon as the transaction is included in a block:
+  https://berkeley.minaexplorer.com/transaction/${sentTx2.hash()}
+  `);
+  await sentTx2.wait();
   } else console.error("Send fail", sentTx2);
 
 
@@ -419,13 +419,13 @@ Your private key is EKE6fs4PPpeJU5dwJS9v4KCXGHzjVJS5sWTTj6iz34AMxGSM17Mv
 
   if (sentTx3.hash() !== undefined) {
     console.log(`
-	Success! Update transaction sent.
+  Success! Update transaction sent.
 
-	Your smart contract state will be updated
-	as soon as the transaction is included in a block:
-	https://berkeley.minaexplorer.com/transaction/${sentTx3.hash()}
-	`);
-	await sentTx3.wait();
+  Your smart contract state will be updated
+  as soon as the transaction is included in a block:
+  https://berkeley.minaexplorer.com/transaction/${sentTx3.hash()}
+  `);
+  await sentTx3.wait();
   } else console.error("Send fail", sentTx3);
 
 
@@ -436,12 +436,12 @@ Your private key is EKE6fs4PPpeJU5dwJS9v4KCXGHzjVJS5sWTTj6iz34AMxGSM17Mv
         () => {
             let k: number;
             for (k = 0; k < text.length; k++) {
-            		const startTime = Date.now();
+                const startTime = Date.now();
                 const wt = tree.getWitness(BigInt(k));
                 const w = new MyMerkleWitness(wt);
                 const witnessTime = Date.now();
-    						const delayWitness = formatWinstonTime(witnessTime - startTime);
-    						console.log(`Witness ${k} took`, delayWitness);
+                const delayWitness = formatWinstonTime(witnessTime - startTime);
+                console.log(`Witness ${k} took`, delayWitness);
                 zkApp.check(
                     Field(5),
                     w,
@@ -471,12 +471,12 @@ Your private key is EKE6fs4PPpeJU5dwJS9v4KCXGHzjVJS5sWTTj6iz34AMxGSM17Mv
 
     if (sentTx4.hash() !== undefined) {
         console.log(`
-	Success! Update transaction sent.
+  Success! Update transaction sent.
 
-	Your smart contract state will be updated
-	as soon as the transaction is included in a block:
-	https://berkeley.minaexplorer.com/transaction/${sentTx4.hash()}
-	`);
+  Your smart contract state will be updated
+  as soon as the transaction is included in a block:
+  https://berkeley.minaexplorer.com/transaction/${sentTx4.hash()}
+  `);
         await sentTx4.wait();
     } else console.error("Send fail", sentTx4);
     /*
@@ -506,38 +506,38 @@ Your private key is EKE6fs4PPpeJU5dwJS9v4KCXGHzjVJS5sWTTj6iz34AMxGSM17Mv
 
     if (sentTx5.hash() !== undefined) {
         console.log(`
-	Success! Update transaction sent.
+  Success! Update transaction sent.
 
-	Your smart contract state will be updated
-	as soon as the transaction is included in a block:
-	https://berkeley.minaexplorer.com/transaction/${sentTx5.hash()}
-	`);
+  Your smart contract state will be updated
+  as soon as the transaction is included in a block:
+  https://berkeley.minaexplorer.com/transaction/${sentTx5.hash()}
+  `);
         await sentTx5.wait();
     } else console.error("Send fail", sentTx5);
 
     /*
 
-	// create a destination we will deploy the smart contract to
-	const zkAppPrivateKey = PrivateKey.random();
-	const zkFaucet = PrivateKey.fromBase58("EKEuXCfveWYbu1feMMUzuNyuxsyki22TEySgzzD4tPdxMkevGaSC"); 
-	const zkFaucetAddress = zkFaucet.toPublicKey();
-	//const zkFaucetAddressString = PublicKey.toBase58(zkFaucetAddress);
-	await fetchAccount({ publicKey: zkFaucetAddress });
-	const check = await Mina.hasAccount(zkFaucetAddress);
-	const balance = await Mina.getBalance(zkFaucetAddress);
+  // create a destination we will deploy the smart contract to
+  const zkAppPrivateKey = PrivateKey.random();
+  const zkFaucet = PrivateKey.fromBase58("EKEuXCfveWYbu1feMMUzuNyuxsyki22TEySgzzD4tPdxMkevGaSC"); 
+  const zkFaucetAddress = zkFaucet.toPublicKey();
+  //const zkFaucetAddressString = PublicKey.toBase58(zkFaucetAddress);
+  await fetchAccount({ publicKey: zkFaucetAddress });
+  const check = await Mina.hasAccount(zkFaucetAddress);
+  const balance = await Mina.getBalance(zkFaucetAddress);
 
-	const balanceString = (Number(balance.toBigInt()) / 1e9).toLocaleString('en')
-	console.log("Faucet balance", balanceString, check);
-	const zkAppPrivateKeyString = PrivateKey.toBase58(zkAppPrivateKey);
-	const zkAppAddress = zkAppPrivateKey.toPublicKey();
-	const zkAppAddressString = PublicKey.toBase58(zkAppAddress);
+  const balanceString = (Number(balance.toBigInt()) / 1e9).toLocaleString('en')
+  console.log("Faucet balance", balanceString, check);
+  const zkAppPrivateKeyString = PrivateKey.toBase58(zkAppPrivateKey);
+  const zkAppAddress = zkAppPrivateKey.toPublicKey();
+  const zkAppAddressString = PublicKey.toBase58(zkAppAddress);
 	
-	console.log("zkAppPrivateKey", zkAppPrivateKeyString, "zkAppAddress", zkAppAddressString);
+  console.log("zkAppPrivateKey", zkAppPrivateKeyString, "zkAppAddress", zkAppAddressString);
 	
-	//await Mina.faucet(zkAppAddress);
-	//await Mina.waitForFunding(zkAppAddressString);
-	console.log(`View your account on https://berkeley.minaexplorer.com/wallet/${zkAppAddressString}`);
-	*/
+  //await Mina.faucet(zkAppAddress);
+  //await Mina.waitForFunding(zkAppAddressString);
+  console.log(`View your account on https://berkeley.minaexplorer.com/wallet/${zkAppAddressString}`);
+  */
   await shutdown();
 }
 

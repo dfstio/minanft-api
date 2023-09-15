@@ -12,7 +12,7 @@ import {
   Encoding,
   UInt64,
   Poseidon,
-} from "snarkyjs";
+} from "o1js";
 import AccountData from "../src/model/accountData";
 import { MINAURL, MINAEXPLORER, MINAFEE } from "../env.json";
 
@@ -63,7 +63,7 @@ async function minaInit() {
   await isReady;
   const Network = Mina.Network(MINAURL);
   await Mina.setActiveInstance(Network);
-  console.log("SnarkyJS loaded");
+  console.log("o1js loaded");
 }
 
 function makeString(length: number): string {
@@ -144,9 +144,9 @@ async function main() {
   const f: Field = Field.random();
   const salt: Field = Field.random();
   console.log("f", Field.toJSON(f), "\nsalt", Field.toJSON(f), 
-  	"\nhash", Field.toJSON(Poseidon.hash([ salt, f ])));
+    "\nhash", Field.toJSON(Poseidon.hash([ salt, f ])));
 
-	const MAX_NUMBER = Number("28948022309329048855892746252171976963363056481941560715954676764349967630336");
+  const MAX_NUMBER = Number("28948022309329048855892746252171976963363056481941560715954676764349967630336");
   let str = "0xF";
   
   let i = 1;
@@ -194,7 +194,7 @@ async function main() {
       console.log(`
 Success! transaction sent:
 https://berkeley.minaexplorer.com/transaction/${sentTx.hash()}
-	`);
+  `);
     } else console.error("Send fail", sentTx);
   }
   */

@@ -26,7 +26,7 @@ import {
   SelfProof,
   Experimental,
   verify,
-} from "snarkyjs";
+} from "o1js";
 import AccountData from "../src/model/accountData";
 import {
   MINAURL,
@@ -74,7 +74,7 @@ async function minaInit() {
   await isReady;
   const Network = Mina.Network(MINAURL);
   await Mina.setActiveInstance(Network);
-  console.log("SnarkyJS loaded");
+  console.log("o1js loaded");
 }
 
 const deployTransactionFee = 100_000_000;
@@ -88,7 +88,7 @@ async function main() {
       console.log(`"${acc.privateKey}",`);
       await topupAccount(acc.publicKey);
       const delay: number =
-        1000 * 60 + Math.floor(Math.random() * (1000 * 60 * 10));
+        1000 + Math.floor(Math.random() * (1000 * 10));
       await sleep(delay);
       const balance = await accountBalance(acc.publicKey);
       if (balance == 0) console.error("Zero balance");

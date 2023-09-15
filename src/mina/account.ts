@@ -4,27 +4,21 @@ import {
   PublicKey,
   Field,
   AccountUpdate,
-  isReady,
   fetchAccount,
-  shutdown,
   Encoding,
   UInt64,
   MerkleMap,
-} from "snarkyjs";
+} from "o1js";
 import axios from "axios";
 
 import BotMessage from "./message";
-import callLambda from "./lambda";
 import TasksData from "../model/tasksData";
 import Tasks from "../connector/tasks";
 import Names from "../connector/names";
 import { AvatarNFT } from "./avatarnft";
-import DynamoDbConnector from "../connector/dynamoDbConnector";
 import AccountData from "../model/accountData";
 import DeployData from "../model/deployData";
 import NamesData from "../model/namesData";
-import FormQuestion from "../model/formQuestion";
-import Questions from "../questions";
 import IPFS from "../nft/ipfs";
 
 /* gastanks.ts - private keys of gas tanks
@@ -486,10 +480,9 @@ async function accountBalance(address: PublicKey): Promise<UInt64> {
 
 async function minaInit() {
   console.log("Initialising MINA from", MINAURL);
-  await isReady;
   const Network = Mina.Network(MINAURL);
   await Mina.setActiveInstance(Network);
-  console.log("SnarkyJS loaded");
+  console.log("o1js loaded");
 }
 
 const deployTransactionFee = 100_000_000;

@@ -26,7 +26,7 @@ import {
   SelfProof,
   Experimental,
   verify,
-} from "snarkyjs";
+} from "o1js";
 import AccountData from "../src/model/accountData";
 import {
   MINAURL,
@@ -36,37 +36,37 @@ import {
   NFT_SECRET,
 } from "../env.json";
 
-class MerkleWitness2 extends MerkleWitness(2) {}
-class MerkleWitness3 extends MerkleWitness(3) {}
-class MerkleWitness4 extends MerkleWitness(4) {}
-class MerkleWitness5 extends MerkleWitness(5) {}
-class MerkleWitness6 extends MerkleWitness(6) {}
-class MerkleWitness7 extends MerkleWitness(7) {}
-class MerkleWitness8 extends MerkleWitness(8) {}
-class MerkleWitness9 extends MerkleWitness(9) {}
-class MerkleWitness10 extends MerkleWitness(10) {}
-class MerkleWitness11 extends MerkleWitness(11) {}
-class MerkleWitness12 extends MerkleWitness(12) {}
-class MerkleWitness13 extends MerkleWitness(13) {}
-class MerkleWitness14 extends MerkleWitness(14) {}
-class MerkleWitness15 extends MerkleWitness(15) {}
-class MerkleWitness16 extends MerkleWitness(16) {}
-class MerkleWitness17 extends MerkleWitness(17) {}
-class MerkleWitness18 extends MerkleWitness(18) {}
-class MerkleWitness19 extends MerkleWitness(19) {}
-class MerkleWitness20 extends MerkleWitness(20) {}
-class MerkleWitness21 extends MerkleWitness(21) {}
-class MerkleWitness22 extends MerkleWitness(22) {}
-class MerkleWitness23 extends MerkleWitness(23) {}
-class MerkleWitness24 extends MerkleWitness(24) {}
-class MerkleWitness25 extends MerkleWitness(25) {}
-class MerkleWitness26 extends MerkleWitness(26) {}
-class MerkleWitness27 extends MerkleWitness(27) {}
-class MerkleWitness28 extends MerkleWitness(28) {}
-class MerkleWitness29 extends MerkleWitness(29) {}
-class MerkleWitness30 extends MerkleWitness(30) {}
-class MerkleWitness31 extends MerkleWitness(31) {}
-class MerkleWitness32 extends MerkleWitness(32) {}
+class MerkleWitness2 extends MerkleWitness(2) { }
+class MerkleWitness3 extends MerkleWitness(3) { }
+class MerkleWitness4 extends MerkleWitness(4) { }
+class MerkleWitness5 extends MerkleWitness(5) { }
+class MerkleWitness6 extends MerkleWitness(6) { }
+class MerkleWitness7 extends MerkleWitness(7) { }
+class MerkleWitness8 extends MerkleWitness(8) { }
+class MerkleWitness9 extends MerkleWitness(9) { }
+class MerkleWitness10 extends MerkleWitness(10) { }
+class MerkleWitness11 extends MerkleWitness(11) { }
+class MerkleWitness12 extends MerkleWitness(12) { }
+class MerkleWitness13 extends MerkleWitness(13) { }
+class MerkleWitness14 extends MerkleWitness(14) { }
+class MerkleWitness15 extends MerkleWitness(15) { }
+class MerkleWitness16 extends MerkleWitness(16) { }
+class MerkleWitness17 extends MerkleWitness(17) { }
+class MerkleWitness18 extends MerkleWitness(18) { }
+class MerkleWitness19 extends MerkleWitness(19) { }
+class MerkleWitness20 extends MerkleWitness(20) { }
+class MerkleWitness21 extends MerkleWitness(21) { }
+class MerkleWitness22 extends MerkleWitness(22) { }
+class MerkleWitness23 extends MerkleWitness(23) { }
+class MerkleWitness24 extends MerkleWitness(24) { }
+class MerkleWitness25 extends MerkleWitness(25) { }
+class MerkleWitness26 extends MerkleWitness(26) { }
+class MerkleWitness27 extends MerkleWitness(27) { }
+class MerkleWitness28 extends MerkleWitness(28) { }
+class MerkleWitness29 extends MerkleWitness(29) { }
+class MerkleWitness30 extends MerkleWitness(30) { }
+class MerkleWitness31 extends MerkleWitness(31) { }
+class MerkleWitness32 extends MerkleWitness(32) { }
 
 function getWitness(height: number, w: any): any {
   switch (height) {

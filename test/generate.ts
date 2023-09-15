@@ -27,7 +27,7 @@ import {
   Experimental,
   verify,
   MerkleMap,
-} from "snarkyjs";
+} from "o1js";
 import {
   MINAURL,
   MINAEXPLORER,
