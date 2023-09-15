@@ -75,7 +75,7 @@ async function botCommandList(
           ),
         },
       );
-    } else await bot.message("Error loading NFT");
+    } else await bot.tmessage("ErrorloadingNFT"); // "ErrorloadingNFT": "Error loading NFT"
   } catch (err) {
     console.error("botCommandList - catch", err);
   }
@@ -122,7 +122,7 @@ async function botCommandBuy(
           ]),
         },
       );
-    } else await bot.message("Error loading NFT");
+    } else await bot.tmessage("ErrorloadingNFT"); // "ErrorloadingNFT": "Error loading NFT"
   } catch (err) {
     console.error("botCommandBuy - catch", err);
   }

@@ -242,10 +242,8 @@ async function deployContract(id: string, nft: NamesData): Promise<void> {
     const zkAppPublicKey = zkAppPrivateKey.toPublicKey();
     const zkAppAddressString = PublicKey.toBase58(zkAppPublicKey);
     const secret = Field.random();
-
-    await bot.message(
-      `NFT deployment (1/3): created NFT account ${zkAppAddressString}`,
-    );
+    //  "createdNFTaccount": "NFT deployment (1/3): created NFT account {{account}}"
+    await bot.tmessage("createdNFTaccount", { account: zkAppAddressString })
 
     let result = <DeployData>{
       privateKey: zkAppPrivateKeyString,
@@ -264,9 +262,8 @@ async function deployContract(id: string, nft: NamesData): Promise<void> {
     console.log("cidImage", cidImage);
     if (!cidImage || cidImage === "") {
       console.error("deployContract - addLink error");
-      await bot.message(
-        `NFT deployment: IPFS error. Cannot upload image. Please try again later by typing command "new"`,
-      );
+      //    "IPFSerrorimage": "NFT deployment: IPFS error. Cannot upload image. Please try again later by typing command \"new\""
+      await bot.tmessage("IPFSerrorimage")
       return;
     }
 
@@ -284,9 +281,8 @@ async function deployContract(id: string, nft: NamesData): Promise<void> {
     console.log("cidURI", cidURI);
     if (!cidURI) {
       console.error("deployContract - add error");
-      await bot.message(
-        `NFT deployment: IPFS error. Cannot upload URI. Please try again later by typing command "new"`,
-      );
+      //  "IPFSerroruri": "NFT deployment: IPFS error. Cannot upload URI. Please try again later by typing command \"new\""
+      await bot.tmessage("IPFSerroruri");
       return;
     }
     deployedNFT.ipfs = cidURI;
@@ -306,13 +302,7 @@ async function deployContract(id: string, nft: NamesData): Promise<void> {
     const compileTime = Date.now();
     const delay = formatWinstonTime(compileTime - startTime);
     console.log("Compilation took", delay);
-    /*
-    await bot.message(
-      `Compilation took ${delay}
-Deploying your NFT smart contract to MINA blockchain...`,
-    );
-    console.log("verificationKey", verificationKey);
-    */
+
     const hash: string | undefined = await deploy(
       deployerPrivateKey,
       zkAppPrivateKey,
@@ -322,9 +312,8 @@ Deploying your NFT smart contract to MINA blockchain...`,
     );
     if (!hash || hash == "") {
       console.error("Error deploying contract");
-      await bot.message(
-        `NFT deployment: Error deploying contract to MINA blockchain. Please try again later by typing command "new"`,
-      );
+      //  "Errordeployingcontract": "NFT deployment: Error deploying contract to MINA blockchain. Please try again later by typing command \"new\""
+      await bot.tmessage("Errordeployingcontract")
       return;
     }
 
@@ -348,9 +337,8 @@ async function createNFT(id: string, nft: NamesData): Promise<void> {
   const bot = new BotMessage(id, nft.language);
   if (!nft.deploy || !nft.ipfs || !nft.deploy.secret) {
     console.error("No nft.deploy or nft.ipfs or deploy.secret");
-    await bot.message(
-      `NFT deployment: Error deploying NFT to MINA blockchain. Please try again later by typing command "new"`,
-    );
+    //   "ErrordeployingNFT": "NFT deployment: Error deploying NFT to MINA blockchain. Please try again later by typing command \"new\""
+    await bot.tmessage("ErrordeployingNFT")
     return;
   }
   axios
@@ -385,8 +373,6 @@ async function createNFT(id: string, nft: NamesData): Promise<void> {
   const compileTime = Date.now();
   const delay = formatWinstonTime(compileTime - startTime);
   console.log("Compilation took", delay);
-  //await bot.message(`Creating Avatar NFT on MINA blockchain...`);
-
   console.log("Creating tx...");
   const deployerPrivateKey = await getDeployer();
   const deployerPublicKey = deployerPrivateKey.toPublicKey();
@@ -396,9 +382,8 @@ async function createNFT(id: string, nft: NamesData): Promise<void> {
   const ipfsFields: Field[] | undefined = ipfsToFields("ipfs:" + nft.ipfs);
   if (!ipfsFields) {
     console.error("Error converting IPFS hash");
-    await bot.message(
-      `NFT deployment: Error converting IPFS hash of the NFT. Please try again later by typing command "new"`,
-    );
+    //   "ErrorconvertingIPFShash": "NFT deployment: Error converting IPFS hash of the NFT. Please try again later by typing command \"new\""
+    await bot.tmessage("ErrorconvertingIPFShash")
     return;
   }
   let newsecret: Field;
@@ -406,9 +391,8 @@ async function createNFT(id: string, nft: NamesData): Promise<void> {
     newsecret = Field.fromJSON(nft.deploy.secret);
   else {
     console.error("No secret in nft.deploy.secret");
-    await bot.message(
-      `NFT deployment: Error deploying NFT to MINA blockchain. Cannot set new passsword for the NFT. Please try again later by typing command "new"`,
-    );
+    //   "Cannotsetnewpasssword":  "NFT deployment: Error deploying NFT to MINA blockchain. Cannot set new passsword for the NFT. Please try again later by typing command \"new\""  
+    await bot.tmessage("Cannotsetnewpasssword")
     return;
   }
 
@@ -455,8 +439,7 @@ async function createNFT(id: string, nft: NamesData): Promise<void> {
   const endTime = Date.now();
   const delay3 = formatWinstonTime(endTime - startTime1);
   console.log("Proof took", delay3, ", now sending transaction...");
-  //await bot.message(`Zero knowledge proof took ${delay3}`);
-  tx.sign([deployerPrivateKey]); // deployerPrivateKey gasPrivateKey
+  tx.sign([deployerPrivateKey])
 
   let sentTx = await tx.send();
 
@@ -473,10 +456,12 @@ If you want to create one more NFT, type command "new"`;
     const table = new Tasks(TASKS_TABLE);
     await table.remove(id);
     await sleep(1000);
-    await bot.message(successMsg);
+    //   "sucessDeploymentMessage": "Success! NFT deployment (3/3): NFT {{nftname}}\nis written to the MINA blockchain:\nhttps://berkeley.minaexplorer.com/transaction/{{hash}}\n\nYou can see it at https://minanft.io/{{nftname}}\nIf you want to create one more NFT, type command \"new\""
+    await bot.tmessage("sucessDeploymentMessage", { nftname: nft.username, hash: sentTx.hash() }))
   } else {
     console.error("Send fail", sentTx);
-    await bot.message(`Send fail`);
+    //   "Transactionhasfailed": "Transaction has failed"
+    await bot.tmessage("Transactionhasfailed");
   }
   await sleep(1000);
   return;
@@ -549,12 +534,8 @@ async function deploy(
       "NFT deployment (2/3): smart contract deployed: ",
       "https://berkeley.minaexplorer.com/transaction/" + hash,
     );
-
-    await bot.message(
-      "NFT deployment (2/3): smart contract deployed: " +
-      "https://berkeley.minaexplorer.com/transaction/" +
-      hash,
-    );
+    //   "smartcontractdeployed": "NFT deployment (2/3): smart contract deployed:\nhttps://berkeley.minaexplorer.com/transaction/{{hash}}"
+    await bot.tmessage("smartcontractdeployed", { hash: hash })
   }
   return hash;
 }
