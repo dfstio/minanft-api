@@ -1,5 +1,5 @@
 // import bip39 from 'bip39
-import { Field } from "snarkyjs";
+import { Field } from "o1js";
 
 function fieldToSeed(field: Field): string {
   // TODO - write code

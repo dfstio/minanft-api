@@ -1,25 +1,27 @@
-import callLambda from "../mina/lambda";
-import BotMessage from "../mina/message";
-import axios from "axios";
-import { verifyJWT } from "../api/jwt";
+import callLambda from '../mina/lambda';
+import BotMessage from '../mina/message';
+import { initLanguages, getLanguage } from '../lang/lang'
+import axios from 'axios';
+import { verifyJWT } from '../api/jwt';
 
 async function startDeployment(
   id: string,
+  language: string,
   timeNow: number,
   filename: string,
   username: string,
   creator: string,
 ): Promise<void> {
-  console.log("startDeployment", id, username, timeNow, filename);
-  const bot = new BotMessage(id);
+  console.log('startDeployment', id, language, username, timeNow, filename);
+  const bot = new BotMessage(id, language);
 
   let uri = {
-    name: username[0] == "@" ? username : "@" + username,
-    description: "",
-    url: "",
-    type: "object",
+    name: username[0] == '@' ? username : '@' + username,
+    description: '',
+    url: '',
+    type: 'object',
     image: filename,
-    external_url: "minanft.io",
+    external_url: 'minanft.io',
     time: timeNow,
   };
 
@@ -28,7 +30,8 @@ async function startDeployment(
     id: id,
     timeCreated: timeNow,
     uri: uri,
-    creator: creator == "" ? "@MinaNFT_bot" : "@" + creator,
+    creator: creator == '' ? '@MinaNFT_bot' : '@' + creator,
+    language: language,
   };
   await bot.image(
     `https://minanft-storage.s3.eu-west-1.amazonaws.com/${filename}`,
@@ -38,30 +41,32 @@ async function startDeployment(
     uri.name,
     `https://minanft-storage.s3.eu-west-1.amazonaws.com/${filename}`,
   );
-  await callLambda("deploy", JSON.stringify(nft));
+  await callLambda('deploy', JSON.stringify(nft));
 }
 
 async function startDeploymentIpfs(
   id: string,
+  language: string,
   command: string,
   creator: string,
 ): Promise<void> {
-  console.log("startDeploymentIpfs", id, command, creator);
-  const bot = new BotMessage(id);
+  console.log('startDeploymentIpfs', id, language, command, creator);
+  const bot = new BotMessage(id, language);
 
   try {
     const response: any = await axios.get(`https://ipfs.io/ipfs/${command}`);
-    console.log("startDeploymentIpfs axios", response.data);
+    console.log('startDeploymentIpfs axios', response.data);
     const uri = response.data;
-    console.log("uri", uri);
+    console.log('uri', uri);
 
     if (uri.name && uri.image) {
       let nft = {
-        username: uri.name[0] == "@" ? uri.name : "@" + uri.name,
+        username: uri.name[0] == '@' ? uri.name : '@' + uri.name,
         id: id,
         timeCreated: Date.now(),
         uri: uri,
-        creator: creator == "" ? "@MinaNFT_bot" : "@" + creator,
+        creator: creator == '' ? '@MinaNFT_bot' : '@' + creator,
+        language: language,
         ipfs: command,
       };
       await bot.image(
@@ -69,11 +74,11 @@ async function startDeploymentIpfs(
         { caption: uri.name },
       );
       await bot.invoice(uri.name, `${uri.image}`);
-      await callLambda("deploy", JSON.stringify(nft));
-    } else console.error("startDeploymentIpfs - wrong uri", uri);
+      await callLambda('deploy', JSON.stringify(nft));
+    } else console.error('startDeploymentIpfs - wrong uri', uri);
   } catch (error: any) {
     console.error(
-      "startDeploymentIpfs",
+      'startDeploymentIpfs',
       error,
       error.data,
       error.response.data,
@@ -82,32 +87,34 @@ async function startDeploymentIpfs(
 }
 
 async function startDeploymentApi(body: any): Promise<void> {
-  console.log("startDeploymentApi", body);
+  console.log('startDeploymentApi', body);
   const { jwtToken, ipfs } = body;
 
   const id: string | undefined = verifyJWT(jwtToken);
   if (id) {
-    console.log("startDeploymentApi", id, ipfs);
+    console.log('startDeploymentApi', id, ipfs);
     // await startDeploymentIpfs(id, ipfs, "");
+    const language = await getLanguage(id);
     await callLambda(
-      "deployipfs",
+      'deployipfs',
       JSON.stringify({
         id,
         command: ipfs,
-        creator: "",
+        creator: '',
+        language
       }),
     );
   }
 }
 
 function generateFilename(timeNow: number): string {
-  let outString: string = "";
-  let inOptions: string = "abcdefghijklmnopqrstuvwxyz0123456789_";
+  let outString: string = '';
+  let inOptions: string = 'abcdefghijklmnopqrstuvwxyz0123456789_';
 
   for (let i = 0; i < 30; i++) {
     outString += inOptions.charAt(Math.floor(Math.random() * inOptions.length));
   }
-  return timeNow.toString() + "-" + outString;
+  return timeNow.toString() + '-' + outString;
 }
 
 export {

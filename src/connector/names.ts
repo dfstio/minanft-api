@@ -1,7 +1,7 @@
-import AWS, { AWSError } from "aws-sdk";
-import { DocumentClient, GetItemOutput } from "aws-sdk/clients/dynamodb";
-import NamesData from "../model/namesData";
-import DeployData from "../model/deployData";
+import AWS, { AWSError } from 'aws-sdk';
+import { DocumentClient, GetItemOutput } from 'aws-sdk/clients/dynamodb';
+import NamesData from '../model/namesData';
+import DeployData from '../model/deployData';
 
 export default class Names {
   private _client: DocumentClient;
@@ -22,7 +22,7 @@ export default class Names {
       TableName: this.tableName,
       Item: name,
     };
-    console.log("create", params);
+    console.log('create', params);
     this._client.put(params, (error) => {
       if (error) {
         console.error(error);
@@ -35,15 +35,16 @@ export default class Names {
     const params = {
       TableName: this.tableName,
       AttributesToGet: [
-        "username",
-        "id",
-        "timeCreated",
-        "uri",
-        "ipfs",
-        "onSale",
-        "price",
-        "currency",
-        "creator",
+        'username',
+        'id',
+        'language',
+        'timeCreated',
+        'uri',
+        'ipfs',
+        'onSale',
+        'price',
+        'currency',
+        'creator',
       ],
     };
 
@@ -51,7 +52,7 @@ export default class Names {
       .scan(params)
       .promise()
       .then((res) => {
-        console.log("scan", params, res);
+        console.log('scan', params, res);
         return res.Items as NamesData[];
       });
   }
@@ -64,7 +65,7 @@ export default class Names {
         username: username,
       },
     };
-    console.log("get Names", params);
+    console.log('get Names', params);
     return this._client
       .get(params, (error: AWSError, data: GetItemOutput) => {
         if (error) {
@@ -76,14 +77,14 @@ export default class Names {
       .promise()
       .then((res) => {
         if (res && res.Item) {
-          console.log("get", params, res.Item);
+          console.log('get', params, res.Item);
           return res.Item as NamesData;
         } else {
           return undefined;
         }
       })
       .catch(() => {
-        console.log("get DB query failed: no names data");
+        console.log('get DB query failed: no names data');
         return undefined;
       });
   }
@@ -94,11 +95,11 @@ export default class Names {
       Key: {
         username: username,
       },
-      UpdateExpression: `set deploy = :data`,
-      ExpressionAttributeValues: { ":data": data },
-      ReturnValues: "UPDATED_NEW",
+      UpdateExpression: 'set deploy = :data',
+      ExpressionAttributeValues: { ':data': data },
+      ReturnValues: 'UPDATED_NEW',
     };
-    console.log("update", params);
+    console.log('update', params);
     this._client.update(params, (error, data) => {
       if (error) {
         console.error(error);
@@ -117,11 +118,11 @@ export default class Names {
       Key: {
         username: username,
       },
-      UpdateExpression: `set ipfs = :ipfs, uri = :uri`,
-      ExpressionAttributeValues: { ":ipfs": ipfs, ":uri": uri },
-      ReturnValues: "UPDATED_NEW",
+      UpdateExpression: 'set ipfs = :ipfs, uri = :uri',
+      ExpressionAttributeValues: { ':ipfs': ipfs, ':uri': uri },
+      ReturnValues: 'UPDATED_NEW',
     };
-    console.log("update", params);
+    console.log('update', params);
     this._client.update(params, (error, data) => {
       if (error) {
         console.error(error);
@@ -140,15 +141,15 @@ export default class Names {
       Key: {
         username: username,
       },
-      UpdateExpression: `set price = :p, currency = :c, onSale = :s`,
+      UpdateExpression: 'set price = :p, currency = :c, onSale = :s',
       ExpressionAttributeValues: {
-        ":p": price,
-        ":c": currency.toLowerCase(),
-        ":s": true,
+        ':p': price,
+        ':c': currency.toLowerCase(),
+        ':s': true,
       },
-      ReturnValues: "UPDATED_NEW",
+      ReturnValues: 'UPDATED_NEW',
     };
-    console.log("update", params);
+    console.log('update', params);
     this._client.update(params, (error, data) => {
       if (error) {
         console.error(error);

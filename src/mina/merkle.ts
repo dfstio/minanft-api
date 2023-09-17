@@ -1,4 +1,4 @@
-import { Field, Poseidon, MerkleMap, PublicKey } from "snarkyjs";
+import { Field, Poseidon, MerkleMap, PublicKey } from "o1js";
 import { createHash } from "node:crypto";
 
 export default class Merkle {

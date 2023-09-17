@@ -4,6 +4,7 @@ import AWS from "aws-sdk";
 import FormData from "form-data";
 import callLambda from "./mina/lambda";
 import BotMessage from "./mina/message";
+import { initLanguages, getLanguage } from './lang/lang'
 
 const CHATGPT_TOKEN = process.env.CHATGPT_TOKEN!;
 const CHATGPTPLUGINAUTH = process.env.CHATGPTPLUGINAUTH!;
@@ -167,14 +168,16 @@ export default class VoiceHandler {
       console.log("Waiting for Whisper");
       await sleep(500);
     }
+    await initLanguages();
+    const language = await getLanguage(id);
     await sleep(200);
-    const bot = new BotMessage(id);
+    const bot = new BotMessage(id, language);
     if (chatGPT == "") {
       console.log("Empty prompt");
       return undefined;
     }
-
-    await bot.message(`Thank you for your prompt: ${chatGPT}`);
+    // "thankyouforprompt": "Thank you for your prompt: {{prompt}}"
+    await bot.tmessage("thankyouforprompt", { prompt: chatGPT })
     return chatGPT;
     /*
     await callLambda(

@@ -39,7 +39,7 @@ As for the storage of NFT data, reliable services such as nft.storage or Infura 
 - AWS lambda, S3 and DynamoDB
 - Serverless
 - ChatGPT
-- SnarkyJS
+- o1js
 - Telegram bot
 
 ## Website

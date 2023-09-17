@@ -1,6 +1,4 @@
 import { Handler, Context, Callback } from "aws-lambda";
-import callLambda from "./src/mina/lambda";
-import BotMessage from "./src/mina/message";
 import { startDeploymentApi } from "./src/nft/nft";
 
 const BOTAPIAUTH = process.env.BOTAPIAUTH!;

@@ -2,6 +2,7 @@ import { Telegraf, Markup } from "telegraf";
 import BotMessage from "../mina/message";
 import { getToken, getTokenByIndex, getSaleTokenByIndex } from "../nft/algolia";
 import { buyInvoice } from "../payments/stripe";
+import { initLanguages, getLanguage, getT } from '../lang/lang'
 
 /*
 new - Create new NFT
@@ -12,17 +13,18 @@ sell - Sell NFT
 buy - Buy NFT 		
 */
 
-async function supportTicket(id: string): Promise<void> {
-  const bot = new BotMessage(id);
+async function supportTicket(id: string, language: string): Promise<void> {
+  const bot = new BotMessage(id, language);
   await bot.supportTicket();
 }
 
 async function botCommandList(
   chatId: string,
+  language: string,
   name: string | undefined = undefined,
 ): Promise<void> {
   try {
-    const bot = new BotMessage(chatId);
+    const bot = new BotMessage(chatId, language);
     // await bot.supportTicket();
 
     const id: number = 0;
@@ -38,43 +40,43 @@ async function botCommandList(
         {
           caption: token.onSale
             ? `MinaNFT ${token.name.replaceAll(
-                "@",
-                "",
-              )}\nPrice: ${token.currency.toUpperCase()} ${token.price}`
+              "@",
+              "",
+            )}\nPrice: ${token.currency.toUpperCase()} ${token.price}`
             : `MinaNFT ${token.name.replaceAll("@", "")}`,
           parse_mode: "Markdown",
           ...Markup.inlineKeyboard(
             token.onSale
               ? [
-                  Markup.button.callback(
-                    "Buy",
-                    JSON.stringify({ a: "by", id: id }),
-                  ),
-                  Markup.button.callback(
-                    "<️",
-                    JSON.stringify({ a: "list", id: prev }),
-                    id === 0 ? true : false,
-                  ),
-                  Markup.button.callback(
-                    ">️",
-                    JSON.stringify({ a: "list", id: next }),
-                  ),
-                ]
+                Markup.button.callback(
+                  "Buy",
+                  JSON.stringify({ a: "by", id: id }),
+                ),
+                Markup.button.callback(
+                  "<️",
+                  JSON.stringify({ a: "list", id: prev }),
+                  id === 0 ? true : false,
+                ),
+                Markup.button.callback(
+                  ">️",
+                  JSON.stringify({ a: "list", id: next }),
+                ),
+              ]
               : [
-                  Markup.button.callback(
-                    "<️",
-                    JSON.stringify({ a: "list", id: prev }),
-                    id === 0 ? true : false,
-                  ),
-                  Markup.button.callback(
-                    ">️",
-                    JSON.stringify({ a: "list", id: next }),
-                  ),
-                ],
+                Markup.button.callback(
+                  "<️",
+                  JSON.stringify({ a: "list", id: prev }),
+                  id === 0 ? true : false,
+                ),
+                Markup.button.callback(
+                  ">️",
+                  JSON.stringify({ a: "list", id: next }),
+                ),
+              ],
           ),
         },
       );
-    } else await bot.message("Error loading NFT");
+    } else await bot.tmessage("ErrorloadingNFT"); // "ErrorloadingNFT": "Error loading NFT"
   } catch (err) {
     console.error("botCommandList - catch", err);
   }
@@ -82,10 +84,11 @@ async function botCommandList(
 
 async function botCommandBuy(
   chatId: string,
+  language: string,
   name: string | undefined = undefined,
 ): Promise<void> {
   try {
-    const bot = new BotMessage(chatId);
+    const bot = new BotMessage(chatId, language);
     // await bot.supportTicket();
 
     const id: number = 0;
@@ -120,7 +123,7 @@ async function botCommandBuy(
           ]),
         },
       );
-    } else await bot.message("Error loading NFT");
+    } else await bot.tmessage("ErrorloadingNFT"); // "ErrorloadingNFT": "Error loading NFT"
   } catch (err) {
     console.error("botCommandBuy - catch", err);
   }
@@ -128,7 +131,7 @@ async function botCommandBuy(
 
 async function botCommandCallback(ctx: any): Promise<void> {
   try {
-    console.log("botCommandCallback", ctx);
+    console.log("botCommandCallback", ctx, ctx.update.callback_query, ctx.update.callback_query.from);
     if (
       ctx &&
       ctx.update &&
@@ -137,8 +140,12 @@ async function botCommandCallback(ctx: any): Promise<void> {
       ctx.update.callback_query.from.id &&
       ctx.update.callback_query.data
     ) {
+      console.log("botCommandCallback data", ctx.update.callback_query.data, ctx.update.callback_query, ctx.update.callback_query.from);
       const data = JSON.parse(ctx.update.callback_query.data);
       console.log("callback_query data", data);
+      await initLanguages();
+      const language = await getLanguage(ctx.update.callback_query.from.id);
+      const T = getT(language);
 
       let id = parseInt(data.id);
       const action = data.a;
@@ -165,46 +172,46 @@ async function botCommandCallback(ctx: any): Promise<void> {
           const replyOptions = Markup.inlineKeyboard(
             token.onSale
               ? [
-                  Markup.button.callback(
-                    "Buy",
-                    JSON.stringify({
-                      a: isList ? "by" : "buy",
-                      id: id,
-                    }),
-                  ),
-                  Markup.button.callback(
-                    "<️",
-                    JSON.stringify({
-                      a: isList ? "list" : "load",
-                      id: prev,
-                    }),
-                    id === 0 ? true : false,
-                  ),
-                  Markup.button.callback(
-                    ">️",
-                    JSON.stringify({
-                      a: isList ? "list" : "load",
-                      id: next,
-                    }),
-                  ),
-                ]
+                Markup.button.callback(
+                  "Buy",
+                  JSON.stringify({
+                    a: isList ? "by" : "buy",
+                    id: id,
+                  }),
+                ),
+                Markup.button.callback(
+                  "<️",
+                  JSON.stringify({
+                    a: isList ? "list" : "load",
+                    id: prev,
+                  }),
+                  id === 0 ? true : false,
+                ),
+                Markup.button.callback(
+                  ">️",
+                  JSON.stringify({
+                    a: isList ? "list" : "load",
+                    id: next,
+                  }),
+                ),
+              ]
               : [
-                  Markup.button.callback(
-                    "<️",
-                    JSON.stringify({
-                      a: isList ? "list" : "load",
-                      id: prev,
-                    }),
-                    id === 0 ? true : false,
-                  ),
-                  Markup.button.callback(
-                    ">️",
-                    JSON.stringify({
-                      a: isList ? "list" : "load",
-                      id: next,
-                    }),
-                  ),
-                ],
+                Markup.button.callback(
+                  "<️",
+                  JSON.stringify({
+                    a: isList ? "list" : "load",
+                    id: prev,
+                  }),
+                  id === 0 ? true : false,
+                ),
+                Markup.button.callback(
+                  ">️",
+                  JSON.stringify({
+                    a: isList ? "list" : "load",
+                    id: next,
+                  }),
+                ),
+              ],
           );
 
           await ctx.editMessageMedia(
@@ -213,16 +220,16 @@ async function botCommandCallback(ctx: any): Promise<void> {
               media: `https://res.cloudinary.com/minanft/image/fetch/h_300,q_100,f_auto/${token.image}`,
               caption: token.onSale
                 ? `MinaNFT ${token.name.replaceAll(
-                    "@",
-                    "",
-                  )}\nPrice: ${token.currency.toUpperCase()} ${token.price}`
+                  "@",
+                  "",
+                )}\nPrice: ${token.currency.toUpperCase()} ${token.price}`
                 : `MinaNFT ${token.name.replaceAll("@", "")}`,
               parse_mode: "Markdown",
             },
             replyOptions,
           );
         } else if (action === "buy" || action === "by") {
-          const stripeMsg = await ctx.replyWithInvoice(buyInvoice(token));
+          const stripeMsg = await ctx.replyWithInvoice(buyInvoice(token, T));
         }
       }
     }

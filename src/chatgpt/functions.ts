@@ -49,21 +49,21 @@ async function handleFunctionCall(
   id: string,
   message: ChatCompletionRequestMessageFunctionCall,
   username: string | undefined,
+  language: string,
 ): Promise<void> {
   if (message && message.arguments) {
     try {
       const request = JSON.parse(message.arguments);
-      const bot = new BotMessage(id);
+      const bot = new BotMessage(id, language);
       console.log("Arguments", request);
 
       if (message.name == "view") {
         console.log("Function view:", request);
-        await bot.message(
-          `Let me show you ${
-            request.nft_name ? "NFT" + request.nft_name : "all NFTs"
-          }`,
-        );
-        await botCommandList(id, request.nft_name);
+        if (request.nft_name)
+          await bot.tmessage("letmeshowyou", { nftname: "NFT" + request.nft_name });
+        else
+          await bot.tmessage("letmeshowyouall");
+        await botCommandList(id, language, request.nft_name);
         return;
       }
 
@@ -77,11 +77,12 @@ async function handleFunctionCall(
             Number(request.price)
           ) {
             const names = new Names(NAMES_TABLE);
-            await bot.message(
-              `Selling NFT ${
-                username ? username.replaceAll("@", "") : ""
-              } for ${request.currency} ${request.price}`,
-            );
+            //  "sellingnftforcurrencyprice": "Selling NFT {{name}} for {{currency}} {{price}}"
+            await bot.tmessage("sellingnftforcurrencyprice", {
+              name: username ? username.replaceAll("@", "") : "",
+              currency: request.currency,
+              price: request.price
+            });
             await names.sell(username, Number(request.price), request.currency);
             await sleep(1000);
             const nft: NamesData | undefined = await names.get(username);
@@ -89,11 +90,12 @@ async function handleFunctionCall(
             if (nft && nft.onSale == true) await algoliaWriteToken(nft);
             else console.error("Error NFT sale handleFunctionCall");
           } else
-            await bot.message(
-              `Cannot sell NFT ${username ? username : ""} for ${
-                request.currency
-              } ${request.price}`,
-            );
+            // "cannotsellnftforcurrencyprice": "Cannot sell NFT {{name}} for {{currency}} {{price}}"
+            await bot.tmessage("cannotsellnftforcurrencyprice", {
+              name: username ? username.replaceAll("@", "") : "",
+              currency: request.currency,
+              price: request.price
+            });
           return;
         }
       }

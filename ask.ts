@@ -1,12 +1,10 @@
 import { Handler, Context, Callback } from "aws-lambda";
-import { ChatCompletionFunctions } from "openai";
 import ChatGPTMessage from "./src/chatgpt/chatgpt";
-import callLambda from "./src/mina/lambda";
 import ImageGPT from "./src/model/imageGPT";
 import BotMessage from "./src/mina/message";
+import { initLanguages, getLanguage } from './src/lang/lang'
 import { context as contextChatGPT } from "./src/chatgpt/context";
 import { functions } from "./src/chatgpt/functions";
-import NamesData from "./src/model/namesData";
 import { startDeployment, generateFilename } from "./src/nft/nft";
 import { copyAIImageToS3 } from "./src/imageHandler";
 
@@ -27,34 +25,38 @@ const chatgpt: Handler = async (
       answerType: "text",
       text: "Authentification failed",
     };
-    if (event && event.auth && event.auth === CHATGPTPLUGINAUTH) {
-      if (event.message && event.id) {
+
+    if (event && event.auth && event.id && event.auth === CHATGPTPLUGINAUTH) {
+      await initLanguages();
+      const language = await getLanguage(event.id);
+      if (event.message) {
         const chat = new ChatGPTMessage(
           CHATGPT_TOKEN,
+          language,
           contextChatGPT,
           functions,
         );
         result = await chat.message(event);
       }
-      if (event.id) {
-        const bot = new BotMessage(event.id);
-        if (result.answerType === "text") {
-          if (result.text.length < 4000) await bot.message(result.text);
-          else if (result.text.length < 4000 * 2) {
-            await bot.message(result.text.substring(0, 4000));
-            await sleep(1000);
-            await bot.message(result.text.substring(4000, 4000 * 2));
-          } else {
-            await bot.message(result.text.substring(0, 4000));
-            await sleep(1000);
-            await bot.message(result.text.substring(4000, 4000 * 2));
-            await sleep(1000);
-            await bot.message(result.text.substring(4000 * 2, 4000 * 3));
-          }
+
+      const bot = new BotMessage(event.id, language);
+      if (result.answerType === "text") {
+        if (result.text.length < 4000) await bot.message(result.text);
+        else if (result.text.length < 4000 * 2) {
+          await bot.message(result.text.substring(0, 4000));
+          await sleep(1000);
+          await bot.message(result.text.substring(4000, 4000 * 2));
+        } else {
+          await bot.message(result.text.substring(0, 4000));
+          await sleep(1000);
+          await bot.message(result.text.substring(4000, 4000 * 2));
+          await sleep(1000);
+          await bot.message(result.text.substring(4000 * 2, 4000 * 3));
         }
-        if (result.answerType === "image")
-          await bot.image(result.image, result.text);
       }
+      if (result.answerType === "image")
+        await bot.image(result.image, result.text);
+
 
       console.log(
         "ChatGPT result answerType:",
@@ -87,7 +89,9 @@ const image: Handler = async (
     };
     if (event && event.auth && event.auth === CHATGPTPLUGINAUTH) {
       if (event.message && event.id && event.username) {
-        const chat = new ChatGPTMessage(CHATGPT_TOKEN, contextChatGPT);
+        await initLanguages();
+        const language = await getLanguage(event.id);
+        const chat = new ChatGPTMessage(CHATGPT_TOKEN, language, contextChatGPT);
         result = await chat.image(
           event.message,
           event.parentMessage,
@@ -97,11 +101,14 @@ const image: Handler = async (
       }
       console.log("Image result", result);
       if (event.id && event.username && result.image !== "") {
+        await initLanguages();
+        const language = await getLanguage(event.id);
         const timeNow = Date.now();
         const filename = generateFilename(timeNow) + ".jpg";
         await copyAIImageToS3(filename, result.image);
         await startDeployment(
           event.id,
+          language,
           timeNow,
           filename,
           event.username,
@@ -134,9 +141,11 @@ const archetype: Handler = async (
       answerType: "text",
       text: "Authentification failed",
     };
+    await initLanguages();
+    const language = event.id ? await getLanguage(event.id) : 'en'
     if (event && event.auth && event.auth === CHATGPTPLUGINAUTH) {
       if (event.message && event.id && event.username) {
-        const chat = new ChatGPTMessage(CHATGPT_TOKEN, contextChatGPT);
+        const chat = new ChatGPTMessage(CHATGPT_TOKEN, language, contextChatGPT);
         result = await chat.image(
           event.message,
           "",
@@ -147,21 +156,18 @@ const archetype: Handler = async (
       }
       console.log("Image result", result);
       if (event.id && event.username && result.image !== "") {
-        const bot = new BotMessage(event.id);
+        const bot = new BotMessage(event.id, language);
         await bot.image(result.image, "ArchetypeNFT");
         await bot.message(result.text);
         const timeNow = Date.now();
         const filename = generateFilename(timeNow) + ".jpg";
         await copyAIImageToS3(filename, result.image);
-        await bot.message(
-          "Please run the Midjourney discord bot's /imagine command using the prompt above to generate your NFT image",
-        );
+        await bot.tmessage("midjourney");
       }
     }
 
     console.log("ChatGPT ask reply:", result.answerType, result.text);
     await sleep(1000);
-    //}
 
     return 200;
   } catch (error) {

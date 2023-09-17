@@ -1,12 +1,14 @@
 import { Handler, Context } from "aws-lambda";
 import { deployContract, checkBalance, createNFT } from "./src/mina/account";
 import { startDeploymentIpfs } from "./src/nft/nft";
+import { initLanguages, getLanguage } from './src/lang/lang'
 
 import AccountData from "./src/model/accountData";
 
 const deploy: Handler = async (event: any, context: Context) => {
   try {
     console.log("deploy", event);
+    await initLanguages();
     await deployContract(event.id, event);
 
     //context.succeed(event.id);
@@ -51,7 +53,10 @@ const topup: Handler = async (event: any, context: Context) => {
 const create: Handler = async (event: any, context: Context) => {
   try {
     console.log("create", event);
-    if (event.id && event.data) await createNFT(event.id, event.data);
+    if (event.id && event.data) {
+      await initLanguages();
+      await createNFT(event.id, event.data);
+    }
     else console.error("no event.id or event.data");
 
     //context.succeed(event.id);
@@ -71,12 +76,16 @@ const create: Handler = async (event: any, context: Context) => {
 const deployipfs: Handler = async (event: any, context: Context) => {
   try {
     console.log("deploymentIpfs", event);
-    if (event.id && event.command)
+    if (event.id && event.command) {
+      await initLanguages();
+      //const language = await getLanguage(event.id);
       await startDeploymentIpfs(
         event.id,
+        event.language,
         event.command,
         event.creator ? event.creator : "",
       );
+    }
     else console.error("no event.id or event.command");
 
     //context.succeed(event.id);

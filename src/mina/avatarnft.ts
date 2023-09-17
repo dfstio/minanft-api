@@ -10,7 +10,7 @@ import {
   DeployArgs,
   Permissions,
   Poseidon,
-} from "snarkyjs";
+} from "o1js";
 
 //const NFT_SALT = process.env.NFT_SALT!;
 //const NFT_SECRET = process.env.NFT_SECRET!;
@@ -120,7 +120,7 @@ export class AvatarNFT extends SmartContract {
         // TODO add checks and proofs
         this.postsRoot.set(postsRoot);
     }
-		*/
+    */
 
   // Change password
   @method changePassword(salt: Field, secret: Field, newsecret: Field) {

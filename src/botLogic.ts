@@ -1,30 +1,21 @@
 import { Telegraf, Context } from "telegraf";
 import Questions from "./questions";
+import { getT, initLanguages } from './lang/lang'
 import DynamoDbConnector from "./connector/dynamoDbConnector";
 import Names from "./connector/names";
 import History from "./connector/history";
 import {
   startDeployment,
-  startDeploymentIpfs,
   generateFilename,
 } from "./nft/nft";
 import DocumentData from "./model/documentData";
-import AccountData from "./model/accountData";
 import FileHandler from "./fileHandler";
-import ImageData from "./model/imageData";
 import VoiceData from "./model/voiceData";
 import { copyTelegramImageToS3 } from "./imageHandler";
 import VoiceHandler from "./voiceHandler";
-import AudioHandler from "./audioHandler";
 import Validator from "./validator";
 import FormQuestion from "./model/formQuestion";
-import FormAnswer from "./model/formAnswer";
 import callLambda from "./mina/lambda";
-import AWS from "aws-sdk";
-import nodemailer from "nodemailer";
-//import ChatGPTMessage from "./chatgpt/chatgpt";
-//import { context } from "./chatgpt/context";
-//import { functions } from "./chatgpt/functions";
 import { reservedNames } from "./nft/reservednames";
 import { generateJWT } from "./api/jwt";
 import { algoliaWriteTokens } from "./nft/algolia";
@@ -35,7 +26,6 @@ import {
   botCommandCallback,
 } from "./payments/botcommands";
 
-const CHATGPT_TOKEN = process.env.CHATGPT_TOKEN!;
 const CHATGPTPLUGINAUTH = process.env.CHATGPTPLUGINAUTH!;
 const NAMES_TABLE = process.env.NAMES_TABLE!;
 const HISTORY_TABLE = process.env.HISTORY_TABLE!;
@@ -48,12 +38,6 @@ interface KeyboardButton {
   request_location?: boolean;
 }
 
-interface ReplyKeyboardMarkup {
-  keyboard: KeyboardButton[][];
-  resize_keyboard?: boolean;
-  one_time_keyboard?: boolean;
-  selective?: boolean;
-}
 
 interface ReplyKeyboardRemove {
   remove_keyboard: true;
@@ -157,7 +141,7 @@ export default class BotLogic {
 
     if (body.message && body.message.successful_payment) {
       console.log("successful_payment");
-      await this.message("Thank you for payment");
+      await this.message("Thank you for payment"); //TODO: translate message and handle payment
       return;
     }
 
@@ -204,16 +188,16 @@ export default class BotLogic {
       .sendMessage(
         process.env.SUPPORT_CHAT!,
         body.message.from.id.toString() +
-          " " +
-          username +
-          "\n" +
-          (body.message.from.first_name
-            ? body.message.from.first_name.toString() + " "
-            : " ") +
-          (body.message.from.last_name
-            ? body.message.from.last_name.toString()
-            : "") +
-          "\nReply to this message",
+        " " +
+        username +
+        "\n" +
+        (body.message.from.first_name
+          ? body.message.from.first_name.toString() + " "
+          : " ") +
+        (body.message.from.last_name
+          ? body.message.from.last_name.toString()
+          : "") +
+        "\nReply to this message",
         {
           reply_to_message_id: forwarded.message_id,
           disable_notification: true,
@@ -240,8 +224,11 @@ export default class BotLogic {
       console.log("Already answered");
       return;
     }
-    let LANGUAGE = await this.dbConnector.getCurrentLanguage(chatIdString);
-    if (LANGUAGE !== "en" && LANGUAGE !== "it") LANGUAGE = "en";
+    await initLanguages();
+    let LANGUAGE: string = "en";
+    if (body.message && body.message.from && body.message.from.language_code) LANGUAGE = body.message.from.language_code;
+    else LANGUAGE = await this.dbConnector.getCurrentLanguage(chatIdString);
+    const T = getT(LANGUAGE);
     const currQuestion: FormQuestion = formQuestions[currIndexAnswer];
 
     if (
@@ -252,7 +239,7 @@ export default class BotLogic {
     ) {
       await this.dbConnector.resetAnswer(chatIdString);
       await this.message(
-        "Let's create another MINA NFT. Please choose your Mina NFT avatar name",
+        T("createNFT"),
       );
       return;
     }
@@ -263,7 +250,7 @@ export default class BotLogic {
         "ask",
         JSON.stringify({
           id: chatIdString,
-          message: "I want to sell my Mina NFT",
+          message: T("Iwanttosell"), //  "Iwanttosell": "I want to sell my Mina NFT"
           parentMessage: parentMessage,
           image: "",
           //function_call: "sell",
@@ -276,10 +263,10 @@ export default class BotLogic {
 
     if (command == "buy" || command == "/buy") {
       await this.message(
-        "Let's buy an amazing MINA NFT. Look what NFTs are available for sale",
+        T("buyNFT"),
       );
 
-      await botCommandBuy(chatIdString);
+      await botCommandBuy(chatIdString, LANGUAGE);
       return;
     }
 
@@ -287,7 +274,7 @@ export default class BotLogic {
       command.substring(0, 9) == "archetype" ||
       command.substring(0, 10) == "/archetype"
     ) {
-      await this.message("Generating archetype NFT. Please wait a few minutes");
+      await this.message(T("archetype"));
 
       await callLambda(
         "archetype",
@@ -302,19 +289,19 @@ export default class BotLogic {
     }
 
     if (command == "list" || command == "/list") {
-      await botCommandList(chatIdString);
+      await botCommandList(chatIdString, LANGUAGE);
       return;
     }
 
     if (command == "support" || body.message.text == "/support") {
-      await supportTicket(chatIdString);
+      await supportTicket(chatIdString, LANGUAGE);
       return;
     }
 
     if (command == "auth" || body.message.text == "/auth") {
       await this.message(generateJWT(chatIdString), false);
       await this.message(
-        "This authorization code you can use in minanft.io or minanft nodejs library",
+        T("authorizationCode"),
       );
       return;
     }
@@ -322,7 +309,7 @@ export default class BotLogic {
     if (command == "secret" || command == "/secret") {
       if (!(currState && currState.username)) {
         console.log("secret - No username", currState);
-        await this.message("Please first create NFT");
+        await this.message(T("NFTfirst"));
         return;
       }
 
@@ -336,15 +323,12 @@ export default class BotLogic {
             console.error("Telegraf error", error);
           });
       else
-        await this.message(
-          `Secret key for you Mina Avatar NFT @${currState.username} is not created yet`,
-        );
-
+        await this.message(T("Secretkeynotcreated", { username: currState.username }));
       return;
     }
 
     if (body.message.location) {
-      await this.message(this.questions.typeError[LANGUAGE]);
+      await this.message(T(this.questions.typeError));
       return;
     }
 
@@ -363,14 +347,14 @@ export default class BotLogic {
         selective: false,
       };
       await this.message(
-        this.questions.questions[currIndexAnswer].text[LANGUAGE],
+        T(this.questions.questions[currIndexAnswer].text),
       );
     }
 
     if (body.message.photo) {
       if (!(currState && currState.username)) {
         console.log("No username", currState);
-        await this.message("Please choose your Mina NFT avatar name");
+        await this.message(T("chooseNFTname"));
         return;
       }
       if (currIndexAnswer == 1) {
@@ -382,6 +366,7 @@ export default class BotLogic {
           await copyTelegramImageToS3(filename, photo.file_id);
           await startDeployment(
             chatIdString,
+            LANGUAGE,
             timeNow,
             filename,
             currState.username,
@@ -394,7 +379,7 @@ export default class BotLogic {
             currIndexAnswer,
             "image uploaded",
           );
-          await this.message(this.questions.finalWords[LANGUAGE]);
+          await this.message(T(this.questions.finalWords));
         } catch (error) {
           console.error("Image catch", (<any>error).toString());
         }
@@ -465,10 +450,10 @@ export default class BotLogic {
         //const item = await this.dbConnector.getItem(chatIdString);
         const fileHandler = new FileHandler(documentData);
         await fileHandler.copyFileToS3(chatIdString); //, this.parseObjectToHtml(item));
-        await this.message(this.questions.fileSuccess[LANGUAGE]);
+        await this.message(T(this.questions.fileSuccess));
         //currIndexAnswer++;
       } else {
-        await this.message(this.questions.typeError[LANGUAGE]);
+        await this.message(T(this.questions.typeError));
       }
     }
 
@@ -518,14 +503,14 @@ export default class BotLogic {
             : "en",
         );
         /*
-    const options = <ReplyKeyboardMarkup>{keyboard: [[<KeyboardButton>{text: this.questions.phoneButton[LANGUAGE], request_contact: true}]], 
+    const options = <ReplyKeyboardMarkup>{keyboard: [[<KeyboardButton>{text: T(this.questions.phoneButton), request_contact: true}]], 
                                           resize_keyboard: true,
                                           one_time_keyboard: true};
                                           
         add it back if the phone number is needed for KYC								  
 */
         await this.message(
-          `${this.questions.welcomeWords[LANGUAGE]}\n\n${currQuestion.text[LANGUAGE]}`,
+          `${T(this.questions.welcomeWords)}\n\n${T(currQuestion.text)}`,
         );
         this.bot.telegram
           .sendMessage(
@@ -546,7 +531,7 @@ export default class BotLogic {
           if (userInput.substring(7) == "auth") {
             await this.message(generateJWT(chatIdString), false);
             await this.message(
-              "This authorization code you can use in minanft.io or minanft nodejs library",
+              T("authorizationCode"),
             );
           } else {
             await callLambda(
@@ -555,16 +540,9 @@ export default class BotLogic {
                 id: chatIdString,
                 command: userInput.substring(7),
                 creator: username ? username : "",
+                language: LANGUAGE,
               }),
             );
-
-            /*
-            await startDeploymentIpfs(
-                chatIdString,
-                userInput.substring(7),
-                username ? username : "",
-            );
-        */
           }
           return;
         }
@@ -583,14 +561,14 @@ export default class BotLogic {
             if (name) {
               console.log("Found the same name", name);
               await this.message(
-                "This name is already taken. Please choose another Mina NFT avatar name",
+                T("nameTaken"),
               );
               return;
             }
             if (reservedNames.includes(userInput.toLowerCase().substr(1, 30))) {
               console.log("Name is reserved", name);
               await this.message(
-                "This name is reserved. Please choose another Mina NFT avatar name",
+                T("nameReserved"),
               );
               return;
             }
@@ -603,14 +581,13 @@ export default class BotLogic {
           currIndexAnswer++;
           if (currIndexAnswer < formQuestions.length)
             await this.message(
-              this.questions.questions[currIndexAnswer].text[LANGUAGE],
+              T(this.questions.questions[currIndexAnswer].text),
             );
         } else {
           await this.message(
-            `${
-              currQuestion.error
-                ? currQuestion.error[LANGUAGE]
-                : this.questions.commonError[LANGUAGE]
+            `${currQuestion.error
+              ? T(currQuestion.error)
+              : T(this.questions.commonError)
             }`,
           );
         }
@@ -639,7 +616,7 @@ export default class BotLogic {
             }),
           );
 
-        await this.message(this.questions.finalWords[LANGUAGE]);
+        await this.message(T(this.questions.finalWords));
         await this.dbConnector.increaseCounter(chatIdString, ++currIndexAnswer);
         await this.dbConnector.updateMessageId(
           chatIdString,

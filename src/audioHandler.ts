@@ -2,8 +2,8 @@ import VoiceData from "./model/voiceData";
 import axios from "axios";
 import AWS from "aws-sdk";
 import FormData from "form-data";
-import callLambda from "./mina/lambda";
 import BotMessage from "./mina/message";
+import { initLanguages, getLanguage } from './lang/lang'
 
 const CHATGPT_TOKEN = process.env.CHATGPT_TOKEN!;
 const CHATGPTPLUGINAUTH = process.env.CHATGPTPLUGINAUTH!;
@@ -113,13 +113,18 @@ export default class AudioHandler {
         })
         .catch((e) => console.log("whisper error - transcript", e));
     });
+
+    await initLanguages();
+    const language = await getLanguage(id);
+
     await sleep(1000);
     while (!finished) {
       console.log("Waiting for Whisper");
       await sleep(2000);
     }
     await sleep(200);
-    const bot = new BotMessage(id);
+
+    const bot = new BotMessage(id, language);
     if (chatGPT == "") {
       console.log("Empty prompt");
       return;

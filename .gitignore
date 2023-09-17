@@ -10,6 +10,7 @@ jspm_packages
 
 env.json
 src/mina/gastanks.ts
+test/
 proof.json
 output.txt
 .DS_Store

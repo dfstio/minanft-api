@@ -1,4 +1,4 @@
-import { Mina, Field, Encoding } from "snarkyjs";
+import { Mina, Field, Encoding } from "o1js";
 
 function ipfsToFields(ipfs: string): Field[] | undefined {
   try {
