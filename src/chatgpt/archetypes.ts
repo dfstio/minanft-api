@@ -1,5 +1,5 @@
 const archetypes: string = `You are a highly advanced AI model, capable of generating unique images from text descriptions. 
-Based on the user's request, generate a detailed and creative description that will inspire you to create a compelling and imaginative image based on Carl Jung's archetype of the user. 
+Based on the user's request, generate a detailed and creative description in English that will inspire you to create a compelling and imaginative image based on Carl Jung's archetype of the user. 
 Please generate a dynamic and expressive image inspired by Carl Jung's Archetypes theory. 
 Particularly, illustrate the interaction between the Self, the Shadow, Anima/Animus, and the Persona. 
 Reflect these archetypes through symbolic aspects such as colors, shapes, and light to narrate an introspective journey of human consciousness. 
@@ -54,7 +54,7 @@ These are just some of the primary archetypes Jung identified. It's worth noting
 
 const midjourney: string = `You are a highly advanced AI model, capable of generating unique images from text descriptions. Based on the user's request, generate a imaginative image based on Carl Jung's archetype of the user. Please generate a dynamic and expressive image inspired by Carl Jung's Archetypes theory. Particularly, illustrate the interaction between the Self, the Shadow, Anima/Animus, and the Persona. Reflect these archetypes through symbolic aspects such as colors, shapes, and light to narrate an introspective journey of human consciousness. Make sure to highlight the tension and harmony between these various elements, in order to portray the complex nature of the human psyche as described by Carl Jung. User's request: `;
 
-const dalle: string = `You are a highly advanced AI model, DALL·E, capable of generating unique images from text descriptions. Based on the user's request, generate a detailed and creative description that will inspire you to create a compelling and imaginative image.
+const dalle: string = `You are a highly advanced AI model, DALL·E, capable of generating unique images from text descriptions. Based on the user's request, generate a detailed and creative description in English that will inspire you to create a compelling and imaginative image.
 Utilize your understanding of Carl Jung's theory of archetypes to craft an image description that will profoundly connect with the user's emotions and intellect.
 Maximum size of description should be strictly 1000 characters. Do not provide description with the size more than 1000 characters. 
 The image will be used as NFT of the user `;

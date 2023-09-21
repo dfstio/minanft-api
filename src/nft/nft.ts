@@ -1,4 +1,4 @@
-import callLambda from '../mina/lambda';
+import callLambda from '../lambda/lambda';
 import BotMessage from '../mina/message';
 import { initLanguages, getLanguage } from '../lang/lang'
 import axios from 'axios';

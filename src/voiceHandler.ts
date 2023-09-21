@@ -1,8 +1,9 @@
 import VoiceData from "./model/voiceData";
 import axios from "axios";
-import AWS from "aws-sdk";
+import { S3Client, PutObjectCommand, HeadObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { ElasticTranscoderClient, CreateJobCommand } from '@aws-sdk/client-elastic-transcoder'
 import FormData from "form-data";
-import callLambda from "./mina/lambda";
+import callLambda from "./lambda/lambda";
 import BotMessage from "./mina/message";
 import { initLanguages, getLanguage } from './lang/lang'
 
@@ -19,178 +20,150 @@ export default class VoiceHandler {
     id: string,
     parentMessage: string,
   ): Promise<string | undefined> {
-    const botToken = process.env.BOT_TOKEN!;
+    try {
+      const botToken = process.env.BOT_TOKEN!;
 
-    const fileId = this.voiceData.file_id;
-    const filename = Date.now().toString();
-    const key = id + "-" + filename;
-    const telegramFileInfo: any = await axios.get(
-      `https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`,
-    );
-    const filePath = telegramFileInfo.data.result.file_path;
-    const s3 = new AWS.S3();
-    axios
-      .get(`https://api.telegram.org/file/bot${botToken}/${filePath}`, {
-        responseType: "arraybuffer",
-      })
-      .then((response) => {
-        const buffer = Buffer.from(response.data, "binary");
-        s3.putObject({
-          Bucket: process.env.BUCKET_VOICEIN!,
-          Key: key + ".ogg", // "/"
-          Body: buffer,
-        }).promise();
-      })
-      .catch((e) => {
-        console.log(e);
-        return undefined;
-      });
+      const fileId = this.voiceData.file_id;
+      const filename = Date.now().toString();
+      const key = id + "-" + filename;
+      const telegramFileInfo: any = await axios.get(
+        `https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`,
+      );
+      const filePath = telegramFileInfo.data.result.file_path;
+      const response = await axios
+        .get(`https://api.telegram.org/file/bot${botToken}/${filePath}`, {
+          responseType: "arraybuffer",
+        });
 
-    console.log("Saved", key + ".ogg");
-    const elasticTranscoder = new AWS.ElasticTranscoder();
-    const elasticParams = {
-      PipelineId: process.env.VOICE_PIPELINEID!, //voice
-      Input: {
-        Key: key + ".ogg",
-      },
-      Output: {
-        Key: key + ".mp3",
-        PresetId: "1351620000001-300020", // mp3 192k
-      },
-    };
+      const buffer = Buffer.from(response.data, "binary");
+      const input = {
+        Bucket: process.env.BUCKET_VOICEIN!,
+        Key: key + ".ogg", // "/"
+        Body: buffer,
+      }
+      const client = new S3Client({});
+      const putcommand = new PutObjectCommand(input);
+      await client.send(putcommand);
 
-    let finished = false;
-    await sleep(500);
-    while (!finished) {
-      console.log("Waiting for OGG");
-      s3.headObject(
-        {
-          Bucket: process.env.BUCKET_VOICEIN!,
+      console.log("Saved", key + ".ogg");
+      const elasticTranscoder = new ElasticTranscoderClient({});
+      const elasticParams = {
+        PipelineId: process.env.VOICE_PIPELINEID!, //voice
+        Input: {
           Key: key + ".ogg",
         },
-        function (err, data) {
-          if (err) console.log("OGG is not ready yet");
-          else {
-            finished = true;
-            console.log("OGG is ready", data);
-          }
+        Output: {
+          Key: key + ".mp3",
+          PresetId: "1351620000001-300020", // mp3 192k
         },
-      );
-      await sleep(500);
-    }
+      };
 
-    finished = false;
-    elasticTranscoder.createJob(elasticParams, function (err, data) {
-      if (err) console.log("AWS.ElasticTranscoder error", err, err.stack);
-      // an error occurred
-      else {
-        console.log("AWS.ElasticTranscoder", data); // successful response
-        finished = true;
+      const oggparams = {
+        Bucket: process.env.BUCKET_VOICEIN!,
+        Key: key + ".ogg",
       }
-    });
 
-    // Set the parameters for the S3 getObject operation
-    const params = {
-      Bucket: process.env.BUCKET_VOICEOUT!,
-      Key: key + ".mp3", //"1686398067705.mp3",
-    };
-
-    while (!finished) {
-      console.log("Waiting for AWS.ElasticTranscoder");
+      let finished = false;
       await sleep(500);
-    }
-
-    finished = false;
-    await sleep(1000);
-    while (!finished) {
-      console.log("Waiting for MP3");
-      s3.headObject(params, function (err, data) {
-        if (err) console.log("MP3 is not ready yet");
-        else {
+      while (!finished) {
+        console.log("Waiting for OGG", filename);
+        const headcommand = new HeadObjectCommand(oggparams);
+        try {
+          const headresponse = await client.send(headcommand);
           finished = true;
-          console.log("MP3 is ready", data);
+          console.log("OGG is uploaded:", filename, headresponse);
         }
-      });
-      await sleep(1000);
-    }
-
-    //await sleep(5000);
-    let chatGPT = "";
-    finished = false;
-    // Get audio metadata to retrieve size and type
-    s3.headObject(params, function (err, data) {
-      if (err) {
-        console.log("Voice error - headObject", params, err);
-        return undefined;
+        catch (e) {
+          console.log("OGG upload is not ready yet:", filename);
+          await sleep(500);
+        }
       }
-      console.log("data", data);
+      await sleep(1000);
+
+      finished = false;
+      const elsticcommand = new CreateJobCommand(elasticParams);
+      await elasticTranscoder.send(elsticcommand);
+
+      // Set the parameters for the S3 getObject operation
+      const mp3params = {
+        Bucket: process.env.BUCKET_VOICEOUT!,
+        Key: key + ".mp3", //"1686398067705.mp3",
+      };
+
+      await sleep(500);
+      while (!finished) {
+        console.log("Waiting for MP3", filename);
+        const headcommand = new HeadObjectCommand(mp3params);
+        try {
+          const headresponse = await client.send(headcommand);
+          finished = true;
+          console.log("MP3 is uploaded:", filename, headresponse);
+        }
+        catch (e) {
+          console.log("MP3 upload is not ready yet:", filename);
+          await sleep(500);
+        }
+      }
+      await sleep(1000);
+
+      //await sleep(5000);
+      let chatGPT = "";
+      finished = false;
+
+      // Get audio metadata to retrieve size and type
+      const getcommand = new GetObjectCommand(mp3params);
+      const getresponse = await client.send(getcommand);
 
       // Get read object stream
-      const s3Stream = s3.getObject(params).createReadStream();
+      const s3Stream = getresponse.Body
 
       const formData = new FormData();
 
       // append stream with a file
       formData.append("file", s3Stream, {
-        contentType: data.ContentType, //voiceData.mime_type, 'audio/mp3'
-        knownLength: data.ContentLength, //voiceData.file_size, 149187,
+        contentType: getresponse.ContentType, //voiceData.mime_type, 'audio/mp3'
+        knownLength: getresponse.ContentLength, //voiceData.file_size, 149187,
         filename: key + ".mp3",
       });
 
       formData.append("model", "whisper-1");
 
-      axios
-        .post("https://api.openai.com/v1/audio/transcriptions", formData, {
-          headers: {
-            Authorization: `Bearer ${CHATGPT_TOKEN}`,
-            ...formData.getHeaders(),
-          },
-          maxBodyLength: 25 * 1024 * 1024,
-        })
-        .then((response) => {
-          if (response && response.data && response.data.text) {
-            console.log("ChatGPT transcript:", response.data.text);
-            chatGPT = response.data.text;
-            finished = true;
-          } else {
-            console.error("Chat GPT error", response.data.error);
-            finished = true;
+      try {
+        const response = await axios
+          .post("https://api.openai.com/v1/audio/transcriptions", formData, {
+            headers: {
+              Authorization: `Bearer ${CHATGPT_TOKEN}`,
+              ...formData.getHeaders(),
+            },
+            maxBodyLength: 25 * 1024 * 1024,
+          })
+        if (response && response.data && response.data.text) {
+          console.log("ChatGPT transcript:", response.data.text);
+          chatGPT = response.data.text;
+          if (chatGPT == "") {
+            console.log("Empty prompt");
             return undefined;
           }
-        })
-        .catch((e) => {
-          console.log("Voice error - ChatGPT transcript", e);
+          await initLanguages();
+          const language = await getLanguage(id);
+          const bot = new BotMessage(id, language);
+
+          // "thankyouforprompt": "Thank you for your prompt: {{prompt}}"
+          await bot.tmessage("thankyouforprompt", { prompt: chatGPT })
+          return chatGPT;
+        } else {
+          console.error("Chat GPT error", response.data.error);
+          finished = true;
           return undefined;
-        });
-    });
-    await sleep(500);
-    while (!finished) {
-      console.log("Waiting for Whisper");
-      await sleep(500);
-    }
-    await initLanguages();
-    const language = await getLanguage(id);
-    await sleep(200);
-    const bot = new BotMessage(id, language);
-    if (chatGPT == "") {
-      console.log("Empty prompt");
+        }
+      } catch (error: any) {
+        console.error("Voice error - ChatGPT transcript", error);
+        return undefined;
+      };
+    } catch (error: any) {
+      console.error("copyVoiceToS3", error);
       return undefined;
     }
-    // "thankyouforprompt": "Thank you for your prompt: {{prompt}}"
-    await bot.tmessage("thankyouforprompt", { prompt: chatGPT })
-    return chatGPT;
-    /*
-    await callLambda(
-      "ask",
-      JSON.stringify({
-        id: id,
-        message: chatGPT,
-        parentMessage: parentMessage,
-        image: "",
-        auth: CHATGPTPLUGINAUTH,
-      }),
-    );
-    */
   }
 }
 

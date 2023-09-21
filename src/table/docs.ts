@@ -1,3 +1,9 @@
+import Table from "./table";
+import { DocsData, DocsSummaryData } from "../model/docsData";
+
+export default class Docs extends Table<DocsData> { }
+
+/*
 import AWS, { AWSError } from "aws-sdk";
 import { DocumentClient, GetItemOutput } from "aws-sdk/clients/dynamodb";
 import { DocsData, DocsSummaryData } from "../model/docsData";
@@ -68,3 +74,4 @@ export default class Docs {
       });
   }
 }
+*/

@@ -1,12 +1,13 @@
-import DynamoDbConnector from "./dynamoDbConnector";
+/*
+import Users from "./Users";
 import MerkleData from "../model/merkleData";
 import FormQuestion from "../model/formQuestion";
 import Questions from "../questions";
 
 export default async function merkleData(id: string): Promise<MerkleData[]> {
   console.log("merkleData", id);
-  const dbConnector = new DynamoDbConnector(process.env.DYNAMODB_TABLE!);
-  const item = await dbConnector.getFullItem(id);
+  const users = new Users(process.env.DYNAMODB_TABLE!);
+  const item = await users.getFullItem(id);
   let data: MerkleData[] = [];
   data.push(<MerkleData>{ name: "telegramId", value: id });
   const questions = new Questions();
@@ -22,3 +23,4 @@ export default async function merkleData(id: string): Promise<MerkleData[]> {
   console.log("Merkle data:", data);
   return data;
 }
+*/

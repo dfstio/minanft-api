@@ -13,8 +13,8 @@ import axios from "axios";
 
 import BotMessage from "./message";
 import TasksData from "../model/tasksData";
-import Tasks from "../connector/tasks";
-import Names from "../connector/names";
+import Tasks from "../table/tasks";
+import Names from "../table/names";
 import { AvatarNFT } from "./avatarnft";
 import AccountData from "../model/accountData";
 import DeployData from "../model/deployData";
@@ -125,23 +125,6 @@ https://berkeley.minaexplorer.com/transaction/${sentTx.hash()}
 	`);
     } else console.error("Send topup fail", sentTx);
   }
-
-  /*
-    //Start deployment
-    const deployer = <DeployData>{
-      privateKey: result.privateKey,
-      publicKey: result.publicKey,
-      explorer: result.explorer,
-      salt: result.salt,
-      telegramId: id,
-      hash: "",
-    };
-
-    console.log("Start deployment", deployer);
-    await callLambda("deploy", JSON.stringify(deployer));
-    await sleep(1000);
-  }
-*/
 }
 
 async function checkGasTank(gastank: string): Promise<boolean> {
@@ -183,7 +166,7 @@ async function getDeployer(): Promise<PrivateKey> {
   let i: number = Math.floor(Math.random() * (GASTANKS.length - 1));
   let replenish: boolean = await checkGasTank(GASTANKS[i]);
   while (i === deployer1 || i === deployer2 || i === deployer3 || replenish) {
-    console.error("Deployer was recently used or empty, finding another");
+    console.log(`Deployer ${i} was recently used or empty, finding another`);
     i = Math.floor(Math.random() * (GASTANKS.length - 1));
     replenish = await checkGasTank(GASTANKS[i]);
   }

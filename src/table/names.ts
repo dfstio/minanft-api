@@ -1,3 +1,45 @@
+import Table from "./table";
+import NamesData from '../model/namesData';
+import DeployData from '../model/deployData';
+
+export default class Names extends Table<NamesData> {
+
+  public async updateDeploy(username: string, data: DeployData): Promise<void> {
+    await this.updateData({
+      username: username,
+    }, { '#D': 'deploy' }, { ':data': data }, 'set #D = :data')
+  }
+
+  public async updateUri(
+    username: string,
+    ipfs: string,
+    uri: any,
+  ): Promise<void> {
+    await this.updateData(
+      { username: username },
+      { "#I": 'ipfs', '#U': 'uri' },
+      { ':ipfs': ipfs, ':uri': uri },
+      'set #I = :ipfs, #U = :uri')
+  }
+
+  public async sell(
+    username: string,
+    price: number,
+    currency: string,
+  ): Promise<void> {
+    await this.updateData(
+      { username: username },
+      { "#P": 'price', '#C': 'currency', '#S': 'onSale' },
+      {
+        ':p': price,
+        ':c': currency.toLowerCase(),
+        ':s': true,
+      },
+      'set #P = :p, #C = :c, #S = :s')
+  }
+}
+
+/*
 import AWS, { AWSError } from 'aws-sdk';
 import { DocumentClient, GetItemOutput } from 'aws-sdk/clients/dynamodb';
 import NamesData from '../model/namesData';
@@ -158,3 +200,4 @@ export default class Names {
     });
   }
 }
+*/

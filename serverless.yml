@@ -2,8 +2,10 @@ org: dfstio
 app: minanft-telegram-bot
 service: minanft-telegram-bot
 
+
 plugins:
   - serverless-plugin-typescript
+
 
 provider:
   name: aws
@@ -144,12 +146,6 @@ provider:
         - "arn:aws:elastictranscoder:${opt:region, self:provider.region}:*:preset/*"
 
 
-
-
-custom:
-  s3Bucket: formbucket-${self:provider.environment.BUCKET}
-
-
 functions:
   send:
     handler: telegram.send
@@ -211,13 +207,6 @@ functions:
     handler: mina.create     
     timeout: 900
     memorySize: 2048
-  plugin:
-    handler: chatgpt.plugin
-    timeout: 30
-    events:
-      - http:
-          path: chatgpt
-          method: post
 
 
 resources:
@@ -315,3 +304,8 @@ package:
     - .travis.yml
     - .prettierrc
     - node_modules/aws-sdk/**
+
+  
+custom:
+  s3Bucket: formbucket-${self:provider.environment.BUCKET}
+    

@@ -1,9 +1,9 @@
 import { Telegraf, Context } from "telegraf";
 import Questions from "./questions";
 import { getT, initLanguages } from './lang/lang'
-import DynamoDbConnector from "./connector/dynamoDbConnector";
-import Names from "./connector/names";
-import History from "./connector/history";
+import Users from "./table/users";
+import Names from "./table/names";
+import History from "./table/history";
 import {
   startDeployment,
   generateFilename,
@@ -15,7 +15,7 @@ import { copyTelegramImageToS3 } from "./imageHandler";
 import VoiceHandler from "./voiceHandler";
 import Validator from "./validator";
 import FormQuestion from "./model/formQuestion";
-import callLambda from "./mina/lambda";
+import callLambda from "./lambda/lambda";
 import { reservedNames } from "./nft/reservednames";
 import { generateJWT } from "./api/jwt";
 import { algoliaWriteTokens } from "./nft/algolia";
@@ -25,6 +25,7 @@ import {
   botCommandBuy,
   botCommandCallback,
 } from "./payments/botcommands";
+import UserData from "./model/userData";
 
 const CHATGPTPLUGINAUTH = process.env.CHATGPTPLUGINAUTH!;
 const NAMES_TABLE = process.env.NAMES_TABLE!;
@@ -50,7 +51,7 @@ export default class BotLogic {
   supportId: string;
   history: History | undefined;
   //chat: ChatGPTMessage;
-  dbConnector: DynamoDbConnector;
+  users: Users;
   validator: Validator;
   questions: Questions;
 
@@ -79,7 +80,7 @@ export default class BotLogic {
     });
     //this.chat = new ChatGPTMessage(CHATGPT_TOKEN, context, functions);
     this.questions = new Questions();
-    this.dbConnector = new DynamoDbConnector(process.env.DYNAMODB_TABLE!);
+    this.users = new Users(process.env.DYNAMODB_TABLE!);
     this.validator = new Validator();
     this.id = undefined;
   }
@@ -207,7 +208,7 @@ export default class BotLogic {
         console.error("Telegraf error", error);
       });
 
-    let currState = await this.dbConnector.getCurrentState(chatIdString);
+    let currState = await this.users.getItem(chatIdString);
     let currIndexAnswer = currState && currState.currentAnswer;
     if (!currIndexAnswer) currIndexAnswer = 0;
     let current_message_id = currState && currState.message_id;
@@ -227,7 +228,7 @@ export default class BotLogic {
     await initLanguages();
     let LANGUAGE: string = "en";
     if (body.message && body.message.from && body.message.from.language_code) LANGUAGE = body.message.from.language_code;
-    else LANGUAGE = await this.dbConnector.getCurrentLanguage(chatIdString);
+    else LANGUAGE = await this.users.getCurrentLanguage(chatIdString);
     const T = getT(LANGUAGE);
     const currQuestion: FormQuestion = formQuestions[currIndexAnswer];
 
@@ -237,7 +238,7 @@ export default class BotLogic {
       command == "\new" ||
       command == "/new"
     ) {
-      await this.dbConnector.resetAnswer(chatIdString);
+      await this.users.resetAnswer(chatIdString);
       await this.message(
         T("createNFT"),
       );
@@ -281,7 +282,7 @@ export default class BotLogic {
         JSON.stringify({
           id: chatIdString,
           message: command.substring(0, 10),
-          username: currState.username,
+          username: (currState && currState.username) ? currState.username : '',
           auth: CHATGPTPLUGINAUTH,
         }),
       );
@@ -335,7 +336,7 @@ export default class BotLogic {
     if (body.message.contact && currQuestion.type === "phone") {
       console.log("Contact", body.message.contact);
       if (body.message.contact.phone_number) {
-        await this.dbConnector.updateAnswer(
+        await this.users.updateAnswer(
           chatIdString,
           currIndexAnswer,
           body.message.contact.phone_number.toString(),
@@ -374,7 +375,7 @@ export default class BotLogic {
               ? currState.user.username
               : "",
           );
-          this.dbConnector.updateAnswer(
+          this.users.updateAnswer(
             chatIdString,
             currIndexAnswer,
             "image uploaded",
@@ -387,10 +388,6 @@ export default class BotLogic {
     }
 
     if (body.message.voice) {
-      await this.dbConnector.updateMessageId(
-        chatIdString,
-        body.message.message_id.toString(),
-      );
       const voice = body.message.voice;
       console.log(
         "Voice  data:",
@@ -418,10 +415,6 @@ export default class BotLogic {
     }
 
     if (body.message.audio) {
-      await this.dbConnector.updateMessageId(
-        chatIdString,
-        body.message.message_id.toString(),
-      );
       const audio = body.message.audio;
       console.log(
         "Audio  data:",
@@ -446,8 +439,8 @@ export default class BotLogic {
       console.log("Document", body.message.document);
       const documentData = <DocumentData>body.message.document;
       if (this.validator.validateWrittenDocument(documentData)) {
-        //await this.dbConnector.updateAnswer(chatIdString, currIndexAnswer, documentData.file_name);
-        //const item = await this.dbConnector.getItem(chatIdString);
+        //await this.users.updateAnswer(chatIdString, currIndexAnswer, documentData.file_name);
+        //const item = await this.users.getItem(chatIdString);
         const fileHandler = new FileHandler(documentData);
         await fileHandler.copyFileToS3(chatIdString); //, this.parseObjectToHtml(item));
         await this.message(T(this.questions.fileSuccess));
@@ -465,11 +458,6 @@ export default class BotLogic {
       console.log("currIndexAnswer", currIndexAnswer);
       const askChatGPT = userInput;
       if (askChatGPT) {
-        await this.dbConnector.updateMessageId(
-          chatIdString,
-          body.message.message_id.toString(),
-          askChatGPT,
-        );
         console.log("ChatGPT question:", askChatGPT);
         await callLambda(
           "ask",
@@ -493,15 +481,20 @@ export default class BotLogic {
           body.message.chat,
           body.message.from.language_code,
         );
-        this.dbConnector.createForm(
-          chatIdString,
+        const user: UserData = <UserData>{
+          id: chatIdString,
           username,
-          body.message.message_id.toString(),
-          body.message.chat,
-          body.message.from.language_code
+          minanft: [],
+          message_id: body.message.message_id.toString(),
+          message: "",
+          currentAnswer: 0,
+          user: body.message.chat,
+          language_code: body.message.from.language_code
             ? body.message.from.language_code
             : "en",
-        );
+          chatGPTinit: false
+        }
+        this.users.create(user);
         /*
     const options = <ReplyKeyboardMarkup>{keyboard: [[<KeyboardButton>{text: T(this.questions.phoneButton), request_contact: true}]], 
                                           resize_keyboard: true,
@@ -573,7 +566,7 @@ export default class BotLogic {
               return;
             }
           }
-          this.dbConnector.updateAnswer(
+          this.users.updateAnswer(
             chatIdString,
             currIndexAnswer,
             currIndexAnswer == 0 ? userInput.toLowerCase() : userInput,
@@ -617,11 +610,7 @@ export default class BotLogic {
           );
 
         await this.message(T(this.questions.finalWords));
-        await this.dbConnector.increaseCounter(chatIdString, ++currIndexAnswer);
-        await this.dbConnector.updateMessageId(
-          chatIdString,
-          body.message.message_id.toString(),
-        );
+        await this.users.increaseCounter(chatIdString, ++currIndexAnswer);
       }
       return;
     }

@@ -1,6 +1,6 @@
 import { Handler, Context, Callback } from "aws-lambda";
 import TasksData from "./src/model/tasksData";
-import Tasks from "./src/connector/tasks";
+import Tasks from "./src/table/tasks";
 const TASKS_TABLE = process.env.TASKS_TABLE!;
 
 const tasks: Handler = async (

@@ -2,7 +2,7 @@ import { Telegraf, Context } from "telegraf";
 import { mintInvoice, postInvoice, supportInvoice } from "../payments/stripe";
 import HistoryData from "../model/historyData";
 import { getT } from '../lang/lang'
-import History from "../connector/history";
+import History from "../table/history";
 const HISTORY_TABLE = process.env.HISTORY_TABLE!;
 
 export default class BotMessage {

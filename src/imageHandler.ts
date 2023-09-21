@@ -1,84 +1,100 @@
 import axios from "axios";
-import { S3 } from "aws-sdk";
+import { S3Client, PutObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
 
 async function copyTelegramImageToS3(
   filename: string,
   file_id: string,
 ): Promise<void> {
-  const botToken = process.env.BOT_TOKEN!;
+  try {
+    const botToken = process.env.BOT_TOKEN!;
+    const telegramFileInfo: any = await axios.get(
+      `https://api.telegram.org/bot${botToken}/getFile?file_id=${file_id}`,
+    );
+    const filePath = telegramFileInfo.data.result.file_path;
+    const response = await axios
+      .get(`https://api.telegram.org/file/bot${botToken}/${filePath}`, {
+        responseType: "arraybuffer",
+      });
 
-  const telegramFileInfo: any = await axios.get(
-    `https://api.telegram.org/bot${botToken}/getFile?file_id=${file_id}`,
-  );
-  const filePath = telegramFileInfo.data.result.file_path;
-  const s3 = new S3();
-  axios
-    .get(`https://api.telegram.org/file/bot${botToken}/${filePath}`, {
-      responseType: "arraybuffer",
-    })
-    .then((response) => {
-      const buffer = Buffer.from(response.data, "binary");
-      s3.putObject({
-        Bucket: process.env.BUCKET!,
-        Key: filename,
-        Body: buffer,
-      }).promise();
-    })
-    .catch((e) => console.log(e));
+    const buffer = Buffer.from(response.data, "binary");
+    const input = {
+      Bucket: process.env.BUCKET!,
+      Key: filename,
+      Body: buffer,
+    }
+    const client = new S3Client({});
+    const putcommand = new PutObjectCommand(input);
+    await client.send(putcommand);
 
-  let finished: boolean = false;
-  const params = {
-    Bucket: process.env.BUCKET!,
-    Key: filename,
-  };
+    const params = {
+      Bucket: process.env.BUCKET!,
+      Key: filename,
+    };
 
-  while (!finished) {
-    console.log("Waiting for S3 to upload", filename);
-    s3.headObject(params, function (err: any, data: any) {
-      if (err) console.log("S3 upload is not ready yet");
-      else {
+    let finished = false;
+    await sleep(500);
+    while (!finished) {
+      console.log("Waiting for file", filename);
+      const headcommand = new HeadObjectCommand(params);
+      try {
+        const headresponse = await client.send(headcommand);
         finished = true;
-        console.log("File is uploaded", filename);
+        console.log("File is uploaded:", filename, headresponse);
       }
-    });
+      catch (e) {
+        console.log("S3 upload is not ready yet:", filename);
+        await sleep(500);
+      }
+    }
     await sleep(1000);
+  }
+  catch (error: any) {
+    console.error('copyTelegramImageToS3', error);
   }
 }
 
 async function copyAIImageToS3(filename: string, url: string): Promise<void> {
-  const s3 = new S3();
-  console.log("copyAIImageToS3", filename, url);
-  axios
-    .get(url, {
-      responseType: "arraybuffer",
-    })
-    .then((response) => {
-      console.log("copyAIImageToS3 response");
-      const buffer = Buffer.from(response.data, "binary");
-      s3.putObject({
-        Bucket: process.env.BUCKET!,
-        Key: filename,
-        Body: buffer,
-      }).promise();
-    })
-    .catch((e) => console.log(e));
+  try {
+    console.log("copyAIImageToS3", filename, url);
+    const response = await axios
+      .get(url, {
+        responseType: "arraybuffer",
+      });
 
-  let finished: boolean = false;
-  const params = {
-    Bucket: process.env.BUCKET!,
-    Key: filename,
-  };
+    const buffer = Buffer.from(response.data, "binary");
+    const input = {
+      Bucket: process.env.BUCKET!,
+      Key: filename,
+      Body: buffer,
+    }
+    const client = new S3Client({});
+    const putcommand = new PutObjectCommand(input);
+    await client.send(putcommand);
 
-  while (!finished) {
-    console.log("Waiting for S3 to upload", filename);
-    s3.headObject(params, function (err: any, data: any) {
-      if (err) console.log("S3 upload is not ready yet");
-      else {
+    const params = {
+      Bucket: process.env.BUCKET!,
+      Key: filename,
+    };
+
+    let finished = false;
+    await sleep(500);
+    while (!finished) {
+      console.log("Waiting for file", filename);
+      const headcommand = new HeadObjectCommand(params);
+      try {
+        const headresponse = await client.send(headcommand);
         finished = true;
-        console.log("File is uploaded", filename);
+        console.log("File is uploaded:", filename, headresponse);
       }
-    });
+      catch (e) {
+        console.log("S3 upload is not ready yet:", filename);
+        await sleep(500);
+      }
+    }
     await sleep(1000);
+  }
+  catch (error: any) {
+    console.error('copyAIImageToS3', error);
   }
 }
 

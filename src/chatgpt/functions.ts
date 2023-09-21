@@ -3,7 +3,7 @@ import {
   ChatCompletionRequestMessageFunctionCall,
 } from "openai";
 import BotMessage from "../mina/message";
-import Names from "../connector/names";
+import Names from "../table/names";
 import NamesData from "../model/namesData";
 const NAMES_TABLE = process.env.NAMES_TABLE!;
 import { algoliaWriteToken } from "../nft/algolia";
