@@ -1,3 +1,4 @@
+/*
 import { KMS } from "aws-sdk";
 import crypto from "crypto";
 
@@ -6,8 +7,8 @@ import crypto from "crypto";
 async function getKey(context: any) {
   try {
     var params = {
-      KeyId: process.env.AWS_KMS_ENCRYPTION_KEY_ID! /* required */,
-      KeyPairSpec: "RSA_4096" /* required */,
+      KeyId: process.env.AWS_KMS_ENCRYPTION_KEY_ID! ,
+      KeyPairSpec: "RSA_4096" ,
       EncryptionContext: context,
     };
 
@@ -45,7 +46,7 @@ async function getPrivateKey(encryptedKey: any, context: any) {
   }
 }
 
-/*
+
 function encrypt(toEncrypt : any, publicKey : any)
 {
        const buffer = Buffer.from(toEncrypt, 'utf8')
@@ -72,7 +73,7 @@ function decrypt(toDecrypt : any, privateKey : any)
        const decrypted = crypto.privateDecrypt(privateKeyObject, buffer);
        return decrypted.toString('utf8')
 }
-*/
+
 
 export {
   getKey,
@@ -80,3 +81,4 @@ export {
   //decrypt,
   getPrivateKey,
 };
+*/

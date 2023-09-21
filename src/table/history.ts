@@ -1,3 +1,91 @@
+import Table from "./table";
+import HistoryData from "../model/historyData";
+import {
+  ChatCompletionRequestMessage,
+  ChatCompletionRequestMessageRoleEnum,
+} from "openai";
+const HISTORY_HOURS: number = Number(process.env.HISTORY_HOURS!);
+const HISTORY_CHARS: number = Number(process.env.HISTORY_CHARS!);
+
+export default class History extends Table<HistoryData> {
+  private id: string;
+
+  constructor(tableName: string, id: string) {
+    super(tableName);
+    this.id = id;
+  }
+
+  public async add(msg: string, isUser: boolean = false): Promise<void> {
+    const message: ChatCompletionRequestMessage = <
+      ChatCompletionRequestMessage
+      >{
+        role: isUser
+          ? ChatCompletionRequestMessageRoleEnum.User
+          : ChatCompletionRequestMessageRoleEnum.Assistant,
+        content: msg,
+      };
+    await this.addAnswer(message);
+  }
+
+  public async addAnswer(message: ChatCompletionRequestMessage): Promise<void> {
+    await this.create({
+      id: this.id,
+      time: Date.now(),
+      message: message,
+    });
+  }
+
+  public async query(): Promise<HistoryData[]> {
+    return await this.queryData("id = :id", { ":id": this.id })
+  }
+
+  public async remove(time: number): Promise<void> {
+    await super.remove({ id: this.id, time: time })
+  }
+
+  public async build(
+    context: ChatCompletionRequestMessage[],
+    request: ChatCompletionRequestMessage[],
+  ): Promise<ChatCompletionRequestMessage[]> {
+    let history: HistoryData[] = await this.query();
+    let messages: ChatCompletionRequestMessage[] = [];
+    let size: number = 0;
+    for (const msg of context) {
+      const msgSize: number = (msg.content || "").length;
+      size += msgSize;
+      messages.push(msg);
+    }
+    for (const msg of request) {
+      const msgSize: number = (msg.content || "").length;
+      size += msgSize;
+    }
+
+    const count = history.length;
+    history.sort((a, b) => b.time - a.time);
+    console.log("history: ", history);
+
+    const timeLimit: number = Date.now() - HISTORY_HOURS * 60 * 60 * 1000;
+    let subset: HistoryData[] = [];
+    for (const item of history) {
+      const msgSize: number = (item.message.content || "").length;
+      if (item.time > timeLimit && size + msgSize < HISTORY_CHARS) {
+        size += msgSize;
+        subset.push(item);
+      } else await this.remove(item.time);
+    }
+
+    subset.sort((a, b) => a.time - b.time);
+    for (const item of subset) {
+      messages.push(item.message);
+    }
+    for (const msg of request) {
+      messages.push(msg);
+    }
+    return messages;
+  }
+}
+
+/*
 import AWS, { AWSError } from "aws-sdk";
 import { DocumentClient, GetItemOutput } from "aws-sdk/clients/dynamodb";
 import HistoryData from "../model/historyData";
@@ -125,3 +213,4 @@ export default class History {
     return messages;
   }
 }
+*/

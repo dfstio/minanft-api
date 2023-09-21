@@ -1,3 +1,4 @@
+/*
 import { Handler, Context, Callback } from "aws-lambda";
 import ChatGPTplugin from "./src/chatgpt/plugin";
 
@@ -33,3 +34,4 @@ const plugin: Handler = async (
 };
 
 export { plugin };
+*/

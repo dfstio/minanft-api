@@ -1,5 +1,5 @@
 import i18next from 'i18next'
-import DynamoDbConnector from "../connector/dynamoDbConnector";
+import Users from "../table/users";
 
 import en from '../locales/en.json'
 import it from '../locales/it.json'
@@ -18,8 +18,8 @@ async function initLanguages(): Promise<void> {
 }
 
 async function getLanguage(id: string): Promise<string> {
-  const dbConnector = new DynamoDbConnector(process.env.DYNAMODB_TABLE!);
-  const LANGUAGE: string = await dbConnector.getCurrentLanguage(id);
+  const users = new Users(process.env.DYNAMODB_TABLE!);
+  const LANGUAGE: string = await users.getCurrentLanguage(id);
   return LANGUAGE
 }
 

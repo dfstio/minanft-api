@@ -7,7 +7,8 @@ function fieldToSeed(field: Field): string {
 }
 
 function seedToField(seed: string): Field {
-  // TODO - write code
+  // TODO - write code that converts a seed to a field
+
   return Field(68637567654674355437857834);
 }
 

@@ -1,4 +1,7 @@
-export default interface FormAnswer {
+import AccountData from "./accountData";
+import DeployData from "./deployData";
+
+export default interface UserData {
   id: string;
   username?: string;
   minanft: string[];
@@ -14,4 +17,6 @@ export default interface FormAnswer {
   education?: string;
   why?: string;
   fileUrl?: string;
+  account?: AccountData;
+  deployment?: DeployData;
 }

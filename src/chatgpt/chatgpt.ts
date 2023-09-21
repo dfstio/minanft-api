@@ -9,9 +9,8 @@ import {
 } from "openai";
 import ImageGPT from "../model/imageGPT";
 import AIUsage from "../model/aiusage";
-import DynamoDbConnector from "../connector/dynamoDbConnector";
-import HistoryData from "../model/historyData";
-import History from "../connector/history";
+import Users from "../table/users";
+import History from "../table/history";
 import { handleFunctionCall } from "./functions";
 import { archetypes, midjourney, dalle } from "./archetypes";
 const HISTORY_TABLE = process.env.HISTORY_TABLE!;
@@ -47,7 +46,7 @@ export default class ChatGPTMessage {
     const { message, parentMessage, id, image, function_call, role, username } =
       params;
 
-    const dbConnector = new DynamoDbConnector(process.env.DYNAMODB_TABLE!);
+    const users = new Users(process.env.DYNAMODB_TABLE!);
     const history: History = new History(HISTORY_TABLE, id);
     const pMessage: string = parentMessage ? parentMessage : "";
     let isImage: boolean = false;
@@ -99,7 +98,7 @@ export default class ChatGPTMessage {
           response.data.data[0].url
         )
           image_url = response.data.data[0].url;
-        await dbConnector.updateImageUsage(id);
+        await users.updateImageUsage(id);
         console.log("Image result", image_url, response.data);
       } catch (error: any) {
         console.error("createImage error");
@@ -158,7 +157,7 @@ export default class ChatGPTMessage {
       console.log("ChatGPT full log", completion.data);
 
       if (completion.data.usage)
-        await dbConnector.updateUsage(id, <AIUsage>completion.data.usage);
+        await users.updateUsage(id, <AIUsage>completion.data.usage);
       const message: ChatCompletionRequestMessage | undefined = <
         ChatCompletionRequestMessage
         >completion.data.choices[0].message;
@@ -193,7 +192,7 @@ export default class ChatGPTMessage {
     username: string,
     isArchetype: boolean = false,
   ): Promise<ImageGPT> {
-    const dbConnector = new DynamoDbConnector(process.env.DYNAMODB_TABLE!);
+    const users = new Users(process.env.DYNAMODB_TABLE!);
     const pMessage: string = parentMessage ? parentMessage : "";
     let isImage: boolean = false;
 
@@ -249,7 +248,7 @@ export default class ChatGPTMessage {
         fullPrompt = completion.data.choices[0].message.content;
         prompt = completion.data.choices[0].message.content.substr(0, 999);
       }
-      await dbConnector.updateUsage(id, <AIUsage>completion.data.usage);
+      await users.updateUsage(id, <AIUsage>completion.data.usage);
       if (isArchetype && fullPrompt.length > 999) {
         const completion = await this.api.createChatCompletion({
           model: "gpt-4", // "gpt-3.5-turbo"
@@ -272,7 +271,7 @@ export default class ChatGPTMessage {
           completion.data.usage
         ) {
           prompt = completion.data.choices[0].message.content.substr(0, 999);
-          await dbConnector.updateUsage(id, <AIUsage>completion.data.usage);
+          await users.updateUsage(id, <AIUsage>completion.data.usage);
         }
       }
     } catch (err) {
@@ -306,7 +305,7 @@ export default class ChatGPTMessage {
         response.data.data[0].url
       )
         image_url = response.data.data[0].url;
-      await dbConnector.updateImageUsage(id);
+      await users.updateImageUsage(id);
       console.log("Image result", image_url, response.data);
     } catch (error: any) {
       console.error("createImage error");

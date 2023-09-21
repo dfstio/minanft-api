@@ -1,10 +1,11 @@
-import { Configuration, OpenAIApi } from "openai";
-import merkleData from "../connector/merkledata";
 /*
+import { Configuration, OpenAIApi } from "openai";
+import merkleData from "../table/merkledata";
 
-	ChatGPT plugin code (preliminary)
-	Documentation: https://platform.openai.com/docs/plugins/introduction
-*/
+
+  // ChatGPT plugin code (preliminary)
+  // Documentation: https://platform.openai.com/docs/plugins/introduction
+
 
 //TODO: Rewrite plugin functionality after getting access to ChatGPT 4.0 plugins
 export default class ChatGPTPlugin {
@@ -27,3 +28,4 @@ export default class ChatGPTPlugin {
     } else return "Wrong request";
   }
 }
+*/

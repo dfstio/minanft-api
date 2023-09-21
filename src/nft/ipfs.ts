@@ -1,4 +1,4 @@
-import { S3 } from "aws-sdk";
+import { S3Client, GetObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
 import axios from "axios";
 import FormData from "form-data";
 
@@ -37,45 +37,42 @@ export default class IPFS {
     try {
       console.log("addLink", file);
       const auth: string = this.auth;
-      const s3 = new S3();
+      const client = new S3Client({});
 
       const params = {
         Bucket: process.env.BUCKET!,
         Key: file,
       };
 
-      let finished: boolean = false;
-      const start = Date.now();
-      const timeout = 60 * 1000; // 1 min
-      let s3data: any = undefined;
+      let finished = false;
+      await sleep(500);
       while (!finished) {
         console.log("Waiting for S3", file);
-        s3.headObject(params, function (err: any, data: any) {
-          if (err) console.log("S3 is not ready yet");
-          else {
-            finished = true;
-            s3data = data;
-            console.log("S3 is ready", data);
-          }
-        });
-        if (start + timeout < Date.now()) {
-          console.error("addLink timeout");
-          return undefined;
+        const headcommand = new HeadObjectCommand(params);
+        try {
+          const headresponse = await client.send(headcommand);
+          finished = true;
+          console.log("S3 is ready:", file, headresponse);
         }
-        await sleep(1000);
+        catch (e) {
+          console.log("S3 is not ready yet", file);
+          await sleep(500);
+        }
       }
 
-      console.log("s3data", s3data);
-      if (!s3data) return undefined;
+      // Get file metadata to retrieve size and type
+      const getcommand = new GetObjectCommand(params);
+      const getresponse = await client.send(getcommand);
 
       // Get read object stream
-      const s3Stream = s3.getObject(params).createReadStream();
+      const s3Stream = getresponse.Body
+
       const formData = new FormData();
 
       // append stream with a file
       formData.append("file", s3Stream, {
-        contentType: s3data.ContentType,
-        knownLength: s3data.ContentLength,
+        contentType: getresponse.ContentType,
+        knownLength: getresponse.ContentLength,
         filename: file,
       });
 
