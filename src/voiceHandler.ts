@@ -1,6 +1,6 @@
 import VoiceData from "./model/voiceData";
 import axios from "axios";
-import { S3Client, PutObjectCommand, HeadObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import S3File from "./storage/s3";
 import { ElasticTranscoderClient, CreateJobCommand } from '@aws-sdk/client-elastic-transcoder'
 import FormData from "form-data";
 import callLambda from "./lambda/lambda";
@@ -30,22 +30,10 @@ export default class VoiceHandler {
         `https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`,
       );
       const filePath = telegramFileInfo.data.result.file_path;
-      const response = await axios
-        .get(`https://api.telegram.org/file/bot${botToken}/${filePath}`, {
-          responseType: "arraybuffer",
-        });
-
-      const buffer = Buffer.from(response.data, "binary");
-      const input = {
-        Bucket: process.env.BUCKET_VOICEIN!,
-        Key: key + ".ogg", // "/"
-        Body: buffer,
-      }
-      const client = new S3Client({});
-      const putcommand = new PutObjectCommand(input);
-      await client.send(putcommand);
-
+      const file = new S3File(process.env.BUCKET_VOICEIN!, key + ".ogg");
+      await file.upload(`https://api.telegram.org/file/bot${botToken}/${filePath}`);
       console.log("Saved", key + ".ogg");
+
       const elasticTranscoder = new ElasticTranscoderClient({});
       const elasticParams = {
         PipelineId: process.env.VOICE_PIPELINEID!, //voice
@@ -58,61 +46,22 @@ export default class VoiceHandler {
         },
       };
 
-      const oggparams = {
-        Bucket: process.env.BUCKET_VOICEIN!,
-        Key: key + ".ogg",
-      }
-
-      let finished = false;
-      await sleep(500);
-      while (!finished) {
-        console.log("Waiting for OGG", filename);
-        const headcommand = new HeadObjectCommand(oggparams);
-        try {
-          const headresponse = await client.send(headcommand);
-          finished = true;
-          console.log("OGG is uploaded:", filename, headresponse);
-        }
-        catch (e) {
-          console.log("OGG upload is not ready yet:", filename);
-          await sleep(500);
-        }
-      }
+      await file.wait()
+      console.log("OGG is uploaded:", filename);
       await sleep(1000);
 
-      finished = false;
       const elsticcommand = new CreateJobCommand(elasticParams);
       await elasticTranscoder.send(elsticcommand);
 
-      // Set the parameters for the S3 getObject operation
-      const mp3params = {
-        Bucket: process.env.BUCKET_VOICEOUT!,
-        Key: key + ".mp3", //"1686398067705.mp3",
-      };
-
-      await sleep(500);
-      while (!finished) {
-        console.log("Waiting for MP3", filename);
-        const headcommand = new HeadObjectCommand(mp3params);
-        try {
-          const headresponse = await client.send(headcommand);
-          finished = true;
-          console.log("MP3 is uploaded:", filename, headresponse);
-        }
-        catch (e) {
-          console.log("MP3 upload is not ready yet:", filename);
-          await sleep(500);
-        }
-      }
+      const mp3file = new S3File(process.env.BUCKET_VOICEOUT!, key + ".mp3")
+      await mp3file.wait()
+      console.log("MP3 is uploaded:", filename);
       await sleep(1000);
 
-      //await sleep(5000);
       let chatGPT = "";
-      finished = false;
 
       // Get audio metadata to retrieve size and type
-      const getcommand = new GetObjectCommand(mp3params);
-      const getresponse = await client.send(getcommand);
+      const getresponse = await mp3file.get();
 
       // Get read object stream
       const s3Stream = getresponse.Body
@@ -153,7 +102,6 @@ export default class VoiceHandler {
           return chatGPT;
         } else {
           console.error("Chat GPT error", response.data.error);
-          finished = true;
           return undefined;
         }
       } catch (error: any) {
