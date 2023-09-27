@@ -1,6 +1,6 @@
 import VoiceData from "./model/voiceData";
 import axios from "axios";
-import { S3Client, PutObjectCommand, GetObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
+import S3File from "./storage/s3";
 import FormData from "form-data";
 import BotMessage from "./mina/message";
 import { initLanguages, getLanguage } from './lang/lang'
@@ -30,50 +30,17 @@ export default class AudioHandler {
       const telegramFileInfo: any = await axios.get(request);
       //console.log("telegramFileInfo", telegramFileInfo);
       const filePath = telegramFileInfo.data.result.file_path;
-      const audioresponse = await axios
-        .get(`https://api.telegram.org/file/bot${botToken}/${filePath}`, {
-          responseType: "arraybuffer",
-        });
-      const buffer = Buffer.from(audioresponse.data, "binary");
-      const input = {
-        Bucket: process.env.BUCKET!,
-        Key: key, // "/"
-        Body: buffer,
-      }
-      const client = new S3Client({});
-      const putcommand = new PutObjectCommand(input);
-      await client.send(putcommand);
+      const file = new S3File(process.env.BUCKET!, key);
+      await file.upload(`https://api.telegram.org/file/bot${botToken}/${filePath}`);
       console.log("Saved", key);
-
-      const params = {
-        Bucket: process.env.BUCKET!,
-        Key: key,
-      };
-
-      let finished = false;
-      await sleep(500);
-      while (!finished) {
-        console.log("Waiting for Audio", filename);
-        const headcommand = new HeadObjectCommand(params);
-        try {
-          const headresponse = await client.send(headcommand);
-          finished = true;
-          console.log("Audio file is ready:", filename, headresponse);
-        }
-        catch (e) {
-          console.log("Audio file is not ready yet:", filename);
-          await sleep(500);
-        }
-      }
-
+      await file.wait()
+      console.log("Audio file is ready:", filename);
       await sleep(500);
       let chatGPT = "";
-      finished = false;
 
       try {
         // Get audio metadata to retrieve size and type
-        const getcommand = new GetObjectCommand(params);
-        const getresponse = await client.send(getcommand);
+        const getresponse = await file.get()
 
         // Get read object stream
         const s3Stream = getresponse.Body

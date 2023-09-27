@@ -294,7 +294,7 @@ resources:
 
 
 package:
-  individually: false
+  excludeDevDependencies: true
   exclude:
     - test/**
     - jest.config.js
