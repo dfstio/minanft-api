@@ -1,7 +1,7 @@
 import VoiceData from "./model/voiceData";
 import axios from "axios";
 import S3File from "./storage/s3";
-import { ElasticTranscoderClient, CreateJobCommand } from '@aws-sdk/client-elastic-transcoder'
+import oggToMP3 from './voice/ElasticTranscoder';
 import FormData from "form-data";
 import callLambda from "./lambda/lambda";
 import BotMessage from "./mina/message";
@@ -33,25 +33,11 @@ export default class VoiceHandler {
       const file = new S3File(process.env.BUCKET_VOICEIN!, key + ".ogg");
       await file.upload(`https://api.telegram.org/file/bot${botToken}/${filePath}`);
       console.log("Saved", key + ".ogg");
-
-      const elasticTranscoder = new ElasticTranscoderClient({});
-      const elasticParams = {
-        PipelineId: process.env.VOICE_PIPELINEID!, //voice
-        Input: {
-          Key: key + ".ogg",
-        },
-        Output: {
-          Key: key + ".mp3",
-          PresetId: "1351620000001-300020", // mp3 192k
-        },
-      };
-
       await file.wait()
       console.log("OGG is uploaded:", filename);
       await sleep(1000);
 
-      const elsticcommand = new CreateJobCommand(elasticParams);
-      await elasticTranscoder.send(elsticcommand);
+      await oggToMP3(key);
 
       const mp3file = new S3File(process.env.BUCKET_VOICEOUT!, key + ".mp3")
       await mp3file.wait()
