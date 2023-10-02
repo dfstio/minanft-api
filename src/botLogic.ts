@@ -254,8 +254,6 @@ export default class BotLogic {
           message: T("Iwanttosell"), //  "Iwanttosell": "I want to sell my Mina NFT"
           parentMessage: parentMessage,
           image: "",
-          //function_call: "sell",
-          //role: "assistant",
           auth: CHATGPTPLUGINAUTH,
         }),
       );
@@ -464,7 +462,6 @@ export default class BotLogic {
           JSON.stringify({
             id: chatIdString,
             message: askChatGPT,
-            parentMessage: parentMessage,
             image: "",
             username: currState && currState.username ? currState.username : "",
             auth: CHATGPTPLUGINAUTH,
@@ -603,7 +600,6 @@ export default class BotLogic {
                 currState.user && currState.user.username
                   ? currState.user.username
                   : "",
-              parentMessage: parentMessage,
               image: "",
               auth: CHATGPTPLUGINAUTH,
             }),

@@ -1,332 +1,232 @@
-import {
-  Configuration,
-  OpenAIApi,
-  CreateChatCompletionRequest,
-  ChatCompletionRequestMessageRoleEnum,
-  ChatCompletionRequestMessage,
-  CreateImageRequest,
-  ChatCompletionFunctions,
-} from "openai";
-import ImageGPT from "../model/imageGPT";
-import AIUsage from "../model/aiusage";
-import Users from "../table/users";
-import History from "../table/history";
-import { handleFunctionCall } from "./functions";
-import { archetypes, midjourney, dalle } from "./archetypes";
-const HISTORY_TABLE = process.env.HISTORY_TABLE!;
-
-interface InputParams extends CreateImageRequest {
-  prompt: string; // make this mandatory for the function params
-  user: string;
-}
+import OpenAI from 'openai'
+import type ImageGPT from '../model/imageGPT'
+import type AIUsage from '../model/aiusage'
+import Users from '../table/users'
+import History from '../table/history'
+import { handleFunctionCall } from './functions'
+import { archetypes, midjourney, dalle } from './archetypes'
+const HISTORY_TABLE = process.env.HISTORY_TABLE!
 
 export default class ChatGPTMessage {
-  api: OpenAIApi;
-  context: string;
-  functions: ChatCompletionFunctions[];
-  language: string;
+  api: OpenAI
+  context: string
+  functions: any[]
+  language: string
 
   constructor(
     token: string,
     language: string,
-    context: string = "",
-    functions: ChatCompletionFunctions[] = [],
+    context: string = '',
+    functions: any[] = []
   ) {
-    const configuration = new Configuration({
-      //organization: "YOUR_ORG_ID",
-      apiKey: token,
-    });
-    this.api = new OpenAIApi(configuration);
-    this.context = context;
-    this.functions = functions;
-    this.language = language;
+    this.api = new OpenAI({ apiKey: token })
+    this.context = context
+    this.functions = functions
+    this.language = language
   }
 
   public async message(params: any): Promise<ImageGPT> {
-    const { message, parentMessage, id, image, function_call, role, username } =
-      params;
+    const { message, id, image, username } = params
 
-    const users = new Users(process.env.DYNAMODB_TABLE!);
-    const history: History = new History(HISTORY_TABLE, id);
-    const pMessage: string = parentMessage ? parentMessage : "";
-    let isImage: boolean = false;
+    const users = new Users(process.env.DYNAMODB_TABLE!)
+    const history: History = new History(HISTORY_TABLE, id)
+    let isImage: boolean = false
 
-    let prompt = message;
-    const errorMsg = "ChatGPT error. Please try again in few minutes";
-    let answer: ImageGPT = <ImageGPT>{
-      image: "",
-      answerType: "text",
+    let prompt = message
+    const errorMsg = 'ChatGPT error. Please try again in few minutes'
+    let answer: ImageGPT = {
+      image: '',
+      answerType: 'text',
       text: errorMsg,
-    };
-    if (image !== "") isImage = true;
-    if (message.length > 6 && message.substr(0, 5).toLowerCase() === "image") {
-      isImage = true;
-      prompt = message.substr(6);
+    } as ImageGPT
+    if (image !== '') isImage = true
+    if (message.length > 6 && message.substr(0, 5).toLowerCase() === 'image') {
+      isImage = true
+      prompt = message.substr(6)
     }
     if (
       message.length > 9 &&
-      message.substr(0, 8).toLowerCase() === "immagine"
+      message.substr(0, 8).toLowerCase() === 'immagine'
     ) {
-      isImage = true;
-      prompt = message.substr(9);
+      isImage = true
+      prompt = message.substr(9)
     }
 
     if (isImage) {
-      console.log("Image prompt:", prompt);
-      let image_url = "";
+      console.log('Image prompt:', prompt)
+      let imageUrl = ''
 
       try {
-        const defaultImageParams: CreateImageRequest = {
+        const imageParams = {
           n: 1,
           prompt,
-        };
-
-        const inputParams: InputParams = <InputParams>{
-          n: 1,
-          prompt,
-          user: id,
-        };
-
-        const response = await this.api.createImage({
-          ...defaultImageParams,
-          ...inputParams,
-        });
-        if (
-          response &&
-          response.data &&
-          response.data.data &&
-          response.data.data[0].url
-        )
-          image_url = response.data.data[0].url;
-        await users.updateImageUsage(id);
-        console.log("Image result", image_url, response.data);
-      } catch (error: any) {
-        console.error("createImage error");
-        if (
-          error &&
-          error.response &&
-          error.response.data &&
-          error.response.data.error &&
-          error.response.data.error.message
-        ) {
-          console.error(error.response.data.error);
-          answer.text =
-            errorMsg + " : " + error.response.data.error.message.toString();
+          user: id
         }
-        return answer;
+
+        const image = await this.api.images.generate(imageParams)
+        if (image?.data[0]?.url !== undefined) imageUrl = image.data[0].url
+        await users.updateImageUsage(id)
+        console.log('Image result', imageUrl, image.data)
+      } catch (error: any) {
+        console.error('createImage error')
+        if (error?.response?.data?.error?.message !== undefined) {
+          console.error(error.response.data.error)
+          answer.text =
+            errorMsg + ' : ' + error.response.data.error.message.toString()
+        }
+        return answer
       }
 
-      return <ImageGPT>{
-        image: image_url,
-        answerType: "image",
-        text: prompt,
-      };
+      return {
+        image: imageUrl,
+        answerType: 'image',
+        text: prompt
+      } as ImageGPT
     }
 
-    const chatcontext: ChatCompletionRequestMessage[] = [
+    const chatcontext = [
       {
-        role: ChatCompletionRequestMessageRoleEnum.Assistant,
-        content: this.context,
-      },
-    ];
-
-    const request: ChatCompletionRequestMessage[] =
-      role == "assistant"
-        ? [
-          {
-            role: ChatCompletionRequestMessageRoleEnum.Assistant,
-            content: message,
-          },
-        ]
-        : [];
+        role: 'system',
+        content: this.context
+      }
+    ]
 
     try {
-      const messages: ChatCompletionRequestMessage[] = await history.build(
-        chatcontext,
-        request,
-      );
-      console.log("Request chatGptMessages", messages);
+      const messages = await history.build(chatcontext)
+      console.log('Request chatGptMessages', messages)
 
-      const completion = await this.api.createChatCompletion({
-        model: "gpt-4", // "gpt-3.5-turbo"
+      const completion = await this.api.chat.completions.create({
+        model: 'gpt-4',
         messages,
         functions: this.functions,
-        function_call: function_call ? { name: function_call } : undefined,
-        user: id,
-      });
-      console.log("ChatGPT full log", completion.data);
+        function_call: 'auto', // auto is default, but we'll be explicit
+        user: id
+      })
+      console.log('ChatGPT full log', completion)
 
-      if (completion.data.usage)
-        await users.updateUsage(id, <AIUsage>completion.data.usage);
-      const message: ChatCompletionRequestMessage | undefined = <
-        ChatCompletionRequestMessage
-        >completion.data.choices[0].message;
+      if (completion.usage !== undefined && completion.usage !== null)
+        await users.updateUsage(id, completion.usage as AIUsage)
+      const message = completion.choices[0].message
       if (message) {
-        console.log("ChatGPT", message);
-        await history.addAnswer(
-          <ChatCompletionRequestMessage>completion.data.choices[0].message,
-        );
+        console.log('ChatGPT', message)
+        await history.addAnswer(message)
         if (message.function_call) {
-          await handleFunctionCall(id, message.function_call, username, this.language);
-          answer.answerType = "function";
-          answer.text = "";
+          await handleFunctionCall(id, message.function_call, username, this.language)
+          answer.answerType = 'function'
+          answer.text = ''
         }
-        if (message.content) answer.text = message.content;
+        if (message.content !== undefined && message.content !== null) answer.text = message.content
       }
 
-      return answer;
+      return answer
     } catch (error: any) {
-      if (error.response.data.error.message) {
-        console.error("ChatGPT error", error.response.data.error.message);
+      if (error?.response?.data?.error?.message !== undefined) {
+        console.error('ChatGPT error', error.response.data.error.message)
         answer.text =
-          answer.text + " : " + error.response.data.error.message.toString();
-      } else console.error("ChatGPT error", error);
-      return answer;
+          answer.text + ' : ' + error.response.data.error.message.toString()
+      } else console.error('ChatGPT error', error)
+      return answer
     }
   }
 
   public async image(
     msg: string,
-    parentMessage: string,
     id: string,
     username: string,
     isArchetype: boolean = false,
   ): Promise<ImageGPT> {
-    const users = new Users(process.env.DYNAMODB_TABLE!);
-    const pMessage: string = parentMessage ? parentMessage : "";
-    let isImage: boolean = false;
-
-    const errorMsg = "ChatGPT error. Please try again in few minutes";
+    const users = new Users(process.env.DYNAMODB_TABLE!)
+    const errorMsg = 'ChatGPT error. Please try again in few minutes'
     let answer: ImageGPT = <ImageGPT>{
-      image: "",
-      answerType: "text",
+      image: '',
+      answerType: 'text',
       text: errorMsg,
-    };
-    let prompt: string = msg.substr(0, 999);
-    let fullPrompt: string = msg;
+    }
+    let prompt: string = msg.substring(0, 999)
+    let fullPrompt: string = msg
 
-    const art: string = isArchetype ? dalle : archetypes;
-    const chatGptMessages =
-      pMessage == ""
-        ? [
-          {
-            role: ChatCompletionRequestMessageRoleEnum.System,
-            content: isArchetype ? art : art + username,
-          },
-          {
-            role: ChatCompletionRequestMessageRoleEnum.User,
-            content: msg,
-          },
-        ]
-        : [
-          {
-            role: ChatCompletionRequestMessageRoleEnum.User,
-            content: pMessage,
-          },
-          {
-            role: ChatCompletionRequestMessageRoleEnum.System,
-            content: isArchetype ? art : art + username,
-          },
-          {
-            role: ChatCompletionRequestMessageRoleEnum.User,
-            content: msg,
-          },
-        ];
+    const art: string = isArchetype ? dalle : archetypes
+    const messages: any[] =
+      [
+        {
+          role: 'system',
+          content: isArchetype ? art : art + username
+        },
+        {
+          role: 'user',
+          content: msg
+        }
+      ]
 
     try {
-      const completion = await this.api.createChatCompletion({
-        model: "gpt-4", // "gpt-3.5-turbo"
-        messages: chatGptMessages,
-        user: id,
-      });
-      console.log("ChatGPT", completion.data.choices[0].message?.content);
-      if (
-        completion.data.choices[0].message &&
-        completion.data.choices[0].message.content &&
-        completion.data.usage
-      ) {
-        fullPrompt = completion.data.choices[0].message.content;
-        prompt = completion.data.choices[0].message.content.substr(0, 999);
+      const completion = await this.api.chat.completions.create({
+        model: 'gpt-4', // "gpt-3.5-turbo"
+        messages,
+        user: id
+      })
+      console.log('ChatGPT', completion.choices[0].message?.content)
+      if (completion?.choices[0]?.message?.content !== undefined && completion?.choices[0]?.message?.content !== null) {
+        fullPrompt = completion.choices[0].message.content
+        prompt = completion.choices[0].message.content.substring(0, 999)
       }
-      await users.updateUsage(id, <AIUsage>completion.data.usage);
+      await users.updateUsage(id, completion.usage as AIUsage)
       if (isArchetype && fullPrompt.length > 999) {
-        const completion = await this.api.createChatCompletion({
-          model: "gpt-4", // "gpt-3.5-turbo"
+        const completion = await this.api.chat.completions.create({
+          model: 'gpt-4',
           messages: [
             {
-              role: ChatCompletionRequestMessageRoleEnum.System,
+              role: 'system',
               content:
-                "Maximum size of description should be strictly 1000 characters. Do not provide description with the size more than 1000 characters. Please shorten the user input so it would be not more than 1000 characters",
+                'Maximum size of description should be strictly 1000 characters. Do not provide description with the size more than 1000 characters. Please shorten the user input so it would be not more than 1000 characters',
             },
             {
-              role: ChatCompletionRequestMessageRoleEnum.User,
-              content: fullPrompt,
+              role: 'user',
+              content: fullPrompt
             },
           ],
-          user: id,
-        });
-        if (
-          completion.data.choices[0].message &&
-          completion.data.choices[0].message.content &&
-          completion.data.usage
-        ) {
-          prompt = completion.data.choices[0].message.content.substr(0, 999);
-          await users.updateUsage(id, <AIUsage>completion.data.usage);
+          user: id
+        })
+        if (completion?.choices[0]?.message?.content !== undefined &&
+          completion?.choices[0]?.message?.content !== null &&
+          completion?.usage !== undefined) {
+          prompt = completion.choices[0].message.content.substring(0, 999)
+          await users.updateUsage(id, completion.usage as AIUsage)
         }
       }
     } catch (err) {
-      console.error(err);
+      console.error(err)
     }
 
-    console.log("Image prompt:", prompt);
-    console.log("Image full prompt:", fullPrompt);
-    let image_url = "";
+    console.log('Image prompt:', prompt)
+    console.log('Image full prompt:', fullPrompt)
+    let imageUrl = ''
 
     try {
-      const defaultImageParams: CreateImageRequest = {
+      const imageParams = {
         n: 1,
         prompt,
-      };
-
-      const inputParams: InputParams = <InputParams>{
-        n: 1,
-        prompt,
-        user: id,
-      };
-
-      const response = await this.api.createImage({
-        ...defaultImageParams,
-        ...inputParams,
-      });
-      if (
-        response &&
-        response.data &&
-        response.data.data &&
-        response.data.data[0].url
-      )
-        image_url = response.data.data[0].url;
-      await users.updateImageUsage(id);
-      console.log("Image result", image_url, response.data);
-    } catch (error: any) {
-      console.error("createImage error");
-      if (
-        error &&
-        error.response &&
-        error.response.data &&
-        error.response.data.error &&
-        error.response.data.error.message
-      ) {
-        console.error(error.response.data.error);
-        answer.text =
-          errorMsg + " : " + error.response.data.error.message.toString();
+        user: id
       }
-      return answer;
+
+      const image = await this.api.images.generate(imageParams)
+      if (image?.data[0]?.url !== undefined) imageUrl = image.data[0].url
+      await users.updateImageUsage(id)
+      console.log('Image result', imageUrl, image.data)
+    } catch (error: any) {
+      console.error('createImage error')
+      if (error?.response?.data?.error?.message !== undefined &&
+        error?.response?.data?.error?.message !== null) {
+        console.error(error.response.data.error)
+        answer.text =
+          errorMsg + ' : ' + error.response.data.error.message.toString()
+      }
+      return answer
     }
 
     return <ImageGPT>{
-      image: image_url,
-      answerType: "image",
+      image: imageUrl,
+      answerType: 'image',
       text: isArchetype ? midjourney + fullPrompt : prompt,
-    };
+    }
   }
 }
