@@ -94,7 +94,6 @@ const image: Handler = async (
         const chat = new ChatGPTMessage(CHATGPT_TOKEN, language, contextChatGPT);
         result = await chat.image(
           event.message,
-          event.parentMessage,
           event.id,
           event.username,
         );
@@ -148,7 +147,6 @@ const archetype: Handler = async (
         const chat = new ChatGPTMessage(CHATGPT_TOKEN, language, contextChatGPT);
         result = await chat.image(
           event.message,
-          "",
           event.id,
           event.username,
           true,

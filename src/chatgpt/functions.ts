@@ -1,98 +1,95 @@
-import {
-  ChatCompletionFunctions,
-  ChatCompletionRequestMessageFunctionCall,
-} from "openai";
-import BotMessage from "../mina/message";
-import Names from "../table/names";
-import NamesData from "../model/namesData";
-const NAMES_TABLE = process.env.NAMES_TABLE!;
-import { algoliaWriteToken } from "../nft/algolia";
-import { botCommandList } from "../payments/botcommands";
+import BotMessage from '../mina/message'
+import Names from '../table/names'
+import type NamesData from '../model/namesData'
+import { algoliaWriteToken } from '../nft/algolia'
+import { botCommandList } from '../payments/botcommands'
 
-const currencies: string[] = ["USD", "EUR", "GBP", "CAD", "JPY"];
-const functions: ChatCompletionFunctions[] = [
+const NAMES_TABLE = process.env.NAMES_TABLE!
+
+const currencies: string[] = ['USD', 'EUR', 'GBP', 'CAD', 'JPY']
+const functions: any[] = [
   {
-    name: "view",
-    description: "Shows to the user all NFTs or NFT with specific name",
+    name: 'view',
+    description: 'Shows to the user all NFTs or NFT with specific name',
     parameters: {
-      type: "object",
+      type: 'object',
       properties: {
         nft_name: {
-          type: "string",
-          description: "Mina NFT avatar name to view",
-        },
-      },
-    },
+          type: 'string',
+          description: 'Mina NFT avatar name to view'
+        }
+      }
+    }
   },
   {
-    name: "sell",
+    name: 'sell',
     description: "Sell user's NFT for money",
     parameters: {
-      type: "object",
+      type: 'object',
       properties: {
         price: {
-          type: "integer",
-          description: "The sale price of NFT",
+          type: 'integer',
+          description: 'The sale price of NFT'
         },
         currency: {
-          type: "string",
-          description: "The currency of sale",
-          enum: currencies,
+          type: 'string',
+          description: 'The currency of sale',
+          enum: currencies
         },
       },
-      required: ["price", "currency"],
-    },
-  },
-];
+      required: ['price', 'currency']
+    }
+  }
+]
 
 async function handleFunctionCall(
   id: string,
-  message: ChatCompletionRequestMessageFunctionCall,
+  message: any,
   username: string | undefined,
-  language: string,
+  language: string
 ): Promise<void> {
   if (message && message.arguments) {
     try {
       const request = JSON.parse(message.arguments);
       const bot = new BotMessage(id, language);
-      console.log("Arguments", request);
+      console.log('Arguments', request);
 
-      if (message.name == "view") {
-        console.log("Function view:", request);
+      if (message.name == 'view') {
+        console.log('Function view:', request);
         if (request.nft_name)
-          await bot.tmessage("letmeshowyou", { nftname: "NFT" + request.nft_name });
+          await bot.tmessage('letmeshowyou', { nftname: 'NFT' + request.nft_name });
         else
-          await bot.tmessage("letmeshowyouall");
+          await bot.tmessage('letmeshowyouall');
         await botCommandList(id, language, request.nft_name);
         return;
       }
 
-      if (message.name == "sell") {
-        console.log("Function sell:", request);
+      if (message.name == 'sell') {
+        console.log('Function sell:', request);
         if (request.price && request.currency) {
           if (
             currencies.includes(request.currency) &&
             username &&
-            username !== "" &&
+            username !== '' &&
             Number(request.price)
           ) {
             const names = new Names(NAMES_TABLE);
             //  "sellingnftforcurrencyprice": "Selling NFT {{name}} for {{currency}} {{price}}"
-            await bot.tmessage("sellingnftforcurrencyprice", {
-              name: username ? username.replaceAll("@", "") : "",
+            await bot.tmessage('sellingnftforcurrencyprice', {
+              name: username ? username.replaceAll('@', '') : '',
               currency: request.currency,
               price: request.price
             });
             await names.sell(username, Number(request.price), request.currency);
             await sleep(1000);
             const nft: NamesData | undefined = await names.get(username);
-            console.log("NFT sale handleFunctionCall", nft);
+            console.log('NFT sale handleFunctionCall', nft);
             if (nft && nft.onSale == true) await algoliaWriteToken(nft);
-            else console.error("Error NFT sale handleFunctionCall");
+            else console.error('Error NFT sale handleFunctionCall');
           } else
             // "cannotsellnftforcurrencyprice": "Cannot sell NFT {{name}} for {{currency}} {{price}}"
-            await bot.tmessage("cannotsellnftforcurrencyprice", {
-              name: username ? username.replaceAll("@", "") : "",
+            await bot.tmessage('cannotsellnftforcurrencyprice', {
+              name: username ? username.replaceAll('@', '') : '',
               currency: request.currency,
               price: request.price
             });
@@ -100,8 +97,7 @@ async function handleFunctionCall(
         }
       }
     } catch (err) {
-      console.error("Function error:", err);
-      return;
+      console.error('Function error:', err);
     }
   }
 }
