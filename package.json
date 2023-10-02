@@ -1,5 +1,22 @@
 {
-  "license": "MIT",
+  "name": "minanft",
+  "description": "Mina NFT backend, API and telegram bot",
+  "keywords": [
+    "minanft",
+    "NFT",
+    "backend",
+    "bot",
+    "telegram",
+    "mina",
+    "zkapp",
+    "zk",
+    "blockchain",
+    "web3",
+    "zero knowledge"
+  ],
+  "version": "1.5.0",
+  "author": "dfst.io",
+  "license": "Apache-2.0",
   "scripts": {
     "test": "jest",
     "test-watch": "jest --watch",
