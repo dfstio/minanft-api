@@ -203,6 +203,7 @@ export default class ChatGPTMessage {
 
     try {
       const imageParams = {
+        model: "dall-e-3",
         n: 1,
         prompt,
         user: id

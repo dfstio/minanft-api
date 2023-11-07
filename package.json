@@ -1,5 +1,5 @@
 {
-  "name": "minanft",
+  "name": "minanft-api",
   "description": "Mina NFT backend, API and telegram bot",
   "keywords": [
     "minanft",
@@ -14,7 +14,7 @@
     "web3",
     "zero knowledge"
   ],
-  "version": "1.5.0",
+  "version": "1.6.0",
   "author": "dfst.io",
   "license": "Apache-2.0",
   "scripts": {
@@ -25,7 +25,7 @@
     "info": "serverless info --aws-profile minanft",
     "org": "serverless --org=dfstio --aws-profile minanft",
     "push": "git status && git push -u originminanft contract",
-    "gitcreate": "git remote add originminanft https://github.com/dfstio/minanft",
+    "gitcreate": "git remote add originminanftapi https://github.com/dfstio/minanft-api",
     "githubcleartoken": "git config --global --unset credential.helper",
     "checkout": "git checkout -b contract",
     "commit": "git commit -a -S -m",
@@ -39,38 +39,39 @@
     "lang": "ts-node test/lang.ts",
     "deploytest": "ts-node test/deploy.ts",
     "deployers": "ts-node test/deployers.ts",
-    "generate": "ts-node test/generate.ts"
+    "generate": "ts-node test/generate.ts",
+    "vscode": "yarn dlx @yarnpkg/sdks vscode"
   },
   "devDependencies": {
-    "@types/node": "^20.8.0",
-    "@types/nodemailer": "^6.4.11",
-    "@typescript-eslint/eslint-plugin": "^6.7.3",
-    "eslint": "^8.50.0",
-    "eslint-config-standard-with-typescript": "latest",
-    "eslint-plugin-import": "^2.28.1",
-    "eslint-plugin-n": "^16.1.0",
+    "@types/node": "^20.8.10",
+    "@types/nodemailer": "^6.4.13",
+    "@typescript-eslint/eslint-plugin": "^6.10.0",
+    "eslint": "^8.53.0",
+    "eslint-config-standard-with-typescript": "^39.1.1",
+    "eslint-plugin-import": "^2.29.0",
+    "eslint-plugin-n": "^16.3.0",
     "eslint-plugin-promise": "^6.1.1",
     "serverless-plugin-typescript": "^2.1.5",
     "typescript": "^5.2.2"
   },
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.421.0",
-    "@aws-sdk/client-elastic-transcoder": "^3.421.0",
-    "@aws-sdk/client-lambda": "^3.421.0",
-    "@aws-sdk/client-s3": "^3.421.0",
-    "@aws-sdk/util-dynamodb": "^3.421.0",
-    "@types/aws-lambda": "^8.10.122",
-    "@types/jsonwebtoken": "^9.0.3",
-    "@types/remove-markdown": "^0.3.2",
+    "@aws-sdk/client-dynamodb": "^3.441.0",
+    "@aws-sdk/client-elastic-transcoder": "^3.441.0",
+    "@aws-sdk/client-lambda": "^3.441.0",
+    "@aws-sdk/client-s3": "^3.441.0",
+    "@aws-sdk/util-dynamodb": "^3.441.0",
+    "@types/aws-lambda": "^8.10.126",
+    "@types/jsonwebtoken": "^9.0.5",
+    "@types/remove-markdown": "^0.3.3",
     "algoliasearch": "^4.20.0",
-    "axios": "^1.5.1",
+    "axios": "^1.6.0",
     "form-data": "^4.0.0",
-    "i18next": "^23.5.1",
+    "i18next": "^23.6.0",
     "jsonwebtoken": "^9.0.2",
-    "o1js": "^0.13.0",
-    "openai": "^4.11.0",
+    "o1js": "^0.14.0",
+    "openai": "^4.16.1",
     "remove-markdown": "^0.5.0",
-    "telegraf": "^4.14.0"
+    "telegraf": "^4.15.0"
   },
-  "packageManager": "yarn@3.4.1"
+  "packageManager": "yarn@4.0.1"
 }

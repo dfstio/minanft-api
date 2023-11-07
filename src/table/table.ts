@@ -5,7 +5,9 @@ import {
   GetItemCommand,
   DeleteItemCommand,
   UpdateItemCommand,
-  QueryCommand
+  UpdateItemCommandInput,
+  QueryCommand,
+
 } from "@aws-sdk/client-dynamodb";
 import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
 
@@ -89,10 +91,10 @@ export default class Table<T> {
 
   public async remove(key: any): Promise<void> {
     try {
-      const params = {
+      const params  = {
         TableName: this.tableName,
         Key: marshall(key)
-      }
+      };
       console.log("Table: remove", params)
       const command = new DeleteItemCommand(params)
       const data = await this._client.send(command)
@@ -104,14 +106,14 @@ export default class Table<T> {
 
   public async updateData(key: any, names: any, values: any, updateExpression: string): Promise<void> {
     try {
-      const params = {
+      const params : UpdateItemCommandInput = {
         TableName: this.tableName,
         Key: marshall(key),
         ExpressionAttributeNames: names,
         ExpressionAttributeValues: marshall(values),
         UpdateExpression: updateExpression,
         ReturnValues: 'UPDATED_NEW',
-      }
+      } as UpdateItemCommandInput;
       console.log("Table: updateData", params)
       const command = new UpdateItemCommand(params)
       const data = await this._client.send(command)
