@@ -11,6 +11,7 @@ function ipfsToFields(ipfs: string): Field[] | undefined {
         fields,
       );
     console.log("ipfsToFields length", fields.length, ipfs);
+    /*
     const restored = fieldsToIPFS(fields);
     console.log("Restored: ", restored);
     if (ipfs !== restored) {
@@ -22,6 +23,8 @@ function ipfsToFields(ipfs: string): Field[] | undefined {
       );
       return undefined;
     }
+    
+    */
     return fields;
   } catch (error: any) {
     console.error("ipfsToFields error", error);

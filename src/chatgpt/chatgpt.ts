@@ -96,7 +96,7 @@ export default class ChatGPTMessage {
       console.log('Request chatGptMessages', messages)
 
       const completion = await this.api.chat.completions.create({
-        model: 'gpt-4',
+        model: 'gpt-4-1106-preview',
         messages,
         functions: this.functions,
         function_call: 'auto', // auto is default, but we'll be explicit
@@ -160,7 +160,7 @@ export default class ChatGPTMessage {
 
     try {
       const completion = await this.api.chat.completions.create({
-        model: 'gpt-4', // "gpt-3.5-turbo"
+        model: 'gpt-4-1106-preview', // "gpt-3.5-turbo"
         messages,
         user: id
       })
@@ -172,7 +172,7 @@ export default class ChatGPTMessage {
       await users.updateUsage(id, completion.usage as AIUsage)
       if (isArchetype && fullPrompt.length > 999) {
         const completion = await this.api.chat.completions.create({
-          model: 'gpt-4',
+          model: 'gpt-4-1106-preview',
           messages: [
             {
               role: 'system',
