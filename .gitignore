@@ -17,3 +17,4 @@ output.txt
 .eslintrc.json
 .yarn/
 .yarnrc.yml
+.build/
