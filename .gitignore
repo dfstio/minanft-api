@@ -6,7 +6,7 @@ jspm_packages
 .serverless
 
 # Test directories
-
+deperciated/
 
 env.json
 src/mina/gastanks.ts
