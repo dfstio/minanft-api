@@ -2,10 +2,8 @@ org: dfstio
 app: minanft-telegram-bot
 service: minanft-telegram-bot
 
-
 plugins:
   - serverless-plugin-typescript
-
 
 provider:
   name: aws
@@ -52,6 +50,9 @@ provider:
     ALGOLIA_KEY: ${file(./env.json):ALGOLIA_KEY, env:ALGOLIA_KEY}
     ALGOLIA_PROJECT: ${file(./env.json):ALGOLIA_PROJECT, env:ALGOLIA_PROJECT}
     AWS_KMS_ENCRYPTION_KEY_ID: ${file(./env.json):AWS_KMS_ENCRYPTION_KEY_ID, env:AWS_KMS_ENCRYPTION_KEY_ID}
+    NAMES_ORACLE_SK: ${file(./env.json):NAMES_ORACLE_SK, env:NAMES_ORACLE_SK}
+    DEPLOYER: ${file(./env.json):DEPLOYER, env:DEPLOYER}
+    PROVER_KEYS_BUCKET: ${file(./env.json):PROVER_KEYS_BUCKET, env:PROVER_KEYS_BUCKET}
   iamRoleStatements:
     - Effect: "Allow"
       Action:
@@ -117,7 +118,7 @@ provider:
       Action:
         - s3:PutObject
         - s3:PutObjectAcl
-        - s3:GetObject 
+        - s3:GetObject
         - s3:GetObjectAcl
         - s3:HeadObject
       Resource: "arn:aws:s3:::${self:provider.environment.BUCKET}/*"
@@ -125,7 +126,7 @@ provider:
       Action:
         - s3:PutObject
         - s3:PutObjectAcl
-        - s3:GetObject 
+        - s3:GetObject
         - s3:GetObjectAcl
         - s3:HeadObject
       Resource: "arn:aws:s3:::${self:provider.environment.BUCKET_VOICEIN}/*"
@@ -133,18 +134,26 @@ provider:
       Action:
         - s3:PutObject
         - s3:PutObjectAcl
-        - s3:GetObject 
+        - s3:GetObject
         - s3:GetObjectAcl
         - s3:HeadObject
         - s3:ListBucket
       Resource: "arn:aws:s3:::${self:provider.environment.BUCKET_VOICEOUT}/*"
     - Effect: Allow
       Action:
+        - s3:PutObject
+        - s3:PutObjectAcl
+        - s3:GetObject
+        - s3:GetObjectAcl
+        - s3:HeadObject
+        - s3:ListBucket
+      Resource: "arn:aws:s3:::${self:provider.environment.PROVER_KEYS_BUCKET}/*"
+    - Effect: Allow
+      Action:
         - elastictranscoder:CreateJob
-      Resource: 
+      Resource:
         - "arn:aws:elastictranscoder:${opt:region, self:provider.region}:*:pipeline/*"
         - "arn:aws:elastictranscoder:${opt:region, self:provider.region}:*:preset/*"
-
 
 functions:
   send:
@@ -164,50 +173,51 @@ functions:
           path: api
           method: post
   ask:
-    handler: ask.chatgpt  
+    handler: ask.chatgpt
     timeout: 900
     memorySize: 256
   image:
-    handler: ask.image  
+    handler: ask.image
     timeout: 900
     memorySize: 256
   archetype:
-    handler: ask.archetype  
+    handler: ask.archetype
     timeout: 900
     memorySize: 256
   audio:
-    handler: audio.transcribe  
+    handler: audio.transcribe
     timeout: 900
     memorySize: 256
   test:
-    handler: test.tasks  
+    handler: test.mint
     timeout: 900
+    memorySize: 3008
+    ephemeralStorageSize: 4096
   tasks:
-    handler: tasks.check  
+    handler: tasks.check
     timeout: 300
     memorySize: 192
     events:
-      - schedule: 
+      - schedule:
           rate: rate(5 minutes)
           enabled: true
           name: ts
   deploy:
-    handler: mina.deploy     
+    handler: mina.deploy
     timeout: 900
     memorySize: 2048
   topup:
-    handler: mina.topup     
+    handler: mina.topup
     timeout: 900
     memorySize: 512
   deployipfs:
-    handler: mina.deployipfs     
+    handler: mina.deployipfs
     timeout: 900
     memorySize: 2048
   create:
-    handler: mina.create     
+    handler: mina.create
     timeout: 900
     memorySize: 2048
-
 
 resources:
   Resources:
@@ -274,7 +284,7 @@ resources:
           - AttributeName: id
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
-        TableName: ${self:provider.environment.DOCS_TABLE}        
+        TableName: ${self:provider.environment.DOCS_TABLE}
     HistoryDynamoDbTable:
       Type: "AWS::DynamoDB::Table"
       DeletionPolicy: Retain
@@ -290,8 +300,7 @@ resources:
           - AttributeName: time
             KeyType: RANGE
         BillingMode: PAY_PER_REQUEST
-        TableName: ${self:provider.environment.HISTORY_TABLE}    
-
+        TableName: ${self:provider.environment.HISTORY_TABLE}
 
 package:
   excludeDevDependencies: true
@@ -305,7 +314,5 @@ package:
     - .prettierrc
     - node_modules/aws-sdk/**
 
-  
 custom:
   s3Bucket: formbucket-${self:provider.environment.BUCKET}
-    
