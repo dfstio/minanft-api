@@ -5,6 +5,7 @@ import {
   MINANFT_NAME_SERVICE,
   accountBalanceMina,
   Memory,
+  MinaNFTMetadataUpdate,
 } from "minanft";
 import {
   PrivateKey,
@@ -61,14 +62,14 @@ export async function example() {
   const useLocalBlockchain: boolean = true;
   const transactionFee = 150_000_000;
 
-  const keys = MinaNFT.minaInit("local");
+  const keys = MinaNFT.minaInit(`testworld2`);
   const deployer = keys ? keys[0].privateKey : PrivateKey.fromBase58(DEPLOYER!);
   const oraclePrivateKey = PrivateKey.fromBase58(NAMES_ORACLE_SK!);
   const nameServiceAddress = PublicKey.fromBase58(MINANFT_NAME_SERVICE);
   const ownerPrivateKey = PrivateKey.random();
   const ownerPublicKey = ownerPrivateKey.toPublicKey();
   const owner = Poseidon.hash(ownerPublicKey.toFields());
-  const pinataJWT = ""; //PINATA_JWT;
+  const pinataJWT = PINATA_JWT!;
 
   console.log(
     `Deployer balance: ${await accountBalanceMina(deployer.toPublicKey())}`
@@ -97,6 +98,9 @@ export async function example() {
   console.log("Compiling...");
   //const cache: Cache = Cache.FileSystem(cacheDir, true);
   //const cache: Cache = Cache.FileSystem(nftCacheDir, true);
+  //console.time("MinaNFTMetadataUpdate compiled");
+  //await MinaNFTMetadataUpdate.compile({ cache });
+  //console.timeEnd("MinaNFTMetadataUpdate compiled");
   MinaNFT.setCacheFolder(nftCacheDir);
 
   console.time("compiled");
@@ -204,6 +208,7 @@ using the deployer with public key ${sender.toBase58()}:
   console.log(`json:`, JSON.stringify(nft.toJSON(), null, 2));
   Memory.info("json");
 
+  /*
   const nameService = new MinaNFTNameService({ oraclePrivateKey });
   let tx = await nameService.deploy(deployer);
   if (tx === undefined) {
@@ -211,15 +216,15 @@ using the deployer with public key ${sender.toBase58()}:
   }
   Memory.info("deploy");
   await MinaNFT.transactionInfo(tx, "deploy name service");
+*/
 
-  /*
   const nameService = new MinaNFTNameService({
     oraclePrivateKey,
     address: nameServiceAddress,
   });
-  */
+
   console.time("mint");
-  tx = await nft.mint({
+  const tx = await nft.mint({
     deployer,
     owner,
     pinataJWT,
