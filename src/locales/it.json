@@ -36,7 +36,7 @@
   "ErrordeployingNFT": "Distribuzione NFT: Errore durante il deploy dell'NFT sulla blockchain MINA. Riprova più tardi digitando il comando \"new\"",
   "ErrorconvertingIPFShash": "Distribuzione NFT: Errore nella conversione dell'hash IPFS dell'NFT. Riprova più tardi digitando il comando \"new\"",
   "Cannotsetnewpasssword": "Distribuzione NFT: Errore durante il deploy dell'NFT sulla blockchain MINA. Impossibile impostare una nuova password per l'NFT. Riprova più tardi digitando il comando \"new\"",
-  "sucessDeploymentMessage": "Successo! Distribuzione NFT (3/3): NFT {{nftname}} è scritto sulla blockchain MINA: https://berkeley.minaexplorer.com/transaction/{{hash}}\n\nPuoi visualizzarlo su https://minanft.io/{{nftname}}\nSe vuoi creare un altro NFT, digita il comando \"new\"",
+  "sucessDeploymentMessage": "Successo! NFT {{nftname}} è scritto sulla blockchain MINA: https://minascan.io/testworld/tx/{{hash}}\n\nPuoi visualizzarlo su https://minanft.io/{{nftname}}\nSe vuoi creare un altro NFT, digita il comando \"new\"",
   "Transactionhasfailed": "La transazione è fallita",
   "smartcontractdeployed": "Distribuzione NFT (2/3): contratto intelligente distribuito: https://berkeley.minaexplorer.com/transaction/{{hash}}",
   "ErrorloadingNFT": "Errore nel caricamento dell'NFT",

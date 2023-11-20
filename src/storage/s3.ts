@@ -7,6 +7,7 @@ import {
   CopyObjectCommand,
 } from "@aws-sdk/client-s3";
 import axios from "axios";
+import { createHash } from "crypto";
 
 export default class S3File {
   private readonly _client: S3Client;
@@ -81,6 +82,42 @@ export default class S3File {
       return data.Body;
     } catch (error: any) {
       console.error("Error: S3File: getStream", error);
+      return undefined;
+    }
+  }
+
+  public async sha3_512(): Promise<string> {
+    const stream = await this.getStream();
+    const hash = createHash("SHA3-512");
+    for await (const chunk of stream) {
+      hash.update(chunk);
+    }
+    return hash.digest("base64");
+  }
+
+  public async metadata(): Promise<
+    | {
+        size: number;
+        mimeType: string;
+      }
+    | undefined
+  > {
+    try {
+      const params = {
+        Bucket: this.bucket,
+        Key: this.key,
+      };
+      console.log("S3File: metadata", params);
+      const command = new HeadObjectCommand(params);
+      const data = await this._client.send(command);
+      console.log("Success: S3File: metadata", data);
+      if (data && data.ContentType && data.ContentLength) {
+        const mimeType: string = data.ContentType;
+        const size: number = data.ContentLength;
+        return { size, mimeType };
+      } else return undefined;
+    } catch (error: any) {
+      console.log("Error: S3File: metadata", error);
       return undefined;
     }
   }

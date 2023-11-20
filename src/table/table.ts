@@ -7,7 +7,6 @@ import {
   UpdateItemCommand,
   UpdateItemCommandInput,
   QueryCommand,
-
 } from "@aws-sdk/client-dynamodb";
 import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
 
@@ -19,7 +18,7 @@ export default class Table<T> {
     const options = {};
     this._client = new DynamoDBClient(options);
     this.tableName = tableName;
-    console.log("Table", tableName, "region", process.env.AWS_REGION)
+    console.log("Table", tableName, "region", process.env.AWS_REGION);
   }
 
   get client(): DynamoDBClient {
@@ -30,15 +29,16 @@ export default class Table<T> {
     try {
       const params = {
         TableName: this.tableName,
-        Item: marshall(item),
-      }
-      console.log("Table: create", params)
-      const command = new PutItemCommand(params)
-      const data = await this._client.send(command)
-      console.log("Success: Table: create", data)
-    }
-    catch (error: any) {
-      console.error("Error: Table: create", error)
+        Item: marshall(item, {
+          removeUndefinedValues: true,
+        }),
+      };
+      console.log("Table: create", params);
+      const command = new PutItemCommand(params);
+      const data = await this._client.send(command);
+      console.log("Success: Table: create", data);
+    } catch (error: any) {
+      console.error("Error: Table: create", error);
     }
   }
 
@@ -47,21 +47,19 @@ export default class Table<T> {
       const params = {
         TableName: this.tableName,
         ConsistentRead: true,
-      }
-      console.log("Table: scan", params)
-      const command = new ScanCommand(params)
-      const data = await this._client.send(command)
+      };
+      console.log("Table: scan", params);
+      const command = new ScanCommand(params);
+      const data = await this._client.send(command);
       let result: T[] = [];
       if (data.Items === undefined) return result;
       for (let i = 0; i < data.Items.length; i++) {
         result.push(unmarshall(data.Items[i]) as T);
       }
-      console.log("Success: Table: scan", result)
+      console.log("Success: Table: scan", result);
       return result;
-
-    }
-    catch (error: any) {
-      console.error("Error: Table: scan", error)
+    } catch (error: any) {
+      console.error("Error: Table: scan", error);
       return [];
     }
   }
@@ -72,15 +70,14 @@ export default class Table<T> {
         TableName: this.tableName,
         Key: marshall(key),
         ConsistentRead: true,
-      }
-      console.log("Table: get", params)
-      const command = new GetItemCommand(params)
-      const data = await this._client.send(command)
+      };
+      console.log("Table: get", params);
+      const command = new GetItemCommand(params);
+      const data = await this._client.send(command);
       if (data.Item === undefined) return undefined;
-      return unmarshall(data.Item) as T
-    }
-    catch (error: any) {
-      console.error("Error: Table: get", error)
+      return unmarshall(data.Item) as T;
+    } catch (error: any) {
+      console.error("Error: Table: get", error);
       return undefined;
     }
   }
@@ -91,60 +88,64 @@ export default class Table<T> {
 
   public async remove(key: any): Promise<void> {
     try {
-      const params  = {
+      const params = {
         TableName: this.tableName,
-        Key: marshall(key)
+        Key: marshall(key),
       };
-      console.log("Table: remove", params)
-      const command = new DeleteItemCommand(params)
-      const data = await this._client.send(command)
-    }
-    catch (error: any) {
-      console.error("Error: Table: remove", error)
+      console.log("Table: remove", params);
+      const command = new DeleteItemCommand(params);
+      const data = await this._client.send(command);
+    } catch (error: any) {
+      console.error("Error: Table: remove", error);
     }
   }
 
-  public async updateData(key: any, names: any, values: any, updateExpression: string): Promise<void> {
+  public async updateData(
+    key: any,
+    names: any,
+    values: any,
+    updateExpression: string
+  ): Promise<void> {
     try {
-      const params : UpdateItemCommandInput = {
+      const params: UpdateItemCommandInput = {
         TableName: this.tableName,
         Key: marshall(key),
         ExpressionAttributeNames: names,
         ExpressionAttributeValues: marshall(values),
         UpdateExpression: updateExpression,
-        ReturnValues: 'UPDATED_NEW',
+        ReturnValues: "UPDATED_NEW",
       } as UpdateItemCommandInput;
-      console.log("Table: updateData", params)
-      const command = new UpdateItemCommand(params)
-      const data = await this._client.send(command)
-    }
-    catch (error: any) {
-      console.error("Error: Table: updateData", error)
+      console.log("Table: updateData", params);
+      const command = new UpdateItemCommand(params);
+      const data = await this._client.send(command);
+    } catch (error: any) {
+      console.error("Error: Table: updateData", error);
     }
   }
 
-  public async queryData(keyConditionExpression: string, expressionAttributeValues: any): Promise<T[]> {
+  public async queryData(
+    keyConditionExpression: string,
+    expressionAttributeValues: any
+  ): Promise<T[]> {
     try {
       const params = {
         TableName: this.tableName,
         ConsistentRead: true,
         KeyConditionExpression: keyConditionExpression,
         ExpressionAttributeValues: marshall(expressionAttributeValues),
-      }
-      console.log("Table: queryData", params)
-      const command = new QueryCommand(params)
-      const data = await this._client.send(command)
+      };
+      console.log("Table: queryData", params);
+      const command = new QueryCommand(params);
+      const data = await this._client.send(command);
       let result: T[] = [];
       if (data.Items === undefined) return result;
       for (let i = 0; i < data.Items.length; i++) {
         result.push(unmarshall(data.Items[i]) as T);
       }
-      console.log("Success: Table: queryData", result)
+      console.log("Success: Table: queryData", result);
       return result;
-
-    }
-    catch (error: any) {
-      console.error("Error: Table: queryData", error)
+    } catch (error: any) {
+      console.error("Error: Table: queryData", error);
       return [];
     }
   }
