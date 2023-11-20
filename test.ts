@@ -1,5 +1,5 @@
 import type { Handler, Context, Callback } from "aws-lambda";
-import { example } from "./src/mina/example1";
+import { example } from "./src/mina/example";
 
 const mint: Handler = async (
   event: any,

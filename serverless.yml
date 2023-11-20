@@ -20,6 +20,7 @@ provider:
     TASKS_TABLE: ${file(./env.json):TASKS_TABLE, env:TASKS_TABLE}
     DOCS_TABLE: ${file(./env.json):DOCS_TABLE, env:DOCS_TABLE}
     NAMES_TABLE: ${file(./env.json):NAMES_TABLE, env:NAMES_TABLE}
+    TESTWORLD2_NAMES_TABLE: ${file(./env.json):TESTWORLD2_NAMES_TABLE, env:TESTWORLD2_NAMES_TABLE}
     POSTS_TABLE: ${file(./env.json):POSTS_TABLE, env:POSTS_TABLE}
     HISTORY_TABLE: ${file(./env.json):HISTORY_TABLE, env:HISTORY_TABLE}
     HISTORY_HOURS: ${file(./env.json):HISTORY_HOURS, env:HISTORY_HOURS}
@@ -87,6 +88,15 @@ provider:
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
       Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.NAMES_TABLE}"
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.TESTWORLD2_NAMES_TABLE}"
     - Effect: Allow
       Action:
         - dynamodb:Query
@@ -206,6 +216,11 @@ functions:
     handler: mina.deploy
     timeout: 900
     memorySize: 2048
+  deploynft:
+    handler: mina.deploynft
+    timeout: 900
+    memorySize: 3008
+    ephemeralStorageSize: 4096
   topup:
     handler: mina.topup
     timeout: 900
@@ -257,6 +272,18 @@ resources:
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:provider.environment.NAMES_TABLE}
+    TestWorld2DynamoDbTable:
+      Type: "AWS::DynamoDB::Table"
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: username
+            AttributeType: S
+        KeySchema:
+          - AttributeName: username
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:provider.environment.TESTWORLD2_NAMES_TABLE}
     PostsDynamoDbTable:
       Type: "AWS::DynamoDB::Table"
       DeletionPolicy: Retain

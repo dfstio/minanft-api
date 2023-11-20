@@ -15,4 +15,6 @@ export default interface NamesData {
   price?: number;
   currency?: string;
   creator?: string;
+  testworld2?: any;
+  testworld2uri?: any;
 }

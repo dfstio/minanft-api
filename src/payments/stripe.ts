@@ -11,7 +11,7 @@ function mintInvoice(id: string, T: any, username: string, image: string) {
       // "ReservationNFTname": "Reservation of the MINA Avatar NFT name on MINA blockchain for 1 year and deployment of Mina NFT"
       T("ReservationNFTname"),
     currency: "usd",
-    photo_url: `https://res.cloudinary.com/minanft/image/fetch/h_300,q_100,f_auto/${image}`,
+    photo_url: image,
     //is_flexible: true,
     prices: [
       { label: price.description, amount: price.price * 100 },
@@ -47,7 +47,7 @@ function postInvoice(
   T: any,
   postId: string,
   username: string,
-  image: string,
+  image: string
 ) {
   const invoice = {
     provider_token: process.env.STRIPE_KEY!,
