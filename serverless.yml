@@ -201,7 +201,7 @@ functions:
   test:
     handler: test.mint
     timeout: 900
-    memorySize: 3008
+    memorySize: 8192
     ephemeralStorageSize: 4096
   tasks:
     handler: tasks.check
@@ -219,7 +219,7 @@ functions:
   deploynft:
     handler: mina.deploynft
     timeout: 900
-    memorySize: 3008
+    memorySize: 8192
     ephemeralStorageSize: 4096
   topup:
     handler: mina.topup

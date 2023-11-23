@@ -64,7 +64,7 @@ export async function example() {
   const useLocalBlockchain: boolean = true;
   const transactionFee = 150_000_000;
 
-  const keys = MinaNFT.minaInit(`testworld2`);
+  const keys = MinaNFT.minaInit("local");
   const deployer = keys ? keys[0].privateKey : PrivateKey.fromBase58(DEPLOYER!);
   const oraclePrivateKey = PrivateKey.fromBase58(NAMES_ORACLE_SK!);
   const nameServiceAddress = PublicKey.fromBase58(MINANFT_NAME_SERVICE);
@@ -91,7 +91,7 @@ export async function example() {
   const nftCacheDir = "/tmp/nft-cache";
   //console.log("NFT files", nftfiles);
   console.time("loaded nft cache");
-  await loadCache(PROVER_KEYS_BUCKET!, nftCacheDir, nftfiles);
+  //await loadCache(PROVER_KEYS_BUCKET!, nftCacheDir, nftfiles);
   console.timeEnd("loaded nft cache");
   await listFiles(nftCacheDir);
   Memory.info("nft cache loaded");
@@ -172,6 +172,7 @@ using the deployer with public key ${sender.toBase58()}:
   } else console.log(`Transaction: ${tx1.isSuccess}`);
   */
 
+  /*
   const nft = new MinaNFT({ name: `@test` });
   nft.updateText({
     key: `description`,
@@ -208,10 +209,10 @@ using the deployer with public key ${sender.toBase58()}:
   map.updateMap({ key: `level2-4`, map: mapLevel3 });
   nft.updateMap({ key: `level 2 and 3 data`, map });
 
-  */
+  
   console.log(`json:`, JSON.stringify(nft.toJSON(), null, 2));
   Memory.info("json");
-
+*/
   /*
   const nameService = new MinaNFTNameService({ oraclePrivateKey });
   let tx = await nameService.deploy(deployer);
@@ -220,7 +221,7 @@ using the deployer with public key ${sender.toBase58()}:
   }
   Memory.info("deploy");
   await MinaNFT.transactionInfo(tx, "deploy name service");
-*/
+
 
   const nameService = new MinaNFTNameService({
     oraclePrivateKey,
@@ -240,6 +241,7 @@ using the deployer with public key ${sender.toBase58()}:
     throw new Error("Mint failed");
   }
   await MinaNFT.transactionInfo(tx, "mint");
+  */
   Memory.info("end");
   console.timeEnd("all");
 }

@@ -55,6 +55,7 @@ async function algoliaWriteTokenHelper(
   if (token.username !== token.uri.name) console.error("name mismatch");
 
   let params = token.testworld2uri;
+  const markdown = params.description;
   const description = removeMarkdown(params.description);
   let shortdescription = description;
   if (shortdescription.length > 70) {
@@ -76,7 +77,7 @@ async function algoliaWriteTokenHelper(
   params.minaPublicKey = token.testworld2.publicKey;
 
   params.shortdescription = shortdescription;
-  params.markdown = params.description;
+  params.markdown = markdown;
   params.uri = token.testworld2.storage;
   params.onSale = token.onSale ? true : false;
   params.saleID = "";
