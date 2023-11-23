@@ -77,7 +77,7 @@ export default class Table<T> {
       if (data.Item === undefined) return undefined;
       return unmarshall(data.Item) as T;
     } catch (error: any) {
-      console.error("Error: Table: get", error);
+      console.log("Cannot get item:", key, "Table: get error", error);
       return undefined;
     }
   }
