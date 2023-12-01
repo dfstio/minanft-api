@@ -115,25 +115,38 @@ async function startDeploymentIpfs(
   }
 }
 
-async function startDeploymentApi(body: any): Promise<void> {
-  console.log("startDeploymentApi", body);
-  const { jwtToken, ipfs } = body;
+async function startDeploymentApi(id: string, ipfs: string): Promise<void> {
+  console.log("startDeploymentApi", id, ipfs);
 
-  const id: string | undefined = verifyJWT(jwtToken);
-  if (id) {
-    console.log("startDeploymentApi", id, ipfs);
-    // await startDeploymentIpfs(id, ipfs, "");
-    const language = await getLanguage(id);
-    await callLambda(
-      "deployipfs",
-      JSON.stringify({
-        id,
-        command: ipfs,
-        creator: "",
-        language,
-      })
-    );
-  }
+  const language = await getLanguage(id);
+  await callLambda(
+    "deployipfs",
+    JSON.stringify({
+      id,
+      command: ipfs,
+      creator: "",
+      language,
+    })
+  );
+}
+
+async function mint_v2(
+  id: string,
+  uri: string,
+  privateKey: string | undefined
+): Promise<void> {
+  console.log("mint_v2", id, uri, privateKey);
+
+  const language = await getLanguage(id);
+  await callLambda(
+    "mint_v2",
+    JSON.stringify({
+      id,
+      uri,
+      privateKey: privateKey ?? "",
+      language,
+    })
+  );
 }
 
 function generateFilename(timeNow: number): string {
@@ -150,5 +163,6 @@ export {
   startDeployment,
   startDeploymentIpfs,
   startDeploymentApi,
+  mint_v2,
   generateFilename,
 };

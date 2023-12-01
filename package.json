@@ -43,7 +43,7 @@
     "vscode": "yarn dlx @yarnpkg/sdks vscode"
   },
   "devDependencies": {
-    "@types/node": "^20.9.2",
+    "@types/node": "^20.10.1",
     "@types/nodemailer": "^6.4.14",
     "@typescript-eslint/eslint-plugin": "^6.11.0",
     "eslint": "^8.54.0",
@@ -55,12 +55,12 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.454.0",
-    "@aws-sdk/client-elastic-transcoder": "^3.454.0",
-    "@aws-sdk/client-lambda": "^3.454.0",
-    "@aws-sdk/client-s3": "^3.454.0",
-    "@aws-sdk/util-dynamodb": "^3.454.0",
-    "@types/aws-lambda": "^8.10.126",
+    "@aws-sdk/client-dynamodb": "^3.462.0",
+    "@aws-sdk/client-elastic-transcoder": "^3.462.0",
+    "@aws-sdk/client-lambda": "^3.462.0",
+    "@aws-sdk/client-s3": "^3.462.0",
+    "@aws-sdk/util-dynamodb": "^3.462.0",
+    "@types/aws-lambda": "^8.10.130",
     "@types/jsonwebtoken": "^9.0.5",
     "@types/remove-markdown": "^0.3.4",
     "algoliasearch": "^4.20.0",
@@ -68,11 +68,11 @@
     "form-data": "^4.0.0",
     "i18next": "^23.7.6",
     "jsonwebtoken": "^9.0.2",
-    "minanft": "^1.1.9",
-    "o1js": "^0.14.1",
-    "openai": "^4.19.0",
+    "minanft": "^1.1.15",
+    "o1js": "^0.14.2",
+    "openai": "^4.20.1",
     "remove-markdown": "^0.5.0",
-    "telegraf": "^4.15.0"
+    "telegraf": "^4.15.2"
   },
   "packageManager": "yarn@4.0.1"
 }
