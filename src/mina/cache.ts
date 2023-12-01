@@ -35,7 +35,7 @@ export async function listFiles(folder: string): Promise<string[]> {
     console.log("files", files.length);
     return files;
   } catch (error) {
-    console.log(`"Folder ${folder} not found.creating...`);
+    console.log(`"Folder ${folder} not found, creating...`);
     try {
       await fs.mkdir(folder);
       const files = await fs.readdir(folder);

@@ -53,6 +53,7 @@ provider:
     AWS_KMS_ENCRYPTION_KEY_ID: ${file(./env.json):AWS_KMS_ENCRYPTION_KEY_ID, env:AWS_KMS_ENCRYPTION_KEY_ID}
     NAMES_ORACLE_SK: ${file(./env.json):NAMES_ORACLE_SK, env:NAMES_ORACLE_SK}
     DEPLOYER: ${file(./env.json):DEPLOYER, env:DEPLOYER}
+    BLOCKCHAIN: ${file(./env.json):BLOCKCHAIN, env:BLOCKCHAIN}
     PROVER_KEYS_BUCKET: ${file(./env.json):PROVER_KEYS_BUCKET, env:PROVER_KEYS_BUCKET}
   iamRoleStatements:
     - Effect: "Allow"
@@ -218,6 +219,11 @@ functions:
     memorySize: 2048
   deploynft:
     handler: mina.deploynft
+    timeout: 900
+    memorySize: 8192
+    ephemeralStorageSize: 4096
+  mint_v2:
+    handler: mina.mint_v2
     timeout: 900
     memorySize: 8192
     ephemeralStorageSize: 4096
