@@ -1,6 +1,7 @@
 import { Handler, Context, Callback } from "aws-lambda";
 import { startDeploymentApi, mint_v2 } from "./src/nft/nft";
 import { verifyJWT } from "./src/api/jwt";
+import { runSumSequencer } from "./src/api/sum";
 
 const BOTAPIAUTH = process.env.BOTAPIAUTH!;
 
@@ -41,6 +42,7 @@ const botapi: Handler = async (
           }
           await startDeploymentApi(id, body.data.ipfs);
           break;
+
         case "mint_v2":
           if (body.data.uri === undefined) {
             console.error("No URI data");
@@ -51,6 +53,23 @@ const botapi: Handler = async (
             return;
           }
           await mint_v2(id, body.data.uri, body.data.privateKey);
+          break;
+
+        case "sum":
+          if (body.data.transactions === undefined) {
+            console.error("No transactions data");
+            callback(null, {
+              statusCode: 200,
+              body: "No transactions data",
+            });
+            return;
+          }
+          const sum = await runSumSequencer(body.data.transactions);
+          callback(null, {
+            statusCode: 200,
+            body: sum,
+          });
+          return;
           break;
         default:
           console.error("Wrong command");

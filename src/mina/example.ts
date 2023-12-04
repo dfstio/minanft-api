@@ -7,6 +7,7 @@ import {
   Memory,
   MinaNFTMetadataUpdate,
 } from "minanft";
+/*
 import {
   PrivateKey,
   PublicKey,
@@ -20,45 +21,50 @@ import {
   AccountUpdate,
   Mina,
   Cache,
+  Field,
 } from "o1js";
+*/
 import { getCache, listFiles, loadCache } from "./cache";
 import { getFileData } from "../storage/filedata";
+/*
 const { PINATA_JWT, DEPLOYER, NAMES_ORACLE_SK, PROVER_KEYS_BUCKET } =
   process.env;
+  */
 
-class Counter extends SmartContract {
-  @state(UInt64) counter = State<UInt64>();
+const { PROVER_KEYS_BUCKET } = process.env;
 
-  @method increaseCounter() {
-    const counter = this.counter.getAndAssertEquals();
-    this.counter.set(counter.add(UInt64.from(1)));
-  }
+export async function example(
+  contractName: string,
+  functionName: string,
+  height: number
+) {
+  console.log("example", contractName, functionName, height);
+  const contractsDir = "/tmp/contracts";
+  const files = [contractName + ".js"];
+
+  // Copy compiled from TypeScript to JavaScript source code of the contracts
+  // from S3 bucket to AWS lambda /tmp/contracts folder
+  await loadCache(PROVER_KEYS_BUCKET!, contractsDir, files);
+  await listFiles(contractsDir);
+
+  const contracts = await import(contractsDir + "/" + contractName);
+  console.log("imported contracts");
+
+  const o1js = await import("o1js");
+  console.log("imported o1js");
+
+  const { TreeCalculation, TreeVerifier } = await contracts[functionName](
+    height,
+    o1js
+  );
+  console.log("imported TreeCalculation, TreeVerifier");
+
+  await TreeCalculation.compile();
+  await TreeVerifier.compile();
+  console.log("compiled TreeCalculation, TreeVerifier");
 }
 
-const files = [
-  "srs-fp-65536",
-  "srs-fp-65536.header",
-  "srs-fq-32768",
-  "srs-fq-32768.header",
-  "step-pk-counter-increasecounter",
-  "step-pk-counter-increasecounter.header",
-  "step-vk-counter-increasecounter",
-  "step-vk-counter-increasecounter.header",
-  "wrap-pk-counter",
-  "wrap-pk-counter.header",
-  "wrap-vk-counter",
-  "wrap-vk-counter.header",
-  "lagrange-basis-fp-1024",
-  "lagrange-basis-fp-1024.header",
-];
-
-import nftfiles from "./nftfiles.json";
-
-const counterHash =
-  "21729003151987647112222620390240851408608001808990872928155292896039282560129";
-const filename = "1699706731494-uonscblyc4mp72xgb2g8i8gpv3gtuy.jpg";
-
-export async function example() {
+/*
   console.time("all");
   Memory.info("start");
   const useLocalBlockchain: boolean = true;
@@ -80,14 +86,14 @@ export async function example() {
   Memory.info("before cache");
   //const cache = getCache(PROVER_KEYS_BUCKET!, true);
 
-  /*
+
   const cacheDir = "/tmp/counter-cache";
   console.time("loaded cache");
   await loadCache(PROVER_KEYS_BUCKET!, cacheDir, files);
   console.timeEnd("loaded cache");
   await listFiles(cacheDir);
   Memory.info("cache loaded");
-*/
+
   const nftCacheDir = "/tmp/nft-cache";
   //console.log("NFT files", nftfiles);
   console.time("loaded nft cache");
@@ -110,7 +116,8 @@ export async function example() {
   //const { verificationKey } = await Counter.compile({ cache });
   console.timeEnd("compiled");
   Memory.info("after compiling");
-  /*
+  */
+/*
   await listFiles(cacheDir);
   console.log(`Verification key: ${verificationKey.hash.toJSON()}`);
   if (verificationKey.hash.toJSON() !== counterHash) {
@@ -118,7 +125,7 @@ export async function example() {
     return;
   }
   */
-  /*
+/*
   const sender = deployer.toPublicKey();
   const counterPrivateKey = PrivateKey.random();
   const counterPublicKey = counterPrivateKey.toPublicKey();
@@ -172,7 +179,7 @@ using the deployer with public key ${sender.toBase58()}:
   } else console.log(`Transaction: ${tx1.isSuccess}`);
   */
 
-  /*
+/*
   const nft = new MinaNFT({ name: `@test` });
   nft.updateText({
     key: `description`,
@@ -213,7 +220,7 @@ using the deployer with public key ${sender.toBase58()}:
   console.log(`json:`, JSON.stringify(nft.toJSON(), null, 2));
   Memory.info("json");
 */
-  /*
+/*
   const nameService = new MinaNFTNameService({ oraclePrivateKey });
   let tx = await nameService.deploy(deployer);
   if (tx === undefined) {
@@ -241,7 +248,8 @@ using the deployer with public key ${sender.toBase58()}:
     throw new Error("Mint failed");
   }
   await MinaNFT.transactionInfo(tx, "mint");
-  */
+
   Memory.info("end");
   console.timeEnd("all");
 }
+  */

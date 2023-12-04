@@ -210,7 +210,7 @@ functions:
     memorySize: 192
     events:
       - schedule:
-          rate: rate(5 minutes)
+          rate: rate(60 minutes)
           enabled: true
           name: ts
   deploy:
