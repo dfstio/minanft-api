@@ -9,7 +9,7 @@ const mint: Handler = async (
   try {
     console.log("event", event);
     console.log("Mint started");
-    await example();
+    await example("contracts", "TreeFunction", 5);
     console.log("Mint finished");
     return 200;
   } catch (error) {
