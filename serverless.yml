@@ -20,6 +20,8 @@ provider:
     TASKS_TABLE: ${file(./env.json):TASKS_TABLE, env:TASKS_TABLE}
     DOCS_TABLE: ${file(./env.json):DOCS_TABLE, env:DOCS_TABLE}
     NAMES_TABLE: ${file(./env.json):NAMES_TABLE, env:NAMES_TABLE}
+    JOBS_TABLE: ${file(./env.json):JOBS_TABLE, env:JOBS_TABLE}
+    STEPS_TABLE: ${file(./env.json):STEPS_TABLE, env:STEPS_TABLE}
     TESTWORLD2_NAMES_TABLE: ${file(./env.json):TESTWORLD2_NAMES_TABLE, env:TESTWORLD2_NAMES_TABLE}
     POSTS_TABLE: ${file(./env.json):POSTS_TABLE, env:POSTS_TABLE}
     HISTORY_TABLE: ${file(./env.json):HISTORY_TABLE, env:HISTORY_TABLE}
@@ -89,6 +91,24 @@ provider:
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
       Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.NAMES_TABLE}"
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.JOBS_TABLE}"
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.STEPS_TABLE}"
     - Effect: Allow
       Action:
         - dynamodb:Query
@@ -278,6 +298,38 @@ resources:
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:provider.environment.NAMES_TABLE}
+    JobsDynamoDbTable:
+      Type: "AWS::DynamoDB::Table"
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: jobId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+          - AttributeName: jobId
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:provider.environment.JOBS_TABLE}
+    StepsDynamoDbTable:
+      Type: "AWS::DynamoDB::Table"
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: jobId
+            AttributeType: S
+          - AttributeName: stepId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: jobId
+            KeyType: HASH
+          - AttributeName: stepId
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:provider.environment.STEPS_TABLE}
     TestWorld2DynamoDbTable:
       Type: "AWS::DynamoDB::Table"
       DeletionPolicy: Retain
