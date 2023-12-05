@@ -38,7 +38,7 @@ export default class Table<T> {
       const data = await this._client.send(command);
       console.log("Success: Table: create", data);
     } catch (error: any) {
-      console.error("Error: Table: create", error);
+      throw Error(`Error: Table: create ${error}`);
     }
   }
 
@@ -104,8 +104,9 @@ export default class Table<T> {
     key: any,
     names: any,
     values: any,
-    updateExpression: string
-  ): Promise<void> {
+    updateExpression: string,
+    conditionExpression?: string
+  ): Promise<T | undefined> {
     try {
       const params: UpdateItemCommandInput = {
         TableName: this.tableName,
@@ -113,13 +114,19 @@ export default class Table<T> {
         ExpressionAttributeNames: names,
         ExpressionAttributeValues: marshall(values),
         UpdateExpression: updateExpression,
-        ReturnValues: "UPDATED_NEW",
+        ReturnValues: "ALL_NEW",
       } as UpdateItemCommandInput;
+      if (conditionExpression !== undefined) {
+        params.ConditionExpression = conditionExpression;
+      }
       console.log("Table: updateData", params);
       const command = new UpdateItemCommand(params);
       const data = await this._client.send(command);
+      if (data.Attributes === undefined) return undefined;
+      return unmarshall(data.Attributes) as T;
     } catch (error: any) {
       console.error("Error: Table: updateData", error);
+      return undefined;
     }
   }
 
