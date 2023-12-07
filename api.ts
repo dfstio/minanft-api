@@ -43,6 +43,67 @@ const botapi: Handler = async (
           }
           await startDeploymentApi(id, body.data.ipfs);
           break;
+
+        case "proof":
+          {
+            if (
+              body.data.transactions === undefined ||
+              body.data.developer === undefined ||
+              body.data.name === undefined ||
+              body.data.task === undefined ||
+              body.data.args === undefined
+            ) {
+              console.error("Wrong proof command", body.data);
+              callback(null, {
+                statusCode: 200,
+                body: "No transactions data",
+              });
+              return;
+            }
+            const { transactions, developer, name, task, args } = body.data;
+            const sequencerTree = new Sequencer({
+              jobsTable: process.env.JOBS_TABLE!,
+              stepsTable: process.env.STEPS_TABLE!,
+              username: id,
+            });
+            const jobIdTask = await sequencerTree.createJob({
+              username: id,
+              developer,
+              name,
+              jobData: transactions,
+              task,
+              args,
+            });
+            callback(null, {
+              statusCode: 200,
+              body: jobIdTask ?? "error",
+            });
+            return;
+          }
+          break;
+
+        case "proofResult":
+          if (body.data.jobId === undefined) {
+            console.error("No jobId");
+            callback(null, {
+              statusCode: 200,
+              body: "No jobId",
+            });
+            return;
+          }
+          const sequencerResultTree = new Sequencer({
+            jobsTable: process.env.JOBS_TABLE!,
+            stepsTable: process.env.STEPS_TABLE!,
+            username: id,
+            jobId: body.data.jobId,
+          });
+          const jobResultTree = await sequencerResultTree.getJobStatus();
+          callback(null, {
+            statusCode: 200,
+            body: JSON.stringify(jobResultTree, null, 2) ?? "error",
+          });
+          return;
+          break;
         /*
         case "mint_v2":
           if (body.data.uri === undefined) {

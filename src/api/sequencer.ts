@@ -43,13 +43,16 @@ export default class Sequencer {
   }
 
   public async updateJobStatus(params: {
-    username: string;
-    jobId: string;
     status: JobStatus;
     result?: string;
   }): Promise<void> {
+    if (this.jobId === undefined) throw new Error("jobId is undefined");
     const JobsTable = new Jobs(this.jobsTable);
-    await JobsTable.updateStatus(params);
+    await JobsTable.updateStatus({
+      ...params,
+      username: this.username,
+      jobId: this.jobId,
+    });
   }
 
   public async startJob() {
@@ -175,6 +178,10 @@ export default class Sequencer {
         });
         if (job === undefined) throw new Error("job not found");
 
+        if (job.jobStatus === "failed") {
+          console.log("Sequencer: run: job is failed, exiting");
+          return undefined;
+        }
         if (job.jobData.length !== result.origins.length) {
           console.log("jobData length does not match origins length, exiting");
           return undefined;
@@ -257,76 +264,90 @@ export default class Sequencer {
       console.log("Sequencer: run: odd number of results, returning last one");
     }
     const mergeStepsNumber = Math.floor(stepResults.length / 2);
-    for (let i = 0; i < mergeStepsNumber; i++) {
-      const stepId: string = Date.now().toString() + "." + makeString(32);
-      const step1: StepsData | undefined = await StepsTable.get({
+    if (mergeStepsNumber > 0) {
+      const JobsTable = new Jobs(this.jobsTable);
+      const job = await JobsTable.get({
+        id: this.username,
         jobId: this.jobId,
-        stepId: stepResults[2 * i].stepId,
       });
-      const step2: StepsData | undefined = await StepsTable.get({
-        jobId: this.jobId,
-        stepId: stepResults[2 * i + 1].stepId,
-      });
-      if (step1 === undefined || step2 === undefined)
-        throw new Error("step is undefined");
+      if (job === undefined) throw new Error("job not found");
 
-      const name = step1.name;
-      const jobTask = step1.jobTask;
-      const args = step1.args;
-      const developer = step1.developer;
-      if (name !== step2.name) throw new Error("name mismatch");
-      if (jobTask !== step2.jobTask) throw new Error("jobTask mismatch");
-      if (args.length !== step2.args.length)
-        throw new Error("arguments mismatch");
-      if (developer !== step2.developer) throw new Error("developer mismatch");
-      if (step1.result === undefined || step2.result === undefined)
-        throw new Error(`result is undefined`);
-      else if (
-        step1.timeStarted === undefined ||
-        step1.timeFinished === undefined ||
-        step2.timeStarted === undefined ||
-        step2.timeFinished === undefined
-      )
-        throw new Error(`time is undefined`);
-      else {
-        const billedDuration =
-          (step1.billedDuration ?? 0) +
-          (step2.billedDuration ?? 0) +
-          step1.timeFinished -
-          step1.timeStarted +
-          step2.timeFinished -
-          step2.timeStarted;
-        const stepData: StepsData = {
+      if (job.jobStatus === "failed") {
+        console.log("Sequencer: run: job is failed, exiting");
+        return undefined;
+      }
+      for (let i = 0; i < mergeStepsNumber; i++) {
+        const stepId: string = Date.now().toString() + "." + makeString(32);
+        const step1: StepsData | undefined = await StepsTable.get({
           jobId: this.jobId,
-          stepId,
-          username: this.username,
-          developer,
-          name,
-          jobTask,
-          args,
-          task: "merge" as StepTask,
-          origins: [...step1.origins, ...step2.origins],
-          stepData: [step1.result!, step2.result!],
-          timeCreated: Date.now(),
-          stepStatus: "created" as JobStatus,
-          billedDuration,
-        };
-        try {
-          await StepsTable.create(stepData);
-          await callLambda("step", JSON.stringify({ stepData }));
-          console.log(
-            `Sequencer: run: started merging ${stepData.origins.length} proofs`
-          );
-          await StepsTable.remove({
+          stepId: stepResults[2 * i].stepId,
+        });
+        const step2: StepsData | undefined = await StepsTable.get({
+          jobId: this.jobId,
+          stepId: stepResults[2 * i + 1].stepId,
+        });
+        if (step1 === undefined || step2 === undefined)
+          throw new Error("step is undefined");
+
+        const name = step1.name;
+        const jobTask = step1.jobTask;
+        const args = step1.args;
+        const developer = step1.developer;
+        if (name !== step2.name) throw new Error("name mismatch");
+        if (jobTask !== step2.jobTask) throw new Error("jobTask mismatch");
+        if (args.length !== step2.args.length)
+          throw new Error("arguments mismatch");
+        if (developer !== step2.developer)
+          throw new Error("developer mismatch");
+        if (step1.result === undefined || step2.result === undefined)
+          throw new Error(`result is undefined`);
+        else if (
+          step1.timeStarted === undefined ||
+          step1.timeFinished === undefined ||
+          step2.timeStarted === undefined ||
+          step2.timeFinished === undefined
+        )
+          throw new Error(`time is undefined`);
+        else {
+          const billedDuration =
+            (step1.billedDuration ?? 0) +
+            (step2.billedDuration ?? 0) +
+            step1.timeFinished -
+            step1.timeStarted +
+            step2.timeFinished -
+            step2.timeStarted;
+          const stepData: StepsData = {
             jobId: this.jobId,
-            stepId: step1.stepId,
-          });
-          await StepsTable.remove({
-            jobId: this.jobId,
-            stepId: step2.stepId,
-          });
-        } catch (error: any) {
-          console.error("Error: Sequencer: createStep", error);
+            stepId,
+            username: this.username,
+            developer,
+            name,
+            jobTask,
+            args,
+            task: "merge" as StepTask,
+            origins: [...step1.origins, ...step2.origins],
+            stepData: [step1.result!, step2.result!],
+            timeCreated: Date.now(),
+            stepStatus: "created" as JobStatus,
+            billedDuration,
+          };
+          try {
+            await StepsTable.create(stepData);
+            await callLambda("step", JSON.stringify({ stepData }));
+            console.log(
+              `Sequencer: run: started merging ${stepData.origins.length} proofs`
+            );
+            await StepsTable.remove({
+              jobId: this.jobId,
+              stepId: step1.stepId,
+            });
+            await StepsTable.remove({
+              jobId: this.jobId,
+              stepId: step2.stepId,
+            });
+          } catch (error: any) {
+            console.error("Error: Sequencer: createStep", error);
+          }
         }
       }
     }
