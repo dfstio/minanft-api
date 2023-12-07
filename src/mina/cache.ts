@@ -29,17 +29,21 @@ export async function loadCache(
   }
 }
 
-export async function listFiles(folder: string): Promise<string[]> {
+export async function listFiles(
+  folder: string,
+  isVerbose: boolean = false
+): Promise<string[]> {
   try {
     const files = await fs.readdir(folder);
-    console.log("files", files.length);
+    console.log(`files in ${folder}:`, files.length);
+    if (isVerbose) console.log(files);
     return files;
   } catch (error) {
     console.log(`"Folder ${folder} not found, creating...`);
     try {
       await fs.mkdir(folder);
       const files = await fs.readdir(folder);
-      console.log("files", files.length);
+      console.log(`files in ${folder}:`, files.length);
       return files;
     } catch (error) {
       console.log(`"Error creating folder ${folder}`, error);

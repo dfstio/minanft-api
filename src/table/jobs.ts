@@ -6,9 +6,11 @@ export default class Jobs extends Table<JobsData> {
   public async createJob(params: {
     username: string;
     name: string;
+    task: string;
+    arguments: string[];
     jobData: string[];
   }): Promise<string | undefined> {
-    const { username, name, jobData } = params;
+    const { username, name, jobData, task, arguments: arguments_ } = params;
     const timeCreated: number = Date.now();
     const jobId: string =
       username + "." + timeCreated.toString() + "." + makeString(32);
@@ -16,9 +18,11 @@ export default class Jobs extends Table<JobsData> {
       id: username,
       jobId,
       name,
+      task,
+      arguments: arguments_,
       jobData,
       timeCreated,
-      status: "created" as JobStatus,
+      jobStatus: "created" as JobStatus,
     };
     try {
       await this.create(item);
@@ -34,10 +38,16 @@ export default class Jobs extends Table<JobsData> {
     jobId: string;
     status: JobStatus;
     result?: string;
+    billedDuration?: number;
   }): Promise<void> {
-    const { username, jobId, status, result } = params;
-    if (status === "finished" && result === undefined)
-      throw new Error("result is required for finished jobs");
+    const { username, jobId, status, result, billedDuration } = params;
+    if (
+      status === "finished" &&
+      (result === undefined || billedDuration === undefined)
+    )
+      throw new Error(
+        "result and billingDuration is required for finished jobs"
+      );
     const time: number = Date.now();
     await this.updateData(
       {
@@ -45,17 +55,27 @@ export default class Jobs extends Table<JobsData> {
         jobId,
       },
       status === "finished"
-        ? { "#S": "status", "#T": "timeFinished", "#R": "result" }
+        ? {
+            "#S": "jobStatus",
+            "#T": "timeFinished",
+            "#R": "result",
+            "#B": "billedDuration",
+          }
         : status === "started"
-        ? { "#S": "status", "#T": "timeStarted" }
+        ? { "#S": "jobStatus", "#T": "timeStarted" }
         : status === "used"
-        ? { "#S": "status", "#T": "timeUsed" }
-        : { "#S": "status", "#T": "timeFailed" },
+        ? { "#S": "jobStatus", "#T": "timeUsed" }
+        : { "#S": "jobStatus", "#T": "timeFailed" },
       status === "finished"
-        ? { ":status": status, ":time": time, ":result": result }
+        ? {
+            ":status": status,
+            ":time": time,
+            ":result": result,
+            ":billedDuration": billedDuration,
+          }
         : { ":status": status, ":time": time },
       status === "finished"
-        ? "set #S = :status, #T = :time, #R = :result"
+        ? "set #S = :status, #T = :time, #R = :result, #B = :billedDuration"
         : "set #S = :status, #T = :time"
     );
   }

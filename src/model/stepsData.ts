@@ -8,6 +8,8 @@ export interface StepsData {
 
   username: string;
   name: string;
+  jobTask: string;
+  arguments: string[];
   task: StepTask;
   origins: string[];
   stepData: string[];
@@ -15,6 +17,7 @@ export interface StepsData {
   timeStarted?: number;
   timeFinished?: number;
   timeFailed?: number;
-  status: JobStatus;
+  billedDuration?: number;
+  stepStatus: JobStatus;
   result?: string;
 }

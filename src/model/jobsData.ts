@@ -5,12 +5,15 @@ export interface JobsData {
   jobId: string;
 
   name: string;
+  task: string;
+  arguments: string[];
   jobData: string[];
   timeCreated: number;
   timeStarted?: number;
   timeFinished?: number;
   timeFailed?: number;
   timeUsed?: number;
-  status: JobStatus;
+  billedDuration?: number;
+  jobStatus: JobStatus;
   result?: string;
 }

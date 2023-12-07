@@ -7,6 +7,8 @@ import {
   Memory,
   MinaNFTMetadataUpdate,
 } from "minanft";
+//import fs from "fs/promises";
+import { Cache } from "o1js";
 /*
 import {
   PrivateKey,
@@ -39,13 +41,20 @@ export async function example(
   height: number
 ) {
   console.log("example", contractName, functionName, height);
-  const contractsDir = "/tmp/contracts";
+  const contractsDir = "/mnt/efs/contracts";
+  const cacheDir = "/mnt/efs/cache";
   const files = [contractName + ".js"];
 
   // Copy compiled from TypeScript to JavaScript source code of the contracts
   // from S3 bucket to AWS lambda /tmp/contracts folder
-  await loadCache(PROVER_KEYS_BUCKET!, contractsDir, files);
-  await listFiles(contractsDir);
+  await listFiles(contractsDir, true);
+  await listFiles(cacheDir, true);
+  //await loadCache(PROVER_KEYS_BUCKET!, contractsDir, files);
+  //await listFiles(contractsDir, true);
+  //await listFiles(cacheDir, true);
+  //const file = "a.txt";
+  //await fs.writeFile(`${contractsDir}/${file}`, "a.txt content", "utf8");
+  //await listFiles(contractsDir, true);
 
   const contracts = await import(contractsDir + "/" + contractName);
   console.log("imported contracts");
@@ -58,10 +67,14 @@ export async function example(
     o1js
   );
   console.log("imported TreeCalculation, TreeVerifier");
+  const cache: Cache = Cache.FileSystem(cacheDir);
 
-  await TreeCalculation.compile();
-  await TreeVerifier.compile();
+  await TreeCalculation.compile({ cache });
+  await TreeVerifier.compile({ cache });
   console.log("compiled TreeCalculation, TreeVerifier");
+
+  await listFiles(contractsDir, true);
+  await listFiles(cacheDir, true);
 }
 
 /*
