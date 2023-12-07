@@ -7,9 +7,10 @@ export interface StepsData {
   stepId: string;
 
   username: string;
+  developer: string;
   name: string;
   jobTask: string;
-  arguments: string[];
+  args: string[];
   task: StepTask;
   origins: string[];
   stepData: string[];

@@ -1,4 +1,5 @@
 # MinaNFT
+
 MinaNFT - NFT with AI-generated avatar art on MINA blockchain
 telegram: @minanft_bot
 
@@ -18,21 +19,19 @@ As for the storage of NFT data, reliable services such as nft.storage or Infura 
 
 # Bot commands
 
-```new``` 		- Create new NFT
+`new` - Create new NFT
 
-```sell``` 		- Sell NFT
+`sell` - Sell NFT
 
-```buy``` 		- Buy NFT 		
+`buy` - Buy NFT
 
-```list``` 		- List all NFTs	
+`list` - List all NFTs
 
-```auth``` 		- Get authorisation code for minanft.io	
+`auth` - Get authorisation code for minanft.io
 
-```secret``` 	- Get secret key of your NFT 	
+`secret` - Get secret key of your NFT
 
-```support``` - Buy support ticket 		
- 		
-
+`support` - Buy support ticket
 
 # Used Technologies
 
@@ -43,15 +42,29 @@ As for the storage of NFT data, reliable services such as nft.storage or Infura 
 - Telegram bot
 
 ## Website
+
 https://minanft.io
 
 ## Library on NPM
+
 https://www.npmjs.com/package/minanft
 
 ## Setting api link AWS-telegram
+
 curl \
-  --request POST \
-  --url https://api.telegram.org/bot botToken/setWebhook \
-  --header 'content-type: application/json' \
-  --data '{"url": "API gateway domain/function"}'
-  
+ --request POST \
+ --url https://api.telegram.org/bot botToken/setWebhook \
+ --header 'content-type: application/json' \
+ --data '{"url": "API gateway domain/function"}'
+
+## Configuring AWS VPC
+
+This repo uses EFS storage running in VPC to store the prover keys. To create VPC access for lambda functions:
+
+- Add EFS
+- Add DynamoDB VPC gateway
+- Add S3 VPC gateway
+- Add lambda VPC interface
+- Add NAT to VPC
+- Configure VPC in the functions setting in serverless.yml
+  Use serverless.yml in this repo as an example, and this [guide](https://medium.com/@pra4mesh/internet-access-to-aws-lambda-in-a-vpc-6f7b65845f1d)

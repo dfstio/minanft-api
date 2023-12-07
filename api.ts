@@ -43,7 +43,7 @@ const botapi: Handler = async (
           }
           await startDeploymentApi(id, body.data.ipfs);
           break;
-
+        /*
         case "mint_v2":
           if (body.data.uri === undefined) {
             console.error("No URI data");
@@ -91,7 +91,7 @@ const botapi: Handler = async (
             username: id,
             name: "sum",
             task: "sum",
-            arguments: [],
+            args: [],
             jobData: body.data.transactions,
           });
           callback(null, {
@@ -174,7 +174,7 @@ const botapi: Handler = async (
           });
           return;
           break;
-
+*/
         default:
           console.error("Wrong command");
           callback(null, {

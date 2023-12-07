@@ -4,9 +4,10 @@ export interface JobsData {
   id: string;
   jobId: string;
 
+  developer: string;
   name: string;
   task: string;
-  arguments: string[];
+  args: string[];
   jobData: string[];
   timeCreated: number;
   timeStarted?: number;

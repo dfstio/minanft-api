@@ -1,7 +1,7 @@
 import { Handler, Context } from "aws-lambda";
 import Sequencer from "./src/api/sequencer";
 import { StepsData } from "./src/model/stepsData";
-import { runStep } from "./src/api/step";
+import { runStep } from "./src/api/stepsum";
 import { runStepTree } from "./src/api/steptree";
 
 const step: Handler = async (event: any, context: Context) => {

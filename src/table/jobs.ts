@@ -5,21 +5,23 @@ import { makeString } from "minanft";
 export default class Jobs extends Table<JobsData> {
   public async createJob(params: {
     username: string;
+    developer: string;
     name: string;
     task: string;
-    arguments: string[];
+    args: string[];
     jobData: string[];
   }): Promise<string | undefined> {
-    const { username, name, jobData, task, arguments: arguments_ } = params;
+    const { username, developer, name, jobData, task, args } = params;
     const timeCreated: number = Date.now();
     const jobId: string =
       username + "." + timeCreated.toString() + "." + makeString(32);
     const item: JobsData = {
       id: username,
       jobId,
+      developer,
       name,
       task,
-      arguments: arguments_,
+      args,
       jobData,
       timeCreated,
       jobStatus: "created" as JobStatus,
