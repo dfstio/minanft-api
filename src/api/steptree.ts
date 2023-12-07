@@ -11,8 +11,7 @@ import { Cache, verify, JsonProof, VerificationKey } from "o1js";
 
 export class MinaNFTTreeVerifierPlugin extends BackendPlugin {
   contracts: any;
-  static treeCalculationVerificationKey: string | undefined = undefined;
-  static treeVerifierVerificationKey: VerificationKey | undefined = undefined;
+  static verificationKey: string | undefined = undefined;
 
   constructor(params: { name: string; task: string; args: string[] }) {
     super(params);
@@ -21,34 +20,23 @@ export class MinaNFTTreeVerifierPlugin extends BackendPlugin {
     this.contracts = MinaNFTTreeVerifierFunction(height);
   }
   public async compile(cache: Cache): Promise<VerificationKey[] | undefined> {
-    const { RedactedMinaNFTTreeCalculation, MinaNFTTreeVerifier } =
-      this.contracts;
-    console.time(`compiled RedactedTreeCalculation`);
-    const { verificationKey: verificationKeyCalculation } =
+    const { RedactedMinaNFTTreeCalculation } = this.contracts;
+    MinaNFTTreeVerifierPlugin.verificationKey = (
       await RedactedMinaNFTTreeCalculation.compile({
         cache,
-      });
-    MinaNFTTreeVerifierPlugin.treeCalculationVerificationKey =
-      verificationKeyCalculation;
-    console.timeEnd(`compiled RedactedTreeCalculation`);
-
-    console.time(`compiled TreeVerifier`);
-    const { verificationKey } = await MinaNFTTreeVerifier.compile({ cache });
-    MinaNFTTreeVerifierPlugin.treeVerifierVerificationKey = verificationKey;
-    console.timeEnd(`compiled TreeVerifier`);
-    return [verificationKey];
+      })
+    ).verificationKey;
+    return [];
   }
 
   public async create(transaction: string): Promise<string | undefined> {
     const {
       RedactedMinaNFTTreeState,
       RedactedMinaNFTTreeCalculation,
-      MinaNFTTreeVerifier,
       MerkleTreeWitness,
-      RedactedMinaNFTTreeStateProof,
     } = this.contracts;
-    if (MinaNFTTreeVerifierPlugin.treeCalculationVerificationKey === undefined)
-      throw new Error("treeCalculationVerificationKey is undefined");
+    if (MinaNFTTreeVerifierPlugin.verificationKey === undefined)
+      throw new Error("verificationKey is undefined");
     const args = JSON.parse(transaction);
     const element = TreeElement.fromJSON(args.element);
     const originalWitness = MerkleTreeWitness.fromJSON(args.originalWitness);
@@ -67,7 +55,7 @@ export class MinaNFTTreeVerifierPlugin extends BackendPlugin {
     console.time("verified proof");
     const ok = await verify(
       proof.toJSON(),
-      MinaNFTTreeVerifierPlugin.treeCalculationVerificationKey
+      MinaNFTTreeVerifierPlugin.verificationKey
     );
     console.timeEnd("verified proof");
     if (!ok) throw new Error("proof verification failed");
@@ -78,13 +66,11 @@ export class MinaNFTTreeVerifierPlugin extends BackendPlugin {
     proof1: string,
     proof2: string
   ): Promise<string | undefined> {
-    if (MinaNFTTreeVerifierPlugin.treeCalculationVerificationKey === undefined)
-      throw new Error("treeCalculationVerificationKey is undefined");
+    if (MinaNFTTreeVerifierPlugin.verificationKey === undefined)
+      throw new Error("verificationKey is undefined");
     const {
       RedactedMinaNFTTreeState,
       RedactedMinaNFTTreeCalculation,
-      MinaNFTTreeVerifier,
-      MerkleTreeWitness,
       RedactedMinaNFTTreeStateProof,
     } = this.contracts;
 
@@ -108,7 +94,7 @@ export class MinaNFTTreeVerifierPlugin extends BackendPlugin {
     console.time("verified proof");
     const ok = await verify(
       proof.toJSON(),
-      MinaNFTTreeVerifierPlugin.treeCalculationVerificationKey
+      MinaNFTTreeVerifierPlugin.verificationKey
     );
     console.timeEnd("verified proof");
     if (!ok) throw new Error("proof verification failed");
