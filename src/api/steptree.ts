@@ -24,7 +24,7 @@ export class MinaNFTTreeVerifierPlugin extends BackendPlugin {
     const { RedactedMinaNFTTreeCalculation, MinaNFTTreeVerifier } =
       this.contracts;
     console.time(`compiled RedactedTreeCalculation`);
-    const { verificationKeyCalculation } =
+    const { verificationKey: verificationKeyCalculation } =
       await RedactedMinaNFTTreeCalculation.compile({
         cache,
       });

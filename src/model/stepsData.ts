@@ -22,3 +22,8 @@ export interface StepsData {
   stepStatus: JobStatus;
   result?: string;
 }
+
+export interface ProofsData {
+  jobId: string;
+  stepId: string;
+}

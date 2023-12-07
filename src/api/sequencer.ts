@@ -1,24 +1,29 @@
 import Jobs from "../table/jobs";
 import Steps from "../table/steps";
+import Proofs from "../table/proofs";
 import { JobStatus, JobsData } from "../model/jobsData";
-import { StepsData, StepTask } from "../model/stepsData";
+import { StepsData, StepTask, ProofsData } from "../model/stepsData";
+
 import callLambda from "../lambda/lambda";
 import { makeString, sleep } from "minanft";
 
 export default class Sequencer {
   jobsTable: string;
   stepsTable: string;
+  proofsTable: string;
   username: string;
   jobId?: string;
 
   constructor(params: {
     jobsTable: string;
     stepsTable: string;
+    proofsTable: string;
     username: string;
     jobId?: string;
   }) {
     this.jobsTable = params.jobsTable;
     this.stepsTable = params.stepsTable;
+    this.proofsTable = params.proofsTable;
     this.username = params.username;
     this.jobId = params.jobId;
   }
@@ -97,130 +102,77 @@ export default class Sequencer {
 
   public async run(): Promise<string | undefined> {
     if (this.jobId === undefined) throw new Error("jobId is undefined");
+    const ProofsTable = new Proofs(this.proofsTable);
     const StepsTable = new Steps(this.stepsTable);
-    let results = await StepsTable.queryData(
-      "jobId = :id",
-      {
-        ":id": this.jobId,
-      },
-      "stepId, stepStatus"
-    );
+    let results = await ProofsTable.queryData("jobId = :id", {
+      ":id": this.jobId,
+    });
     console.log("Sequencer: run: results total", results.length);
-    /*
-    if (
-      results.length === 0 ||
-      results.filter((step) => step.stepStatus === "finished").length === 0
-    ) {
-      await sleep(1000 + Math.random() * 10000);
-      results = await StepsTable.queryData(
-        "jobId = :id",
-        {
-          ":id": this.jobId,
-        },
-        "stepId, stepStatus"
-      );
-      console.log("Sequencer: run: results total try 2", results.length);
-    }
-*/
-    if (
-      results.length === 0 ||
-      results.filter((step) => step.stepStatus === "finished").length === 0
-    ) {
+
+    if (results.length === 0) {
       console.log("Sequencer: run: no finished results");
       console.log(results);
       return undefined;
     }
 
-    if (results.filter((step) => step.stepStatus === "finished").length === 1) {
-      if (
-        results.filter(
-          (step) =>
-            step.stepStatus === "created" || step.stepStatus === "started"
-        ).length > 0
-      ) {
-        console.log("Sequencer: run: not all finished, exiting");
+    if (results.length === 1) {
+      // We probably have final result, let's check
+      console.log("Sequencer: run: checking for final result");
+      const resultMetadata = results[0];
+      const result: StepsData | undefined = await StepsTable.get({
+        jobId: this.jobId,
+        stepId: resultMetadata.stepId,
+      });
+      if (result === undefined) return undefined;
+      if (result.result === undefined) throw new Error("result is undefined");
+
+      const JobsTable = new Jobs(this.jobsTable);
+      const job = await JobsTable.get({
+        id: this.username,
+        jobId: this.jobId,
+      });
+      if (job === undefined) throw new Error("job not found");
+
+      if (job.jobStatus === "failed") {
+        console.log("Sequencer: run: job is failed, exiting");
         return undefined;
       }
-      // We have final result, let's check if it's the only one one more time after delay
-      await sleep(1000);
-      console.log("Sequencer: run: checking for final result");
-      results = await StepsTable.queryData(
-        "jobId = :id",
-        {
-          ":id": this.jobId,
-        },
-        "stepId, stepStatus"
-      );
-      if (
-        results.filter((step) => step.stepStatus === "finished").length === 1
-      ) {
-        if (
-          results.filter(
-            (step) =>
-              step.stepStatus === "created" || step.stepStatus === "started"
-          ).length > 0
-        )
-          return undefined;
-        const resultMetadata = results.filter(
-          (step) => step.stepStatus === "finished"
-        )[0];
-        const result: StepsData | undefined = await StepsTable.get({
-          jobId: this.jobId,
-          stepId: resultMetadata.stepId,
-        });
-        if (result === undefined) throw new Error("result is undefined");
-        if (result.result === undefined) throw new Error("result is undefined");
-
-        const JobsTable = new Jobs(this.jobsTable);
-        const job = await JobsTable.get({
-          id: this.username,
-          jobId: this.jobId,
-        });
-        if (job === undefined) throw new Error("job not found");
-
-        if (job.jobStatus === "failed") {
-          console.log("Sequencer: run: job is failed, exiting");
-          return undefined;
-        }
-        if (job.jobData.length !== result.origins.length) {
-          console.log("jobData length does not match origins length, exiting");
-          return undefined;
-        }
-        for (let i = 0; i < result.origins.length; i++)
-          if (
-            result.origins.find((origin) => origin === i.toString()) ===
-            undefined
-          )
-            throw new Error(`origin ${i} not found`);
-        await JobsTable.updateStatus({
-          username: this.username,
-          jobId: this.jobId,
-          status: "finished",
-          result: result.result,
-          billedDuration:
-            (result.billedDuration ?? 0) +
-            (result.timeFinished ?? 0) -
-            (result.timeStarted ?? 0),
-        });
-        await StepsTable.remove({
-          jobId: this.jobId,
-          stepId: resultMetadata.stepId,
-        });
-        console.log("Sequencer: run: final result written");
-        return result.result;
+      if (job.jobData.length !== result.origins.length) {
+        console.log("jobData length does not match origins length, exiting");
+        return undefined;
       }
-      return undefined;
+      for (let i = 0; i < result.origins.length; i++)
+        if (
+          result.origins.find((origin) => origin === i.toString()) === undefined
+        )
+          throw new Error(`origin ${i} not found`);
+      await JobsTable.updateStatus({
+        username: this.username,
+        jobId: this.jobId,
+        status: "finished",
+        result: result.result,
+        billedDuration:
+          (result.billedDuration ?? 0) +
+          (result.timeFinished ?? 0) -
+          (result.timeStarted ?? 0),
+      });
+      await StepsTable.remove({
+        jobId: this.jobId,
+        stepId: resultMetadata.stepId,
+      });
+      await ProofsTable.remove({
+        jobId: this.jobId,
+        stepId: resultMetadata.stepId,
+      });
+      console.log("Sequencer: run: final result written");
+      return result.result;
     }
 
     // We have more than one result, we need to merge
     const stepResults = [];
-    const sourceSteps = results.filter(
-      (step) => step.stepStatus === "finished"
-    );
-    console.log("Sequencer: run: sourceSteps", sourceSteps.length);
-    for (let i = 0; i < sourceSteps.length; i++) {
-      const step = sourceSteps[i];
-      //if (step.result === undefined) throw new Error("result is undefined");
+    console.log("Sequencer: run: results", results.length);
+    for (let i = 0; i < results.length; i++) {
+      const step = results[i];
       const updatedStep = await StepsTable.updateStatus({
         jobId: this.jobId,
         stepId: step.stepId,
@@ -276,6 +228,9 @@ export default class Sequencer {
         console.log("Sequencer: run: job is failed, exiting");
         return undefined;
       }
+      // Let's give previous step instance to exit to reuse the lambda instance
+      await sleep(1000);
+
       for (let i = 0; i < mergeStepsNumber; i++) {
         const stepId: string = Date.now().toString() + "." + makeString(32);
         const step1: StepsData | undefined = await StepsTable.get({
@@ -342,6 +297,14 @@ export default class Sequencer {
               stepId: step1.stepId,
             });
             await StepsTable.remove({
+              jobId: this.jobId,
+              stepId: step2.stepId,
+            });
+            await ProofsTable.remove({
+              jobId: this.jobId,
+              stepId: step1.stepId,
+            });
+            await ProofsTable.remove({
               jobId: this.jobId,
               stepId: step2.stepId,
             });

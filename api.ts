@@ -64,6 +64,7 @@ const botapi: Handler = async (
             const sequencerTree = new Sequencer({
               jobsTable: process.env.JOBS_TABLE!,
               stepsTable: process.env.STEPS_TABLE!,
+              proofsTable: process.env.PROOFS_TABLE!,
               username: id,
             });
             const jobIdTask = await sequencerTree.createJob({
@@ -94,6 +95,7 @@ const botapi: Handler = async (
           const sequencerResultTree = new Sequencer({
             jobsTable: process.env.JOBS_TABLE!,
             stepsTable: process.env.STEPS_TABLE!,
+            proofsTable: process.env.PROOFS_TABLE!,
             username: id,
             jobId: body.data.jobId,
           });

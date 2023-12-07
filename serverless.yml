@@ -22,6 +22,7 @@ provider:
     NAMES_TABLE: ${file(./env.json):NAMES_TABLE, env:NAMES_TABLE}
     JOBS_TABLE: ${file(./env.json):JOBS_TABLE, env:JOBS_TABLE}
     STEPS_TABLE: ${file(./env.json):STEPS_TABLE, env:STEPS_TABLE}
+    PROOFS_TABLE: ${file(./env.json):PROOFS_TABLE, env:PROOFS_TABLE}
     TESTWORLD2_NAMES_TABLE: ${file(./env.json):TESTWORLD2_NAMES_TABLE, env:TESTWORLD2_NAMES_TABLE}
     POSTS_TABLE: ${file(./env.json):POSTS_TABLE, env:POSTS_TABLE}
     HISTORY_TABLE: ${file(./env.json):HISTORY_TABLE, env:HISTORY_TABLE}
@@ -109,6 +110,15 @@ provider:
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
       Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.STEPS_TABLE}"
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.PROOFS_TABLE}"
     - Effect: Allow
       Action:
         - dynamodb:Query
@@ -290,7 +300,7 @@ functions:
   step:
     handler: sequencer.step
     timeout: 900
-    memorySize: 4096
+    memorySize: 8192
     fileSystemConfig:
       localMountPath: /mnt/efs
       arn: arn:aws:elasticfilesystem:eu-west-1:615834060610:access-point/fsap-0424e24fcb8a4b112
@@ -380,6 +390,22 @@ resources:
             KeyType: RANGE
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:provider.environment.STEPS_TABLE}
+    ProofsDynamoDbTable:
+      Type: "AWS::DynamoDB::Table"
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: jobId
+            AttributeType: S
+          - AttributeName: stepId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: jobId
+            KeyType: HASH
+          - AttributeName: stepId
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:provider.environment.PROOFS_TABLE}
     TestWorld2DynamoDbTable:
       Type: "AWS::DynamoDB::Table"
       DeletionPolicy: Retain
