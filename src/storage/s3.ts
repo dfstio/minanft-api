@@ -15,7 +15,7 @@ export default class S3File {
   private readonly key: string;
 
   constructor(bucket: string, key: string) {
-    const options = {};
+    const options = { forcePathStyle: true };
     this._client = new S3Client(options);
     this.bucket = bucket;
     this.key = key;

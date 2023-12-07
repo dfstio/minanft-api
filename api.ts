@@ -2,6 +2,7 @@ import { Handler, Context, Callback } from "aws-lambda";
 import { startDeploymentApi, mint_v2 } from "./src/nft/nft";
 import { verifyJWT } from "./src/api/jwt";
 import { runSumSequencer } from "./src/api/sum";
+import Sequencer from "./src/api/sequencer";
 
 const BOTAPIAUTH = process.env.BOTAPIAUTH!;
 
@@ -71,6 +72,109 @@ const botapi: Handler = async (
           });
           return;
           break;
+
+        case "sum_v2":
+          if (body.data.transactions === undefined) {
+            console.error("No transactions data");
+            callback(null, {
+              statusCode: 200,
+              body: "No transactions data",
+            });
+            return;
+          }
+          const sequencer = new Sequencer({
+            jobsTable: process.env.JOBS_TABLE!,
+            stepsTable: process.env.STEPS_TABLE!,
+            username: id,
+          });
+          const jobId = await sequencer.createJob({
+            username: id,
+            name: "sum",
+            task: "sum",
+            arguments: [],
+            jobData: body.data.transactions,
+          });
+          callback(null, {
+            statusCode: 200,
+            body: jobId ?? "error",
+          });
+          return;
+          break;
+
+        case "sum_v2_result":
+          if (body.data.jobId === undefined) {
+            console.error("No jobId");
+            callback(null, {
+              statusCode: 200,
+              body: "No jobId",
+            });
+            return;
+          }
+          const sequencerResult = new Sequencer({
+            jobsTable: process.env.JOBS_TABLE!,
+            stepsTable: process.env.STEPS_TABLE!,
+            username: id,
+            jobId: body.data.jobId,
+          });
+          const jobResult = await sequencerResult.getJobStatus();
+          callback(null, {
+            statusCode: 200,
+            body: JSON.stringify(jobResult, null, 2) ?? "error",
+          });
+          return;
+          break;
+
+        case "tree":
+          if (body.data.transactions === undefined) {
+            console.error("No transactions data");
+            callback(null, {
+              statusCode: 200,
+              body: "No transactions data",
+            });
+            return;
+          }
+          const sequencerTree = new Sequencer({
+            jobsTable: process.env.JOBS_TABLE!,
+            stepsTable: process.env.STEPS_TABLE!,
+            username: id,
+          });
+          const jobIdTask = await sequencerTree.createJob({
+            username: id,
+            name: "tree",
+            jobData: body.data.transactions,
+            task: body.data.task,
+            arguments: body.data.arguments,
+          });
+          callback(null, {
+            statusCode: 200,
+            body: jobIdTask ?? "error",
+          });
+          return;
+          break;
+
+        case "tree_result":
+          if (body.data.jobId === undefined) {
+            console.error("No jobId");
+            callback(null, {
+              statusCode: 200,
+              body: "No jobId",
+            });
+            return;
+          }
+          const sequencerResultTree = new Sequencer({
+            jobsTable: process.env.JOBS_TABLE!,
+            stepsTable: process.env.STEPS_TABLE!,
+            username: id,
+            jobId: body.data.jobId,
+          });
+          const jobResultTree = await sequencerResultTree.getJobStatus();
+          callback(null, {
+            statusCode: 200,
+            body: JSON.stringify(jobResultTree, null, 2) ?? "error",
+          });
+          return;
+          break;
+
         default:
           console.error("Wrong command");
           callback(null, {
