@@ -60,6 +60,7 @@ const run: Handler = async (event: any, context: Context) => {
       const sequencer = new Sequencer({
         jobsTable: process.env.JOBS_TABLE!,
         stepsTable: process.env.STEPS_TABLE!,
+        proofsTable: process.env.PROOFS_TABLE!,
         username: event.username,
         jobId: event.jobId,
       });

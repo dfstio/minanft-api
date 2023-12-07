@@ -1,4 +1,5 @@
 import Steps from "../table/steps";
+import Proofs from "../table/proofs";
 import Jobs from "../table/jobs";
 import { StepsData } from "../model/stepsData";
 import callLambda from "../lambda/lambda";
@@ -61,6 +62,12 @@ export async function runStep(
       result: result,
     });
 
+    const ProofsTable = new Proofs(process.env.PROOFS_TABLE!);
+    await ProofsTable.create({
+      jobId: step.jobId,
+      stepId: step.stepId,
+    });
+
     await callLambda(
       "sequencer",
       JSON.stringify({
@@ -84,6 +91,8 @@ export async function runStep(
       status: "failed",
       billedDuration: step.billedDuration ?? 0,
     });
+    Memory.info(`failed`);
   }
+  Memory.info(`finished`);
   console.timeEnd("runStep");
 }
