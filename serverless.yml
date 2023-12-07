@@ -236,9 +236,8 @@ functions:
     memorySize: 256
   test:
     handler: test.mint
-    timeout: 900
-    memorySize: 8192
-    ephemeralStorageSize: 4096
+    timeout: 90
+    memorySize: 512
     fileSystemConfig:
       localMountPath: /mnt/efs
       arn: arn:aws:elasticfilesystem:eu-west-1:615834060610:access-point/fsap-0424e24fcb8a4b112

@@ -25,10 +25,11 @@ export default class Sequencer {
 
   public async createJob(params: {
     username: string;
+    developer: string;
     name: string;
     jobData: string[];
     task: string;
-    arguments: string[];
+    args: string[];
   }): Promise<string | undefined> {
     if (this.username !== params.username) throw new Error("username mismatch");
     const JobsTable = new Jobs(this.jobsTable);
@@ -66,9 +67,10 @@ export default class Sequencer {
         jobId: this.jobId,
         stepId,
         username: this.username,
+        developer: job.developer,
         name: job.name,
         jobTask: job.task,
-        arguments: job.arguments,
+        args: job.args,
         task: "create" as StepTask,
         origins: [i.toString()],
         stepData: [job.jobData[i]],
@@ -270,11 +272,13 @@ export default class Sequencer {
 
       const name = step1.name;
       const jobTask = step1.jobTask;
-      const arguments_ = step1.arguments;
+      const args = step1.args;
+      const developer = step1.developer;
       if (name !== step2.name) throw new Error("name mismatch");
       if (jobTask !== step2.jobTask) throw new Error("jobTask mismatch");
-      if (arguments_.length !== step2.arguments.length)
+      if (args.length !== step2.args.length)
         throw new Error("arguments mismatch");
+      if (developer !== step2.developer) throw new Error("developer mismatch");
       if (step1.result === undefined || step2.result === undefined)
         throw new Error(`result is undefined`);
       else if (
@@ -296,9 +300,10 @@ export default class Sequencer {
           jobId: this.jobId,
           stepId,
           username: this.username,
+          developer,
           name,
           jobTask,
-          arguments: arguments_,
+          args,
           task: "merge" as StepTask,
           origins: [...step1.origins, ...step2.origins],
           stepData: [step1.result!, step2.result!],
