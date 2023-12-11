@@ -35,16 +35,16 @@ export default class S3File {
     return this._client;
   }
 
-  public async put(buffer: Buffer): Promise<void> {
+  public async put(data: Buffer | string): Promise<void> {
     try {
       const params = {
         Bucket: this.bucket,
         Key: this.key,
-        Body: buffer,
+        Body: data,
       };
       console.log("S3File: put", params);
       const command = new PutObjectCommand(params);
-      const data = await this._client.send(command);
+      const response = await this._client.send(command);
       console.log("Success: S3File: put");
     } catch (error: any) {
       console.error("Error: S3File: put", error);

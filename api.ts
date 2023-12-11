@@ -3,6 +3,7 @@ import { startDeploymentApi, mint_v2 } from "./src/nft/nft";
 import { verifyJWT } from "./src/api/jwt";
 import { runSumSequencer } from "./src/api/sum";
 import Sequencer from "./src/api/sequencer";
+import { getBackupPlugin } from "./src/api/plugin";
 
 const BOTAPIAUTH = process.env.BOTAPIAUTH!;
 
@@ -61,6 +62,20 @@ const botapi: Handler = async (
               return;
             }
             const { transactions, developer, name, task, args } = body.data;
+            try {
+              const plugin = await getBackupPlugin({
+                developer,
+                name,
+                task,
+                args,
+              });
+            } catch (error) {
+              callback(null, {
+                statusCode: 200,
+                body: "error : no such plugin",
+              });
+              return;
+            }
             const sequencerTree = new Sequencer({
               jobsTable: process.env.JOBS_TABLE!,
               stepsTable: process.env.STEPS_TABLE!,
