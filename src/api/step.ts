@@ -68,6 +68,7 @@ export async function runStep(
       stepId: step.stepId,
     });
 
+    /*
     await callLambda(
       "sequencer",
       JSON.stringify({
@@ -76,6 +77,7 @@ export async function runStep(
         jobId: step.jobId,
       })
     );
+    */
   } catch (error) {
     console.error("runStep error:", (<any>error).toString());
     await StepsTable.updateStatus({
