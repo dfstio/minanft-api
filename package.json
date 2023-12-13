@@ -55,24 +55,24 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.468.0",
-    "@aws-sdk/client-elastic-transcoder": "^3.468.0",
-    "@aws-sdk/client-lambda": "^3.468.0",
-    "@aws-sdk/client-s3": "^3.468.0",
-    "@aws-sdk/util-dynamodb": "^3.468.0",
+    "@aws-sdk/client-dynamodb": "^3.470.0",
+    "@aws-sdk/client-elastic-transcoder": "^3.470.0",
+    "@aws-sdk/client-lambda": "^3.470.0",
+    "@aws-sdk/client-s3": "^3.472.0",
+    "@aws-sdk/util-dynamodb": "^3.470.0",
     "@types/aws-lambda": "^8.10.130",
     "@types/jsonwebtoken": "^9.0.5",
     "@types/remove-markdown": "^0.3.4",
-    "algoliasearch": "^4.20.0",
+    "algoliasearch": "^4.21.1",
     "axios": "^1.6.2",
     "form-data": "^4.0.0",
     "i18next": "^23.7.8",
     "jsonwebtoken": "^9.0.2",
-    "minanft": "^1.1.19",
+    "minanft": "^1.2.4",
     "o1js": "^0.14.2",
-    "openai": "^4.20.1",
+    "openai": "^4.21.0",
     "remove-markdown": "^0.5.0",
     "telegraf": "^4.15.3"
   },
-  "packageManager": "yarn@4.0.1"
+  "packageManager": "yarn@4.0.2"
 }

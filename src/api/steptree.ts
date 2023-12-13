@@ -10,23 +10,34 @@ import {
 import { Cache, verify, JsonProof, VerificationKey } from "o1js";
 
 export class MinaNFTTreeVerifierPlugin extends BackendPlugin {
-  contracts: any;
+  static contracts: any = undefined;
+  static height: number = 0;
+  static isCompiled: boolean = false;
   static verificationKey: string | undefined = undefined;
 
   constructor(params: { name: string; task: string; args: string[] }) {
     super(params);
     if (params.args.length !== 1) throw new Error("arguments length not 1");
     const height = Number(params.args[0]);
-    this.contracts = MinaNFTTreeVerifierFunction(height);
+    if (
+      MinaNFTTreeVerifierPlugin.contracts === undefined ||
+      height !== MinaNFTTreeVerifierPlugin.height
+    ) {
+      MinaNFTTreeVerifierPlugin.contracts = MinaNFTTreeVerifierFunction(height);
+      MinaNFTTreeVerifierPlugin.isCompiled = false;
+      MinaNFTTreeVerifierPlugin.height = height;
+    }
   }
-  public async compile(cache: Cache): Promise<VerificationKey[] | undefined> {
-    const { RedactedMinaNFTTreeCalculation } = this.contracts;
+  public async compile(cache: Cache): Promise<void> {
+    if (MinaNFTTreeVerifierPlugin.isCompiled) return;
+    const { RedactedMinaNFTTreeCalculation } =
+      MinaNFTTreeVerifierPlugin.contracts;
     MinaNFTTreeVerifierPlugin.verificationKey = (
       await RedactedMinaNFTTreeCalculation.compile({
         cache,
       })
     ).verificationKey;
-    return [];
+    MinaNFTTreeVerifierPlugin.isCompiled = true;
   }
 
   public async create(transaction: string): Promise<string | undefined> {
@@ -34,7 +45,7 @@ export class MinaNFTTreeVerifierPlugin extends BackendPlugin {
       RedactedMinaNFTTreeState,
       RedactedMinaNFTTreeCalculation,
       MerkleTreeWitness,
-    } = this.contracts;
+    } = MinaNFTTreeVerifierPlugin.contracts;
     if (MinaNFTTreeVerifierPlugin.verificationKey === undefined)
       throw new Error("verificationKey is undefined");
     const args = JSON.parse(transaction);
@@ -72,7 +83,7 @@ export class MinaNFTTreeVerifierPlugin extends BackendPlugin {
       RedactedMinaNFTTreeState,
       RedactedMinaNFTTreeCalculation,
       RedactedMinaNFTTreeStateProof,
-    } = this.contracts;
+    } = MinaNFTTreeVerifierPlugin.contracts;
 
     class TreeStateProof extends RedactedMinaNFTTreeStateProof {}
 

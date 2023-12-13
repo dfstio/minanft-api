@@ -42,7 +42,7 @@ export class RFCvoting extends BackendPlugin {
   constructor(params: { name: string; task: string; args: string[] }) {
     super(params);
   }
-  public async compile(cache: Cache): Promise<VerificationKey[] | undefined> {
+  public async compile(cache: Cache): Promise<void> {
     if (RFCvoting.verificationKey === undefined)
       RFCvoting.verificationKey = (
         await RealTimeVoting.compile({
@@ -50,7 +50,6 @@ export class RFCvoting extends BackendPlugin {
         })
       ).verificationKey;
     else console.log("verificationKey already exists");
-    return [];
   }
 
   public async create(transaction: string): Promise<string | undefined> {
