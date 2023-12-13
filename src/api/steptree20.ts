@@ -14,7 +14,7 @@ export class MinaNFTTreeVerifierPlugin20 extends BackendPlugin {
   constructor(params: { name: string; task: string; args: string[] }) {
     super(params);
   }
-  public async compile(cache: Cache): Promise<VerificationKey[] | undefined> {
+  public async compile(cache: Cache): Promise<void> {
     if (MinaNFTTreeVerifierPlugin20.verificationKey === undefined)
       MinaNFTTreeVerifierPlugin20.verificationKey = (
         await RedactedMinaNFTTreeCalculation20.compile({
@@ -22,7 +22,6 @@ export class MinaNFTTreeVerifierPlugin20 extends BackendPlugin {
         })
       ).verificationKey;
     else console.log("verificationKey already exists");
-    return [];
   }
 
   public async create(transaction: string): Promise<string | undefined> {

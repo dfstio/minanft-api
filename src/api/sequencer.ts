@@ -147,13 +147,12 @@ export default class Sequencer {
     let results = await ProofsTable.queryData("jobId = :id", {
       ":id": this.jobId,
     });
-    console.log("Sequencer: run: results total", results.length);
 
     if (results.length === 0) {
-      console.log("Sequencer: run: no finished results");
-      console.log(results);
+      //console.log("Sequencer: run: no finished results");
       return true;
     }
+    console.log("Sequencer: run: results", results.length);
     const JobsTable = new Jobs(this.jobsTable);
     const job = await JobsTable.get({
       id: this.username,
@@ -176,7 +175,7 @@ export default class Sequencer {
 
     if (results.length === 1) {
       // We probably have final result, let's check
-      console.log("Sequencer: run: checking for final result");
+      //console.log("Sequencer: run: checking for final result");
       const resultMetadata = results[0];
       const result: StepsData | undefined = await StepsTable.get({
         jobId: this.jobId,
@@ -189,7 +188,9 @@ export default class Sequencer {
       if (result.result === undefined) throw new Error("result is undefined");
 
       if (job.jobData.length !== result.origins.length) {
-        console.log("jobData length does not match origins length, exiting");
+        console.log(
+          "final result check: jobData length does not match origins length, exiting"
+        );
         return true;
       }
       for (let i = 0; i < result.origins.length; i++)
@@ -279,7 +280,7 @@ export default class Sequencer {
     }
 
     const stepResults = [];
-    console.log("Sequencer: run: results", results.length);
+    //console.log("Sequencer: run: results", results.length);
     for (let i = 0; i < results.length; i++) {
       const step = results[i];
       const updatedStep = await StepsTable.updateStatus({
