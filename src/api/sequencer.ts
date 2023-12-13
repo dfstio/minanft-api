@@ -14,6 +14,9 @@ export default class Sequencer {
   proofsTable: string;
   username: string;
   jobId?: string;
+  startTime: number;
+  readonly MAX_RUN_TIME: number = 1000 * 60 * 10; // 10 minutes
+  readonly MAX_JOB_TIME: number = 1000 * 60 * 60 * 2; // 2 hours
 
   constructor(params: {
     jobsTable: string;
@@ -22,6 +25,7 @@ export default class Sequencer {
     username: string;
     jobId?: string;
   }) {
+    this.startTime = Date.now();
     this.jobsTable = params.jobsTable;
     this.stepsTable = params.stepsTable;
     this.proofsTable = params.proofsTable;
@@ -99,9 +103,10 @@ export default class Sequencer {
       jobId: this.jobId,
       status: "started",
     });
-    await this.restart();
+    await this.run();
   }
 
+  /*
   public async restart() {
     await sleep(5000);
     await callLambda(
@@ -114,8 +119,27 @@ export default class Sequencer {
     );
     console.log("Sequencer: run: restarting");
   }
+*/
+  public async run(): Promise<void> {
+    let shouldRun: boolean = true;
+    while (shouldRun && Date.now() - this.startTime < this.MAX_RUN_TIME) {
+      await sleep(1000);
+      shouldRun = await this.runIteration();
+    }
+    if (shouldRun) {
+      await callLambda(
+        "sequencer",
+        JSON.stringify({
+          task: "run",
+          username: this.username,
+          jobId: this.jobId,
+        })
+      );
+      console.log("Sequencer: run: restarting");
+    } else console.log("Sequencer: run: finished");
+  }
 
-  public async run(): Promise<string | undefined> {
+  public async runIteration(): Promise<boolean> {
     if (this.jobId === undefined) throw new Error("jobId is undefined");
     const ProofsTable = new Proofs(this.proofsTable);
     const StepsTable = new Steps(this.stepsTable);
@@ -128,8 +152,7 @@ export default class Sequencer {
     if (results.length === 0) {
       console.log("Sequencer: run: no finished results");
       console.log(results);
-      await this.restart();
-      return undefined;
+      return true;
     }
     const JobsTable = new Jobs(this.jobsTable);
     const job = await JobsTable.get({
@@ -140,11 +163,15 @@ export default class Sequencer {
 
     if (job.jobStatus === "failed") {
       console.log("Sequencer: run: job is failed, exiting");
-      return undefined;
+      return false;
     }
     if (job.jobStatus === "finished" || job.jobStatus === "used") {
       console.log("Sequencer: run: job is finished or used, exiting");
-      return undefined;
+      return false;
+    }
+    if (Date.now() - job.timeCreated > this.MAX_JOB_TIME) {
+      console.error("Sequencer: run: job is too old, exiting");
+      return false;
     }
 
     if (results.length === 1) {
@@ -156,15 +183,14 @@ export default class Sequencer {
         stepId: resultMetadata.stepId,
       });
       if (result === undefined) {
-        await this.restart();
-        return undefined;
+        console.log("Sequencer: run: result is undefined, exiting");
+        return true;
       }
       if (result.result === undefined) throw new Error("result is undefined");
 
       if (job.jobData.length !== result.origins.length) {
         console.log("jobData length does not match origins length, exiting");
-        await this.restart();
-        return undefined;
+        return true;
       }
       for (let i = 0; i < result.origins.length; i++)
         if (
@@ -190,7 +216,7 @@ export default class Sequencer {
         stepId: resultMetadata.stepId,
       });
       console.log("Sequencer: run: final result written");
-      return result.result;
+      return false;
     }
 
     // We have more than one result, we need to merge
@@ -238,7 +264,7 @@ export default class Sequencer {
             "Sequencer: run: rfc-voting final result written",
             txs.length.toString()
           );
-          return txs.length.toString();
+          return false;
         } else {
           await sleep(1000);
           results = await ProofsTable.queryData("jobId = :id", {
@@ -274,8 +300,7 @@ export default class Sequencer {
     }
     if (stepResults.length === 0) {
       console.log("Sequencer: run: no results to merge after trying to lock");
-      await this.restart();
-      return undefined;
+      return true;
     } else {
       if (stepResults.length % 2 === 1) {
         // We have odd number of results, we need to return the last one back to the queue
@@ -309,7 +334,7 @@ export default class Sequencer {
 
         if (job.jobStatus === "failed") {
           console.log("Sequencer: run: job is failed, exiting");
-          return undefined;
+          return false;
         }
         // Let's give previous step instance to exit to reuse the lambda instance
         await sleep(1000);
@@ -399,8 +424,7 @@ export default class Sequencer {
       }
     }
 
-    await this.restart();
-    return undefined;
+    return true;
   }
 
   public async getJobStatus(): Promise<JobsData> {
