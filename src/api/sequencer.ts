@@ -152,7 +152,7 @@ export default class Sequencer {
       //console.log("Sequencer: run: no finished results");
       return true;
     }
-    console.log("Sequencer: run: results", results.length);
+
     const JobsTable = new Jobs(this.jobsTable);
     const job = await JobsTable.get({
       id: this.username,
@@ -188,9 +188,11 @@ export default class Sequencer {
       if (result.result === undefined) throw new Error("result is undefined");
 
       if (job.jobData.length !== result.origins.length) {
+        /*
         console.log(
           "final result check: jobData length does not match origins length, exiting"
         );
+        */
         return true;
       }
       for (let i = 0; i < result.origins.length; i++)
@@ -219,7 +221,7 @@ export default class Sequencer {
       console.log("Sequencer: run: final result written");
       return false;
     }
-
+    console.log("Sequencer: run: results", results.length);
     // We have more than one result, we need to merge
     if (job.name === "rfc-voting") {
       let txs = [];
