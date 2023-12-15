@@ -13,7 +13,7 @@ export class MinaNFTTreeVerifierPlugin extends BackendPlugin {
   static contracts: any = undefined;
   static height: number = 0;
   static isCompiled: boolean = false;
-  static verificationKey: string | undefined = undefined;
+  static verificationKey: VerificationKey | undefined = undefined;
 
   constructor(params: { name: string; task: string; args: string[] }) {
     super(params);

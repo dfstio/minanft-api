@@ -2066,7 +2066,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"axios@npm:^1.6.1, axios@npm:^1.6.2":
+"axios@npm:^1.6.2":
   version: 1.6.2
   resolution: "axios@npm:1.6.2"
   dependencies:
@@ -2210,15 +2210,6 @@ __metadata:
   version: 0.0.2
   resolution: "charenc@npm:0.0.2"
   checksum: a45ec39363a16799d0f9365c8dd0c78e711415113c6f14787a22462ef451f5013efae8a28f1c058f81fc01f2a6a16955f7a5fd0cd56247ce94a45349c89877d8
-  languageName: node
-  linkType: hard
-
-"cli-progress@npm:^3.12.0":
-  version: 3.12.0
-  resolution: "cli-progress@npm:3.12.0"
-  dependencies:
-    string-width: "npm:^4.2.3"
-  checksum: f464cb19ebde2f3880620a2adfaeeefaec6cb15c8e610c8a659ca1047ee90d69f3bf2fdabbb1fe33ac408678e882e3e0eecdb84ab5df0edf930b269b8a72682d
   languageName: node
   linkType: hard
 
@@ -2381,13 +2372,6 @@ __metadata:
   dependencies:
     safe-buffer: "npm:^5.0.1"
   checksum: ebfbf19d4b8be938f4dd4a83b8788385da353d63307ede301a9252f9f7f88672e76f2191618fd8edfc2f24679236064176fab0b78131b161ee73daa37125408c
-  languageName: node
-  linkType: hard
-
-"emoji-regex@npm:^8.0.0":
-  version: 8.0.0
-  resolution: "emoji-regex@npm:8.0.0"
-  checksum: b6053ad39951c4cf338f9092d7bfba448cdfd46fe6a2a034700b149ac9ffbc137e361cbd3c442297f86bed2e5f7576c1b54cc0a6bf8ef5106cc62f496af35010
   languageName: node
   linkType: hard
 
@@ -3249,13 +3233,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"is-fullwidth-code-point@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "is-fullwidth-code-point@npm:3.0.0"
-  checksum: bb11d825e049f38e04c06373a8d72782eee0205bda9d908cc550ccb3c59b99d750ff9537982e01733c1c94a58e35400661f57042158ff5e8f3e90cf936daf0fc
-  languageName: node
-  linkType: hard
-
 "is-glob@npm:^4.0.0, is-glob@npm:^4.0.1, is-glob@npm:^4.0.3":
   version: 4.0.3
   resolution: "is-glob@npm:4.0.3"
@@ -3653,8 +3630,8 @@ __metadata:
     form-data: "npm:^4.0.0"
     i18next: "npm:^23.7.8"
     jsonwebtoken: "npm:^9.0.2"
-    minanft: "npm:^1.2.4"
-    o1js: "npm:^0.14.2"
+    minanft: "npm:^1.2.5"
+    o1js: "npm:^0.15.0"
     openai: "npm:^4.21.0"
     remove-markdown: "npm:^0.5.0"
     serverless-plugin-typescript: "npm:^2.1.5"
@@ -3663,16 +3640,16 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"minanft@npm:^1.2.4":
-  version: 1.2.4
-  resolution: "minanft@npm:1.2.4"
+"minanft@npm:^1.2.5":
+  version: 1.2.5
+  resolution: "minanft@npm:1.2.5"
   dependencies:
-    axios: "npm:^1.6.1"
-    cli-progress: "npm:^3.12.0"
+    axios: "npm:^1.6.2"
     form-data: "npm:^4.0.0"
     mime: "npm:^3.0.0"
-    o1js: "npm:^0.14.1"
-  checksum: 7015be68c51be68368c3a86efd8ef184774cbe1912823ba4d44a9919117b5cfa92e0406d40f82aa254d19267b4b14d7c73e6189e7f8b63704e7f566b564e031c
+  peerDependencies:
+    o1js: ^0.15.0
+  checksum: a83fb0c2b8c6b5d3cfc0e6034a291fe42e42054bcccca85d142da6cd45c68e37f02d83ca5133d597c695c8e996ca2cc328c97773c5214655c6a6f36167518d1f
   languageName: node
   linkType: hard
 
@@ -3750,9 +3727,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"o1js@npm:^0.14.1, o1js@npm:^0.14.2":
-  version: 0.14.2
-  resolution: "o1js@npm:0.14.2"
+"o1js@npm:^0.15.0":
+  version: 0.15.0
+  resolution: "o1js@npm:0.15.0"
   dependencies:
     blakejs: "npm:1.2.1"
     cachedir: "npm:^2.4.0"
@@ -3763,7 +3740,7 @@ __metadata:
     tslib: "npm:^2.3.0"
   bin:
     snarky-run: src/build/run.js
-  checksum: 3621526612dd17df395b73648fed0712b8c1a8103770bb388704bf106ecae324327e4df33c320ff34d475a636efa23d935b08a4cedacc4ec0e2d9175df0f86f7
+  checksum: 5861c7345253349fcd64e8a33a6f5917161bcbc5d48e001239af7461736b5035a6c06378f404e60d477280b12da91b182cb091612efd02c393b523c21977099c
   languageName: node
   linkType: hard
 
@@ -4213,17 +4190,6 @@ __metadata:
   version: 3.0.0
   resolution: "slash@npm:3.0.0"
   checksum: e18488c6a42bdfd4ac5be85b2ced3ccd0224773baae6ad42cfbb9ec74fc07f9fa8396bd35ee638084ead7a2a0818eb5e7151111544d4731ce843019dab4be47b
-  languageName: node
-  linkType: hard
-
-"string-width@npm:^4.2.3":
-  version: 4.2.3
-  resolution: "string-width@npm:4.2.3"
-  dependencies:
-    emoji-regex: "npm:^8.0.0"
-    is-fullwidth-code-point: "npm:^3.0.0"
-    strip-ansi: "npm:^6.0.1"
-  checksum: 1e525e92e5eae0afd7454086eed9c818ee84374bb80328fc41217ae72ff5f065ef1c9d7f72da41de40c75fa8bb3dee63d92373fd492c84260a552c636392a47b
   languageName: node
   linkType: hard
 

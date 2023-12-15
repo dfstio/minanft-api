@@ -9,7 +9,7 @@ import {
 import { Cache, verify, JsonProof, VerificationKey } from "o1js";
 
 export class MinaNFTTreeVerifierPlugin20 extends BackendPlugin {
-  static verificationKey: string | undefined = undefined;
+  static verificationKey: VerificationKey | undefined = undefined;
 
   constructor(params: { name: string; task: string; args: string[] }) {
     super(params);
