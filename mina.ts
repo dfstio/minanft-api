@@ -2,6 +2,7 @@ import { Handler, Context } from "aws-lambda";
 import { deployContract, checkBalance, createNFT } from "./src/mina/account";
 import { deployNFT } from "./src/mina/deploy";
 import { apiMintNFT } from "./src/api/mint";
+import { mint_v3 as mint_v3_func } from "./src/api/mint_v3";
 import { startDeploymentIpfs } from "./src/nft/nft";
 import { initLanguages, getLanguage } from "./src/lang/lang";
 
@@ -52,6 +53,26 @@ const mint_v2: Handler = async (event: any, context: Context) => {
     console.log("mint_v2", event);
     await initLanguages();
     await apiMintNFT(event.id, event.uri, event.privateKey, event.language);
+
+    //context.succeed(event.id);
+    return {
+      statusCode: 200,
+      body: event.id,
+    };
+  } catch (error) {
+    console.error("catch", (<any>error).toString());
+    return {
+      statusCode: 200,
+      body: "mina.mint_v2 error",
+    };
+  }
+};
+
+const mint_v3: Handler = async (event: any, context: Context) => {
+  try {
+    console.log("mint_v3", event);
+    await initLanguages();
+    await mint_v3_func(event.id, event.uri, event.privateKey, event.language);
 
     //context.succeed(event.id);
     return {
@@ -142,4 +163,4 @@ const deployipfs: Handler = async (event: any, context: Context) => {
   }
 };
 
-export { deploy, deploynft, topup, create, deployipfs, mint_v2 };
+export { deploy, deploynft, topup, create, deployipfs, mint_v2, mint_v3 };

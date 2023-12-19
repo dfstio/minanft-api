@@ -1,5 +1,5 @@
 import { Handler, Context, Callback } from "aws-lambda";
-import { startDeploymentApi, mint_v2 } from "./src/nft/nft";
+import { startDeploymentApi, mint_v2, mint_v3 } from "./src/nft/nft";
 import { verifyJWT } from "./src/api/jwt";
 import { runSumSequencer } from "./src/api/sum";
 import Sequencer from "./src/api/sequencer";
@@ -28,6 +28,10 @@ const botapi: Handler = async (
         console.error("Wrong jwtToken");
         callback(null, {
           statusCode: 200,
+          headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Credentials": true,
+          },
           body: "Wrong jwtToken",
         });
         return;
@@ -38,11 +42,39 @@ const botapi: Handler = async (
             console.error("No IPFS hash");
             callback(null, {
               statusCode: 200,
+              headers: {
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Credentials": true,
+              },
               body: "No IPFS hash",
             });
             return;
           }
           await startDeploymentApi(id, body.data.ipfs);
+          break;
+
+        case "mint_v3":
+          if (
+            body.data.transactions === undefined ||
+            body.data.args === undefined ||
+            body.data.transactions.length !== 1
+          ) {
+            console.error("No mint data");
+            callback(null, {
+              statusCode: 200,
+              headers: {
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Credentials": true,
+              },
+              body: "No mint data",
+            });
+            return;
+          }
+          await mint_v3(
+            id,
+            body.data.transactions[0],
+            body.data.args.length === 1 ? body.data.args[0] : undefined
+          );
           break;
 
         case "proof":
@@ -57,6 +89,10 @@ const botapi: Handler = async (
               console.error("Wrong proof command", body.data);
               callback(null, {
                 statusCode: 200,
+                headers: {
+                  "Access-Control-Allow-Origin": "*",
+                  "Access-Control-Allow-Credentials": true,
+                },
                 body: "No transactions data",
               });
               return;
@@ -72,6 +108,10 @@ const botapi: Handler = async (
             } catch (error) {
               callback(null, {
                 statusCode: 200,
+                headers: {
+                  "Access-Control-Allow-Origin": "*",
+                  "Access-Control-Allow-Credentials": true,
+                },
                 body: "error : no such plugin",
               });
               return;
@@ -103,6 +143,10 @@ const botapi: Handler = async (
             console.error("No jobId");
             callback(null, {
               statusCode: 200,
+              headers: {
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Credentials": true,
+              },
               body: "No jobId",
             });
             return;
@@ -117,6 +161,10 @@ const botapi: Handler = async (
           const jobResultTree = await sequencerResultTree.getJobStatus();
           callback(null, {
             statusCode: 200,
+            headers: {
+              "Access-Control-Allow-Origin": "*",
+              "Access-Control-Allow-Credentials": true,
+            },
             body: JSON.stringify(jobResultTree, null, 2) ?? "error",
           });
           return;
@@ -257,6 +305,10 @@ const botapi: Handler = async (
           console.error("Wrong command");
           callback(null, {
             statusCode: 200,
+            headers: {
+              "Access-Control-Allow-Origin": "*",
+              "Access-Control-Allow-Credentials": true,
+            },
             body: "Wrong command",
           });
       }
@@ -266,12 +318,20 @@ const botapi: Handler = async (
 
     callback(null, {
       statusCode: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Credentials": true,
+      },
       body: "ok",
     });
   } catch (error: any) {
     console.error("bot api catch", error.toString());
     callback(null, {
       statusCode: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Credentials": true,
+      },
       body: "error",
     });
   }

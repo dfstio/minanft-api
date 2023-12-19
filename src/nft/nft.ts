@@ -149,6 +149,25 @@ async function mint_v2(
   );
 }
 
+async function mint_v3(
+  id: string,
+  uri: string,
+  privateKey: string | undefined
+): Promise<void> {
+  console.log("mint_v3", id, uri, privateKey);
+
+  const language = await getLanguage(id);
+  await callLambda(
+    "mint_v3",
+    JSON.stringify({
+      id,
+      uri,
+      privateKey: privateKey ?? "",
+      language,
+    })
+  );
+}
+
 function generateFilename(timeNow: number): string {
   let outString: string = "";
   let inOptions: string = "abcdefghijklmnopqrstuvwxyz0123456789_";
@@ -164,5 +183,6 @@ export {
   startDeploymentIpfs,
   startDeploymentApi,
   mint_v2,
+  mint_v3,
   generateFilename,
 };
