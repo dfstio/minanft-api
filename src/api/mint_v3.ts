@@ -25,14 +25,14 @@ const { PINATA_JWT, NAMES_ORACLE_SK, PROVER_KEYS_BUCKET, BLOCKCHAIN } =
 const NAMES_TABLE = process.env.TESTWORLD2_NAMES_TABLE!;
 const blockchainToDeploy: blockchain = "testworld2";
 
-export async function apiMintNFT(
+export async function mint_v3(
   id: string,
   uri: string,
   privateKey: string,
   language: string
 ): Promise<void> {
   Memory.info("start");
-  console.log("apiMintNFT", id, uri, privateKey);
+  console.log("mint_v3", id, uri, privateKey);
 
   try {
     const metadata = JSON.parse(uri);
@@ -60,6 +60,7 @@ export async function apiMintNFT(
       `Deployer balance: ${await accountBalanceMina(deployer.toPublicKey())}`
     );
 
+    /*
     Memory.info("before cache");
     const nftCacheDir = "/tmp/nft-cache";
     console.time("loaded nft cache");
@@ -67,10 +68,14 @@ export async function apiMintNFT(
     console.timeEnd("loaded nft cache");
     await listFiles(nftCacheDir);
     Memory.info("nft cache loaded");
+    */
+
+    const cacheDir = "/mnt/efs/cache";
+    await listFiles(cacheDir);
 
     Memory.info("before compiling");
     console.log("Compiling...");
-    MinaNFT.setCacheFolder(nftCacheDir);
+    MinaNFT.setCacheFolder(cacheDir);
     console.time("compiled");
     await MinaNFT.compile();
     console.timeEnd("compiled");
