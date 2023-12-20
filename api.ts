@@ -4,6 +4,8 @@ import { verifyJWT } from "./src/api/jwt";
 import { runSumSequencer } from "./src/api/sum";
 import Sequencer from "./src/api/sequencer";
 import { getBackupPlugin } from "./src/api/plugin";
+import { reserveName, indexName } from "./src/api/mint_v3";
+import { initLanguages, getLanguage } from "./src/lang/lang";
 
 const BOTAPIAUTH = process.env.BOTAPIAUTH!;
 
@@ -53,29 +55,129 @@ const botapi: Handler = async (
           await startDeploymentApi(id, body.data.ipfs);
           break;
 
-        case "mint_v3":
-          if (
-            body.data.transactions === undefined ||
-            body.data.args === undefined ||
-            body.data.transactions.length !== 1
-          ) {
-            console.error("No mint data");
+        case "reserveName":
+          {
+            if (
+              body.data.transactions === undefined ||
+              body.data.developer === undefined ||
+              body.data.name === undefined ||
+              body.data.task === undefined ||
+              body.data.args === undefined ||
+              body.data.args.length !== 2
+            ) {
+              console.error("Wrong reserveName request");
+              callback(null, {
+                statusCode: 200,
+                headers: {
+                  "Access-Control-Allow-Origin": "*",
+                  "Access-Control-Allow-Credentials": true,
+                },
+                body: "Wrong reserveName request",
+              });
+              return;
+            }
+            const { args } = body.data;
+            const language = await getLanguage(id);
+            const result = await reserveName(id, args[0], args[1], language);
+            console.log("reserveName result", result);
+
             callback(null, {
               statusCode: 200,
               headers: {
                 "Access-Control-Allow-Origin": "*",
                 "Access-Control-Allow-Credentials": true,
               },
-              body: "No mint data",
+              body: JSON.stringify(result),
             });
-            return;
           }
-          await mint_v3(
-            id,
-            body.data.transactions[0],
-            body.data.args.length === 1 ? body.data.args[0] : undefined
-          );
-          break;
+          return;
+
+        case "indexName":
+          {
+            if (
+              body.data.transactions === undefined ||
+              body.data.developer === undefined ||
+              body.data.name === undefined ||
+              body.data.task === undefined ||
+              body.data.args === undefined ||
+              body.data.args.length !== 1
+            ) {
+              console.error("Wrong indexName request");
+              callback(null, {
+                statusCode: 200,
+                headers: {
+                  "Access-Control-Allow-Origin": "*",
+                  "Access-Control-Allow-Credentials": true,
+                },
+                body: "Wrong indexName request",
+              });
+              return;
+            }
+            const { args } = body.data;
+            const language = await getLanguage(id);
+            const result = await indexName(id, args[0], language);
+            console.log("indexName result", result);
+
+            callback(null, {
+              statusCode: 200,
+              headers: {
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Credentials": true,
+              },
+              body: JSON.stringify(result),
+            });
+          }
+          return;
+
+        case "mint_v3":
+          {
+            if (
+              body.data.transactions === undefined ||
+              body.data.transactions.length !== 1 ||
+              body.data.developer === undefined ||
+              body.data.name === undefined ||
+              body.data.task === undefined ||
+              body.data.args === undefined ||
+              body.data.args.length !== 2
+            ) {
+              console.error("Wrong mint data");
+              callback(null, {
+                statusCode: 200,
+                headers: {
+                  "Access-Control-Allow-Origin": "*",
+                  "Access-Control-Allow-Credentials": true,
+                },
+                body: "Wrong mint data",
+              });
+              return;
+            }
+            const { transactions, developer, name, task, args } = body.data;
+            const sequencerTree = new Sequencer({
+              jobsTable: process.env.JOBS_TABLE!,
+              stepsTable: process.env.STEPS_TABLE!,
+              proofsTable: process.env.PROOFS_TABLE!,
+              username: id,
+            });
+            const jobIdTask = await sequencerTree.createJob({
+              username: id,
+              developer,
+              name,
+              jobData: transactions,
+              task,
+              args,
+            });
+            callback(null, {
+              statusCode: 200,
+              headers: {
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Credentials": true,
+              },
+              body: jobIdTask ?? "error",
+            });
+            if (jobIdTask !== undefined)
+              await mint_v3(id, jobIdTask, transactions[0], args[0], args[1]);
+          }
+          return;
 
         case "proof":
           {
@@ -132,6 +234,10 @@ const botapi: Handler = async (
             });
             callback(null, {
               statusCode: 200,
+              headers: {
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Credentials": true,
+              },
               body: jobIdTask ?? "error",
             });
             return;

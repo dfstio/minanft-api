@@ -5,6 +5,8 @@ export default interface NamesData {
   description?: string;
   url?: string;
   id: string;
+  signature?: string;
+  publicKey?: string;
   language: string;
   timeCreated: number;
   deploy?: DeployData;

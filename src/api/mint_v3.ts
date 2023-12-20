@@ -1,17 +1,16 @@
-import { PrivateKey, PublicKey, Poseidon } from "o1js";
+import { PrivateKey, PublicKey, Signature, Field, Mina } from "o1js";
+import Jobs from "../table/jobs";
 import {
   MinaNFT,
   MinaNFTNameService,
   MINANFT_NAME_SERVICE,
+  VERIFICATION_KEY_HASH,
   accountBalanceMina,
   Memory,
   blockchain,
   sleep,
 } from "minanft";
-import nftfiles from "../mina/nftfiles.json";
-import { getFileData, convertIPFSFileData } from "../storage/filedata";
-import { initLanguages, getLanguage } from "../lang/lang";
-import { listFiles, loadCache } from "../mina/cache";
+import { listFiles } from "../mina/cache";
 import { algoliaWriteToken } from "../nft/algolia";
 import { getDeployer } from "../mina/deployers";
 import axios from "axios";
@@ -19,41 +18,235 @@ import axios from "axios";
 import BotMessage from "../mina/message";
 import Names from "../table/names";
 import NamesData from "../model/namesData";
+import { isReservedName } from "../nft/reservednames";
+import { nftPrice } from "../payments/pricing";
 
 const { PINATA_JWT, NAMES_ORACLE_SK, PROVER_KEYS_BUCKET, BLOCKCHAIN } =
   process.env;
 const NAMES_TABLE = process.env.TESTWORLD2_NAMES_TABLE!;
 const blockchainToDeploy: blockchain = "testworld2";
 
+export async function reserveName(
+  id: string,
+  name: string,
+  publicKey: string,
+  language: string
+): Promise<{
+  success: boolean;
+  signature: string;
+  price?: string;
+  reason: string;
+}> {
+  if (name === "" || name === "@")
+    return { success: false, signature: "", reason: "empty name" };
+  const nftName = name[0] === "@" ? name : "@" + name;
+  if (nftName.length > 30)
+    return { success: false, signature: "", reason: "name too long" };
+  if (isReservedName(name))
+    return { success: false, signature: "", reason: "reserved name" };
+
+  try {
+    const names = new Names(NAMES_TABLE);
+    const checkName = await names.get(nftName);
+    if (checkName) {
+      console.log("Found old deployment", checkName);
+      if (checkName.id !== id) {
+        return {
+          success: false,
+          signature: "",
+          reason: "Already deployed by another user",
+        };
+      }
+    }
+    const oraclePrivateKey = PrivateKey.fromBase58(NAMES_ORACLE_SK!);
+    const nameServiceAddress = PublicKey.fromBase58(MINANFT_NAME_SERVICE);
+    const verificationKeyHash = Field.fromJSON(VERIFICATION_KEY_HASH);
+    const address = PublicKey.fromBase58(publicKey);
+
+    const signature: Signature = Signature.create(oraclePrivateKey, [
+      ...address.toFields(),
+      MinaNFT.stringToField(nftName),
+      verificationKeyHash,
+      ...nameServiceAddress.toFields(),
+    ]);
+
+    const nft: NamesData = {
+      id,
+      publicKey,
+      signature: signature.toBase58(),
+      username: nftName,
+      language,
+      timeCreated: Date.now(),
+    };
+    await names.create(nft);
+
+    return {
+      success: true,
+      signature: signature.toBase58(),
+      price: JSON.stringify(nftPrice(name)),
+      reason: "",
+    };
+  } catch (err) {
+    console.error(err);
+    return { success: false, signature: "", reason: "error" };
+  }
+}
+
+export async function indexName(
+  id: string,
+  name: string,
+  language: string
+): Promise<{
+  success: boolean;
+  reason: string;
+}> {
+  if (name === "" || name === "@")
+    return { success: false, reason: "empty name" };
+  const nftName = name[0] === "@" ? name : "@" + name;
+  if (nftName.length > 30) return { success: false, reason: "name too long" };
+
+  try {
+    const names = new Names(NAMES_TABLE);
+    const nftData = await names.get(nftName);
+    if (nftData === undefined || nftData.publicKey === undefined) {
+      console.log("No deployment");
+      return {
+        success: false,
+        reason: "Not found",
+      };
+    }
+
+    const nameService = PublicKey.fromBase58(MINANFT_NAME_SERVICE);
+    const address = PublicKey.fromBase58(nftData.publicKey);
+    MinaNFT.minaInit(blockchainToDeploy);
+    const nft = new MinaNFT({
+      name: nftName,
+      address,
+      nameService,
+    });
+    await nft.loadMetadata();
+
+    const deployData = {
+      privateKey: "",
+      publicKey: nftData.publicKey,
+      storage: nft.storage,
+      telegramId: id,
+    };
+    const creator: string =
+      nft.creator == ""
+        ? "@MinaNFT_api"
+        : nft.creator[0] === "@"
+        ? nft.creator
+        : "@" + nft.creator;
+    let deployedNFT: NamesData = nftData;
+    deployedNFT.uri = nft.toJSON();
+
+    deployedNFT.creator = creator;
+    deployedNFT.ipfs = nft.storage.slice(2);
+
+    const newURI = nft.toJSON() as any;
+    const properties: string = JSON.stringify(newURI.properties);
+    newURI.properties = properties;
+    deployedNFT.testworld2 = deployData;
+    deployedNFT.testworld2uri = newURI;
+    console.log("Writing deployment to Names", deployedNFT);
+    await names.create(deployedNFT);
+    await algoliaWriteToken(deployedNFT);
+
+    return {
+      success: true,
+      reason: "",
+    };
+  } catch (err) {
+    console.error(err);
+    return { success: false, reason: "error" };
+  }
+}
+
 export async function mint_v3(
   id: string,
+  jobId: string,
   uri: string,
+  signature: string,
   privateKey: string,
   language: string
 ): Promise<void> {
+  const timeStarted = Date.now();
+  console.time("all");
   Memory.info("start");
-  console.log("mint_v3", id, uri, privateKey);
+  console.log("mint_v3", id, uri, signature, privateKey, language);
 
   try {
+    const JobsTable = new Jobs(process.env.JOBS_TABLE!);
+    await JobsTable.updateStatus({
+      username: id,
+      jobId: jobId,
+      status: "started",
+    });
+    const bot = new BotMessage(id, language);
+
     const metadata = JSON.parse(uri);
     const names = new Names(NAMES_TABLE);
     const name = await names.get(metadata.name);
     if (name) {
-      console.log("Found old deployment", name);
+      console.log("Found name record", name);
+    }
+
+    const oraclePrivateKey = PrivateKey.fromBase58(NAMES_ORACLE_SK!);
+    const oraclePublicKey = oraclePrivateKey.toPublicKey();
+    const zkAppPrivateKey = PrivateKey.fromBase58(privateKey);
+    const address = zkAppPrivateKey.toPublicKey();
+    const nameServiceAddress = PublicKey.fromBase58(MINANFT_NAME_SERVICE);
+    const verificationKeyHash = Field.fromJSON(VERIFICATION_KEY_HASH);
+
+    const nameService = new MinaNFTNameService({
+      oraclePrivateKey,
+      address: nameServiceAddress,
+    });
+
+    const nft = MinaNFT.fromJSON({
+      metadataURI: uri,
+      nameServiceAddress,
+      skipCalculatingMetadataRoot: true,
+    });
+
+    const msg: Field[] = [
+      ...address.toFields(),
+      MinaNFT.stringToField(nft.name),
+      verificationKeyHash,
+      ...nameServiceAddress.toFields(),
+    ];
+    const checkSignature: boolean = Signature.fromBase58(signature)
+      .verify(oraclePublicKey, msg)
+      .toBoolean();
+
+    let isError = false;
+    if (name !== undefined && name.id !== id) {
+      console.error("Found old deployment by another user", name);
+      isError = true;
+    }
+
+    if (!checkSignature) {
+      console.error("Signature is wrong");
+      isError = true;
+    }
+
+    if (isError) {
+      await bot.tmessage("ErrordeployingNFT");
+      await JobsTable.updateStatus({
+        username: id,
+        jobId: jobId,
+        status: "failed",
+        billedDuration: Date.now() - timeStarted,
+      });
+      Memory.info("deploy error");
+      console.timeEnd("all");
       return;
     }
-    const bot = new BotMessage(id, language);
-
-    console.time("all");
 
     MinaNFT.minaInit(blockchainToDeploy);
     const deployer = await getDeployer();
-    const oraclePrivateKey = PrivateKey.fromBase58(NAMES_ORACLE_SK!);
-    const nameServiceAddress = PublicKey.fromBase58(MINANFT_NAME_SERVICE);
-    const zkAppPrivateKey =
-      privateKey === ""
-        ? PrivateKey.random()
-        : PrivateKey.fromBase58(privateKey);
+
     const pinataJWT = PINATA_JWT!;
 
     console.log(
@@ -80,6 +273,22 @@ export async function mint_v3(
     await MinaNFT.compile();
     console.timeEnd("compiled");
     Memory.info("after compiling");
+    if (MinaNFT.verificationKey?.hash?.toJSON() !== VERIFICATION_KEY_HASH) {
+      console.error(
+        "Verification key is wrong",
+        MinaNFT.verificationKey?.hash?.toJSON()
+      );
+      await bot.tmessage("ErrordeployingNFT");
+      await JobsTable.updateStatus({
+        username: id,
+        jobId: jobId,
+        status: "failed",
+        billedDuration: Date.now() - timeStarted,
+      });
+      Memory.info("deploy error");
+      console.timeEnd("all");
+      return;
+    }
 
     const image = `https://res.cloudinary.com/minanft/image/fetch/h_300,q_100,f_auto/${metadata.image}`;
     console.log("image", image);
@@ -91,17 +300,6 @@ export async function mint_v3(
         console.log("cloudinary ping - aws");
       })
       .catch((e: any) => console.error("cloudinary ping - aws error"));
-
-    const nameService = new MinaNFTNameService({
-      oraclePrivateKey,
-      address: nameServiceAddress,
-    });
-
-    const nft = MinaNFT.fromJSON({
-      metadataURI: uri,
-      nameServiceAddress,
-      skipCalculatingMetadataRoot: true,
-    });
 
     console.time("mint");
     const tx = await nft.mint(
@@ -119,19 +317,40 @@ export async function mint_v3(
     if (tx === undefined) {
       console.error("Error deploying NFT");
       await bot.tmessage("ErrordeployingNFT");
+      await JobsTable.updateStatus({
+        username: id,
+        jobId: jobId,
+        status: "failed",
+        billedDuration: Date.now() - timeStarted,
+      });
       Memory.info("deploy error");
       console.timeEnd("all");
       return;
     }
     Memory.info("deployed");
+    const hash: string | undefined = tx.hash();
+    if (hash === undefined) {
+      console.error("Error deploying NFT");
+      await bot.tmessage("ErrordeployingNFT");
+      await JobsTable.updateStatus({
+        username: id,
+        jobId: jobId,
+        status: "failed",
+        billedDuration: Date.now() - timeStarted,
+      });
+      Memory.info("deploy error");
+      console.timeEnd("all");
+      return;
+    }
 
     await bot.tmessage("sucessDeploymentMessage", {
       nftname: nft.name,
-      hash: tx.hash(),
+      hash,
     });
     await MinaNFT.transactionInfo(tx, "mint", false);
 
-    await bot.invoice(nft.name.slice(1), image);
+    // TODO: Enable invoices after the New Year
+    //await bot.invoice(nft.name.slice(1), image);
 
     const deployData = {
       privateKey: zkAppPrivateKey.toBase58(),
@@ -164,6 +383,14 @@ export async function mint_v3(
     await names.create(deployedNFT);
     await algoliaWriteToken(deployedNFT);
     Memory.info("end");
+    await JobsTable.updateStatus({
+      username: id,
+      jobId: jobId,
+      status: "finished",
+      result: hash,
+      billedDuration: Date.now() - timeStarted,
+    });
+
     await sleep(1000);
     console.timeEnd("all");
   } catch (err) {

@@ -72,7 +72,14 @@ const mint_v3: Handler = async (event: any, context: Context) => {
   try {
     console.log("mint_v3", event);
     await initLanguages();
-    await mint_v3_func(event.id, event.uri, event.privateKey, event.language);
+    await mint_v3_func(
+      event.id,
+      event.jobId,
+      event.uri,
+      event.signature,
+      event.privateKey,
+      event.language
+    );
 
     //context.succeed(event.id);
     return {
