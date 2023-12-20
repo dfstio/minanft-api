@@ -1,7 +1,9 @@
 import NFTPriceData from "../model/nftPriceData";
 import { vipnames } from "../nft/vipnames";
 
-function nftPrice(username: string): NFTPriceData {
+function nftPrice(name: string): NFTPriceData {
+  const username =
+    name[0] === "@" ? name.substring(1).toLowerCase() : name.toLowerCase();
   let category = 3;
   if (username.length <= 5) category = 2;
   if (username.length <= 3) category = 1;

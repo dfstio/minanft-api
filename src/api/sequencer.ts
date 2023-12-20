@@ -44,7 +44,7 @@ export default class Sequencer {
     if (this.username !== params.username) throw new Error("username mismatch");
     const JobsTable = new Jobs(this.jobsTable);
     const jobId = await JobsTable.createJob(params);
-    if (jobId !== undefined)
+    if (jobId !== undefined && params.name !== "mint")
       await callLambda(
         "sequencer",
         JSON.stringify({ task: "start", username: this.username, jobId })

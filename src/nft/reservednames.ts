@@ -97,4 +97,9 @@ const reservedNames: string[] = [
   "porsche",
 ];
 
-export { reservedNames };
+function isReservedName(userInput: string): boolean {
+  const name = userInput[0] === "@" ? userInput.substr(1) : userInput;
+  return reservedNames.includes(userInput.toLowerCase().substr(1, 30));
+}
+
+export { reservedNames, isReservedName };

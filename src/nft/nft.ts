@@ -151,18 +151,22 @@ async function mint_v2(
 
 async function mint_v3(
   id: string,
+  jobId: string,
   uri: string,
-  privateKey: string | undefined
+  signature: string,
+  privateKey: string
 ): Promise<void> {
-  console.log("mint_v3", id, uri, privateKey);
+  console.log("mint_v3", id, uri, signature, privateKey);
 
   const language = await getLanguage(id);
   await callLambda(
     "mint_v3",
     JSON.stringify({
       id,
+      jobId,
       uri,
-      privateKey: privateKey ?? "",
+      signature,
+      privateKey,
       language,
     })
   );
