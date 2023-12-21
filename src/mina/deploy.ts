@@ -63,6 +63,7 @@ export async function deployNFT(
     const ownerPrivateKey = PrivateKey.random();
     const ownerPublicKey = ownerPrivateKey.toPublicKey();
     const privateKey = PrivateKey.random();
+    const publicKey = privateKey.toPublicKey();
     const owner = Poseidon.hash(ownerPublicKey.toFields());
     const pinataJWT = PINATA_JWT!;
 
@@ -86,7 +87,11 @@ export async function deployNFT(
     console.timeEnd("compiled");
     Memory.info("after compiling");
 
-    const mnft = new MinaNFT({ name: nft.username, creator: nft.creator });
+    const mnft = new MinaNFT({
+      name: nft.username,
+      creator: nft.creator,
+      address: publicKey,
+    });
     if (nft.uri.description !== undefined && nft.uri.description !== "")
       mnft.updateText({
         key: `description`,
@@ -96,7 +101,12 @@ export async function deployNFT(
       nft.ipfs === undefined
         ? await getFileData(nft.uri.image)
         : convertIPFSFileData(nft.uri);
-    mnft.updateFileData(`image`, "image", imageData, false);
+    mnft.updateFileData({
+      key: `image`,
+      type: "image",
+      data: imageData,
+      isPrivate: false,
+    });
     console.log(`json:`, JSON.stringify(mnft.toJSON(), null, 2));
     Memory.info("json");
 
