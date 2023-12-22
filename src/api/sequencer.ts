@@ -41,9 +41,17 @@ export default class Sequencer {
     task: string;
     args: string[];
   }): Promise<string | undefined> {
+    const { username, developer, name, jobData, task, args } = params;
     if (this.username !== params.username) throw new Error("username mismatch");
     const JobsTable = new Jobs(this.jobsTable);
-    const jobId = await JobsTable.createJob(params);
+    const jobId = await JobsTable.createJob({
+      username,
+      developer,
+      jobName: name,
+      jobData,
+      task,
+      args,
+    });
     if (jobId !== undefined && params.name !== "mint")
       await callLambda(
         "sequencer",
@@ -81,7 +89,7 @@ export default class Sequencer {
         stepId,
         username: this.username,
         developer: job.developer,
-        name: job.name,
+        name: job.jobName,
         jobTask: job.task,
         args: job.args,
         task: "create" as StepTask,
@@ -223,7 +231,7 @@ export default class Sequencer {
     }
     console.log("Sequencer: run: results", results.length);
     // We have more than one result, we need to merge
-    if (job.name === "rfc-voting") {
+    if (job.jobName === "rfc-voting") {
       let txs = [];
       let billedDuration = 0;
       while (true) {
