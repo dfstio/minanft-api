@@ -3630,7 +3630,7 @@ __metadata:
     form-data: "npm:^4.0.0"
     i18next: "npm:^23.7.8"
     jsonwebtoken: "npm:^9.0.2"
-    minanft: "npm:^1.3.11"
+    minanft: "npm:^1.3.12"
     o1js: "npm:^0.15.1"
     openai: "npm:^4.21.0"
     remove-markdown: "npm:^0.5.0"
@@ -3640,16 +3640,16 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"minanft@npm:^1.3.11":
-  version: 1.3.11
-  resolution: "minanft@npm:1.3.11"
+"minanft@npm:^1.3.12":
+  version: 1.3.12
+  resolution: "minanft@npm:1.3.12"
   dependencies:
     axios: "npm:^1.6.2"
     form-data: "npm:^4.0.0"
     mime: "npm:^3.0.0"
   peerDependencies:
     o1js: ^0.15.1
-  checksum: 2ec184582b30f7b9514b8810409c1009bf290f7d72552b2173ebad174ac83fd8c4b1ceea30ec6503f7475a99e81bcbc0076647d4e6d97d38ed1e916e451ab535
+  checksum: 6c93f2e1c87fc1d9a2442856b7e1370756242b300b8ff66b63779e3dc32c9a0c5f814e053b50b01e96fc9ea3de9d094897756a92810f70c239717ae5b2673456
   languageName: node
   linkType: hard
 

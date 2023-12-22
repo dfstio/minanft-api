@@ -3,6 +3,7 @@ import { startDeploymentApi, mint_v2, mint_v3 } from "./src/nft/nft";
 import { verifyJWT } from "./src/api/jwt";
 import { runSumSequencer } from "./src/api/sum";
 import Sequencer from "./src/api/sequencer";
+import JobsTable from "./src/table/jobs";
 import { getBackupPlugin } from "./src/api/plugin";
 import { reserveName, indexName } from "./src/api/mint_v3";
 import { initLanguages, getLanguage } from "./src/lang/lang";
@@ -39,6 +40,23 @@ const botapi: Handler = async (
         return;
       }
       switch (body.command) {
+        case "queryBilling":
+          const jobsTable = new JobsTable(process.env.JOBS_TABLE!);
+          const billingResult = await jobsTable.queryBilling(id);
+          callback(null, {
+            statusCode: 200,
+            headers: {
+              "Access-Control-Allow-Origin": "*",
+              "Access-Control-Allow-Credentials": true,
+            },
+            body:
+              billingResult === undefined
+                ? "error"
+                : JSON.stringify(billingResult, null, 2) ?? "error",
+          });
+          return;
+          break;
+
         case "mint":
           if (body.data.ipfs === undefined) {
             console.error("No IPFS hash");
@@ -244,7 +262,7 @@ const botapi: Handler = async (
           }
           break;
 
-        case "proofResult":
+        case "jobResult":
           if (body.data.jobId === undefined) {
             console.error("No jobId");
             callback(null, {
