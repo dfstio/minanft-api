@@ -81,4 +81,12 @@ export default class Jobs extends Table<JobsData> {
         : "set #S = :status, #T = :time"
     );
   }
+
+  public async queryBilling(id: string): Promise<JobsData[]> {
+    return await this.queryData(
+      "id = :id",
+      { ":id": id },
+      "id, jobId, billedDuration, timeCreated, timeFinished, jobStatus, developer, name, task"
+    );
+  }
 }
