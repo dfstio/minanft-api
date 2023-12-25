@@ -26,7 +26,7 @@ import {
 import UserData from "./model/userData";
 
 const CHATGPTPLUGINAUTH = process.env.CHATGPTPLUGINAUTH!;
-const NAMES_TABLE = process.env.NAMES_TABLE!;
+const NAMES_TABLE = process.env.TESTWORLD2_NAMES_TABLE!;
 const HISTORY_TABLE = process.env.HISTORY_TABLE!;
 const LANG = process.env.LANG ? process.env.LANG : "en";
 console.log("Language", LANG);

@@ -6,12 +6,12 @@ export default class Jobs extends Table<JobsData> {
   public async createJob(params: {
     username: string;
     developer: string;
-    name: string;
+    jobName: string;
     task: string;
     args: string[];
     jobData: string[];
   }): Promise<string | undefined> {
-    const { username, developer, name, jobData, task, args } = params;
+    const { username, developer, jobName, jobData, task, args } = params;
     const timeCreated: number = Date.now();
     const jobId: string =
       username + "." + timeCreated.toString() + "." + makeString(32);
@@ -19,7 +19,7 @@ export default class Jobs extends Table<JobsData> {
       id: username,
       jobId,
       developer,
-      name,
+      jobName,
       task,
       args,
       jobData,
@@ -86,7 +86,7 @@ export default class Jobs extends Table<JobsData> {
     return await this.queryData(
       "id = :id",
       { ":id": id },
-      "id, jobId, billedDuration, timeCreated, timeFinished, jobStatus, developer, name, task"
+      "id, jobId, billedDuration, timeCreated, timeFinished, jobStatus, developer, jobName, task"
     );
   }
 }

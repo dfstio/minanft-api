@@ -5,7 +5,7 @@ export interface JobsData {
   jobId: string;
 
   developer: string;
-  name: string;
+  jobName: string;
   task: string;
   args: string[];
   jobData: string[];
