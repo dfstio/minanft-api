@@ -78,6 +78,7 @@ const mint_v3: Handler = async (event: any, context: Context) => {
       event.uri,
       event.signature,
       event.privateKey,
+      event.useArweave,
       event.language
     );
 

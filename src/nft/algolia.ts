@@ -21,8 +21,13 @@ async function algoliaWriteTokens(): Promise<void> {
   await index.clearObjects();
 
   for (const token of tokens) {
-    const ok = await algoliaWriteTokenHelper(token, index, bot);
-    if (!ok) success = false;
+    if (token.uri !== undefined) {
+      const ok = await algoliaWriteTokenHelper(token, index, bot);
+      if (!ok) {
+        success = false;
+        console.error("Error writing token", token);
+      }
+    } else console.log("Skipping token", token.username);
   }
   await bot.support(
     success
@@ -52,52 +57,55 @@ async function algoliaWriteTokenHelper(
   index: any,
   bot: BotMessage
 ): Promise<boolean> {
-  if (token.username !== token.uri.name) console.error("name mismatch");
-
-  let params = token.testworld2uri;
-  const markdown = params.description;
-  const description = removeMarkdown(params.description);
-  let shortdescription = description;
-  if (shortdescription.length > 70) {
-    shortdescription = description.slice(0, 70) + "...";
-  }
-
-  const name = params.name;
-  params.objectID = name;
-
-  params.description = description;
-  params.url = params.external_url;
-  params.category = "Mina NFT token";
-  params.contract = "v1";
-  params.chainId = "testworld2";
-  params.tokenId = name;
-  params.owner = name;
-  params.updated = Date.now();
-  params.minaExplorer = process.env.MINAEXPLORER! + token.testworld2.publicKey;
-  params.minaPublicKey = token.testworld2.publicKey;
-
-  params.shortdescription = shortdescription;
-  params.markdown = markdown;
-  params.uri = token.testworld2.storage;
-  params.onSale = token.onSale ? true : false;
-  params.saleID = "";
-  params.saleStatus = token.onSale ? "on sale" : "not on sale";
-  params.price = token.price ? token.price : 0;
-  params.currency = token.currency ? token.currency.toUpperCase() : "";
-  params.sale = "";
-  const creator = params.creator ?? "@MinaNFT_bot";
-  params.creator = creator;
-
-  // Put @minanft first in index always
-  if (name == "@minanft") {
-    params.time = Date.now() + 1000 * 60 * 60 * 24 * 365 * 10;
-    params.shortdescription =
-      "Click here to explore @minanft's rich and diverse content, which includes video and AI-produced audio, as well as a PDF attachment of the MinaNFT pitch deck";
-  }
-
-  //console.log("Algolia write ", token.username, params);
-
   try {
+    console.log("algoliaWriteTokenHelper", token.username, token.uri?.name);
+    if (token.username === "@christmas") console.log("christmas token", token);
+    if (token.username !== token.uri.name) console.error("name mismatch");
+
+    let params = token.testworld2uri;
+    const markdown = params.description;
+    const description = removeMarkdown(params.description);
+    let shortdescription = description;
+    if (shortdescription.length > 70) {
+      shortdescription = description.slice(0, 70) + "...";
+    }
+
+    const name = params.name;
+    params.objectID = name;
+
+    params.description = description;
+    params.url = params.external_url;
+    params.category = "Mina NFT token";
+    params.contract = "v1";
+    params.chainId = "testworld2";
+    params.tokenId = name;
+    params.owner = name;
+    params.updated = Date.now();
+    params.minaExplorer =
+      process.env.MINAEXPLORER! + token.testworld2.publicKey;
+    params.minaPublicKey = token.testworld2.publicKey;
+
+    params.shortdescription = shortdescription;
+    params.markdown = markdown;
+    params.uri = token.testworld2.storage;
+    params.onSale = token.onSale ? true : false;
+    params.saleID = "";
+    params.saleStatus = token.onSale ? "on sale" : "not on sale";
+    params.price = token.price ? token.price : 0;
+    params.currency = token.currency ? token.currency.toUpperCase() : "";
+    params.sale = "";
+    const creator = params.creator ?? "@MinaNFT_bot";
+    params.creator = creator;
+
+    // Put @minanft first in index always
+    if (name == "@minanft") {
+      params.time = Date.now() + 1000 * 60 * 60 * 24 * 365 * 10;
+      params.shortdescription =
+        "Click here to explore @minanft's rich and diverse content, which includes video and AI-produced audio, as well as a PDF attachment of the MinaNFT pitch deck";
+    }
+
+    //console.log("Algolia write ", token.username, params);
+
     const result = await index.saveObject(params);
     console.log(
       "Algolia write result for token",

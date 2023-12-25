@@ -156,7 +156,7 @@ const botapi: Handler = async (
               body.data.name === undefined ||
               body.data.task === undefined ||
               body.data.args === undefined ||
-              body.data.args.length !== 2
+              body.data.args.length !== 3
             ) {
               console.error("Wrong mint data");
               callback(null, {
@@ -193,7 +193,14 @@ const botapi: Handler = async (
               body: jobIdTask ?? "error",
             });
             if (jobIdTask !== undefined)
-              await mint_v3(id, jobIdTask, transactions[0], args[0], args[1]);
+              await mint_v3(
+                id,
+                jobIdTask,
+                transactions[0],
+                args[0],
+                args[1],
+                args[2]
+              );
           }
           return;
 

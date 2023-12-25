@@ -20,6 +20,8 @@ import Names from "../table/names";
 import NamesData from "../model/namesData";
 import { isReservedName } from "../nft/reservednames";
 import { nftPrice } from "../payments/pricing";
+import { use } from "i18next";
+import { ARWEAVE_KEY_STRING } from "../mina/gastanks";
 
 const { PINATA_JWT, NAMES_ORACLE_SK, PROVER_KEYS_BUCKET, BLOCKCHAIN } =
   process.env;
@@ -169,6 +171,7 @@ export async function mint_v3(
   uri: string,
   signature: string,
   privateKey: string,
+  useArweave: string,
   language: string
 ): Promise<void> {
   const timeStarted = Date.now();
@@ -247,7 +250,8 @@ export async function mint_v3(
     MinaNFT.minaInit(blockchainToDeploy);
     const deployer = await getDeployer();
 
-    const pinataJWT = PINATA_JWT!;
+    const pinataJWT: string = PINATA_JWT!;
+    const arweaveKey: string = ARWEAVE_KEY_STRING!;
 
     console.log(
       `Deployer balance: ${await accountBalanceMina(deployer.toPublicKey())}`
@@ -306,7 +310,8 @@ export async function mint_v3(
       {
         nameService,
         deployer,
-        pinataJWT,
+        pinataJWT: useArweave === "true" ? undefined : pinataJWT,
+        arweaveKey: useArweave === "true" ? arweaveKey : undefined,
         privateKey: zkAppPrivateKey,
       },
       true
