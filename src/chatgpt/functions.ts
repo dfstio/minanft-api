@@ -48,6 +48,7 @@ async function handleFunctionCall(
   username: string | undefined,
   language: string
 ): Promise<void> {
+  console.log("handleFunctionCall", id, message, username, language);
   if (message && message.arguments) {
     try {
       const request = JSON.parse(message.arguments);
@@ -82,7 +83,7 @@ async function handleFunctionCall(
               price: request.price,
             });
             await names.sell(username, Number(request.price), request.currency);
-            await sleep(1000);
+            await sleep(5000);
             const nft: NamesData | undefined = await names.get(username);
             console.log("NFT sale handleFunctionCall", nft);
             if (nft && nft.onSale == true) await algoliaWriteToken(nft);

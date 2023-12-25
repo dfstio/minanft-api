@@ -154,7 +154,8 @@ async function mint_v3(
   jobId: string,
   uri: string,
   signature: string,
-  privateKey: string
+  privateKey: string,
+  useArweave: string
 ): Promise<void> {
   console.log("mint_v3", id, uri, signature, privateKey);
 
@@ -167,6 +168,7 @@ async function mint_v3(
       uri,
       signature,
       privateKey,
+      useArweave,
       language,
     })
   );
