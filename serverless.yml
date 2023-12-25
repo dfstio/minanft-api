@@ -7,9 +7,9 @@ plugins:
 
 provider:
   name: aws
-  runtime: nodejs16.x
+  runtime: nodejs20.x
   region: eu-west-1
-  logRetentionInDays: 3
+  logRetentionInDays: 7
   environment:
     TO: ${file(./env.json):TO, env:TO}
     FROM: ${file(./env.json):FROM, env:FROM},
