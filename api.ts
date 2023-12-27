@@ -1,14 +1,17 @@
 import { Handler, Context, Callback } from "aws-lambda";
-import { startDeploymentApi, mint_v2, mint_v3 } from "./src/nft/nft";
+import { startDeploymentApi, mint_v2, mint_v3, post_v3 } from "./src/nft/nft";
 import { verifyJWT } from "./src/api/jwt";
 import { runSumSequencer } from "./src/api/sum";
 import Sequencer from "./src/api/sequencer";
 import JobsTable from "./src/table/jobs";
+import Names from "./src/table/names";
+import NamesData from "./src/model/namesData";
 import { getBackupPlugin } from "./src/api/plugin";
 import { reserveName, indexName } from "./src/api/mint_v3";
 import { initLanguages, getLanguage } from "./src/lang/lang";
 
 const BOTAPIAUTH = process.env.BOTAPIAUTH!;
+const NAMES_TABLE = process.env.TESTWORLD2_NAMES_TABLE!;
 
 const botapi: Handler = async (
   event: any,
@@ -72,6 +75,43 @@ const botapi: Handler = async (
           }
           await startDeploymentApi(id, body.data.ipfs);
           break;
+
+        case "lookupName":
+          {
+            if (
+              body.data.transactions === undefined ||
+              body.data.developer === undefined ||
+              body.data.name === undefined ||
+              body.data.task === undefined ||
+              body.data.args === undefined ||
+              body.data.args.length !== 1
+            ) {
+              console.error("Wrong lookupName request");
+              callback(null, {
+                statusCode: 200,
+                headers: {
+                  "Access-Control-Allow-Origin": "*",
+                  "Access-Control-Allow-Credentials": true,
+                },
+                body: "Wrong lookupName request",
+              });
+              return;
+            }
+            const { args } = body.data;
+            const names = new Names(NAMES_TABLE);
+            const checkName = await names.get({ username: args[0] });
+            if (checkName !== undefined) console.log("Found name", checkName);
+            else console.log("No name found", args[0]);
+            callback(null, {
+              statusCode: 200,
+              headers: {
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Credentials": true,
+              },
+              body: checkName?.publicKey ?? "error",
+            });
+          }
+          return;
 
         case "reserveName":
           {
@@ -201,6 +241,55 @@ const botapi: Handler = async (
                 args[1],
                 args[2]
               );
+          }
+          return;
+
+        case "post_v3":
+          {
+            if (
+              body.data.transactions === undefined ||
+              body.data.developer === undefined ||
+              body.data.name === undefined ||
+              body.data.task === undefined ||
+              body.data.args === undefined ||
+              body.data.args.length !== 6
+            ) {
+              console.error("Wrong post data");
+              callback(null, {
+                statusCode: 200,
+                headers: {
+                  "Access-Control-Allow-Origin": "*",
+                  "Access-Control-Allow-Credentials": true,
+                },
+                body: "Wrong post data",
+              });
+              return;
+            }
+            const { transactions, developer, name, task, args } = body.data;
+            const sequencerTree = new Sequencer({
+              jobsTable: process.env.JOBS_TABLE!,
+              stepsTable: process.env.STEPS_TABLE!,
+              proofsTable: process.env.PROOFS_TABLE!,
+              username: id,
+            });
+            const jobIdTask = await sequencerTree.createJob({
+              username: id,
+              developer,
+              name,
+              jobData: transactions,
+              task,
+              args,
+            });
+            callback(null, {
+              statusCode: 200,
+              headers: {
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Credentials": true,
+              },
+              body: jobIdTask ?? "error",
+            });
+            if (jobIdTask !== undefined)
+              await post_v3(id, jobIdTask, transactions, args);
           }
           return;
 

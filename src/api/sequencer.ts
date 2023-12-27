@@ -52,7 +52,7 @@ export default class Sequencer {
       task,
       args,
     });
-    if (jobId !== undefined && params.name !== "mint")
+    if (jobId !== undefined && params.name !== "mint" && params.name !== "post")
       await callLambda(
         "sequencer",
         JSON.stringify({ task: "start", username: this.username, jobId })

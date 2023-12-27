@@ -9,6 +9,8 @@ import {
   Memory,
   blockchain,
   sleep,
+  MinaNFTCommitData,
+  Update,
 } from "minanft";
 import { listFiles } from "../mina/cache";
 import { algoliaWriteToken } from "../nft/algolia";
@@ -22,6 +24,7 @@ import { isReservedName } from "../nft/reservednames";
 import { nftPrice } from "../payments/pricing";
 import { use } from "i18next";
 import { ARWEAVE_KEY_STRING } from "../mina/gastanks";
+import { encrypt, decrypt } from "../nft/kms";
 
 const { PINATA_JWT, NAMES_ORACLE_SK, PROVER_KEYS_BUCKET, BLOCKCHAIN } =
   process.env;
@@ -49,8 +52,8 @@ export async function reserveName(
 
   try {
     const names = new Names(NAMES_TABLE);
-    const checkName = await names.get(nftName);
-    if (checkName) {
+    const checkName = await names.get({ username: nftName });
+    if (checkName !== undefined) {
       console.log("Found old deployment", checkName);
       if (checkName.id !== id) {
         return {
@@ -109,7 +112,7 @@ export async function indexName(
 
   try {
     const names = new Names(NAMES_TABLE);
-    const nftData = await names.get(nftName);
+    const nftData = await names.get({ username: nftName });
     if (nftData === undefined || nftData.publicKey === undefined) {
       console.log("No deployment");
       return {
@@ -128,29 +131,9 @@ export async function indexName(
     });
     await nft.loadMetadata();
 
-    const deployData = {
-      privateKey: "",
-      publicKey: nftData.publicKey,
-      storage: nft.storage,
-      telegramId: id,
-    };
-    const creator: string =
-      nft.creator == ""
-        ? "@MinaNFT_api"
-        : nft.creator[0] === "@"
-        ? nft.creator
-        : "@" + nft.creator;
     let deployedNFT: NamesData = nftData;
-    deployedNFT.uri = nft.toJSON();
-
-    deployedNFT.creator = creator;
-    deployedNFT.ipfs = nft.storage.slice(2);
-
-    const newURI = nft.toJSON() as any;
-    const properties: string = JSON.stringify(newURI.properties);
-    newURI.properties = properties;
-    deployedNFT.testworld2 = deployData;
-    deployedNFT.testworld2uri = newURI;
+    deployedNFT.uri = JSON.stringify(nft.toJSON());
+    deployedNFT.storage = nft.storage;
     console.log("Writing deployment to Names", deployedNFT);
     await names.create(deployedNFT);
     await algoliaWriteToken(deployedNFT);
@@ -190,7 +173,7 @@ export async function mint_v3(
 
     const metadata = JSON.parse(uri);
     const names = new Names(NAMES_TABLE);
-    const name = await names.get(metadata.name);
+    const name = await names.get({ username: metadata.name });
     if (name) {
       console.log("Found name record", name);
     }
@@ -256,16 +239,6 @@ export async function mint_v3(
     console.log(
       `Deployer balance: ${await accountBalanceMina(deployer.toPublicKey())}`
     );
-
-    /*
-    Memory.info("before cache");
-    const nftCacheDir = "/tmp/nft-cache";
-    console.time("loaded nft cache");
-    await loadCache(PROVER_KEYS_BUCKET!, nftCacheDir, nftfiles);
-    console.timeEnd("loaded nft cache");
-    await listFiles(nftCacheDir);
-    Memory.info("nft cache loaded");
-    */
 
     const cacheDir = "/mnt/efs/cache";
     await listFiles(cacheDir);
@@ -357,36 +330,216 @@ export async function mint_v3(
     // TODO: Enable invoices after the New Year
     //await bot.invoice(nft.name.slice(1), image);
 
-    const deployData = {
-      privateKey: zkAppPrivateKey.toBase58(),
-      publicKey: zkAppPrivateKey.toPublicKey().toBase58(),
-      //ownerPrivateKey: ownerPrivateKey.toBase58(),
-      storage: nft.storage,
-      telegramId: id,
-    };
     const creator: string =
       metadata.creator == "" || metadata.creator === undefined
         ? "@MinaNFT_bot"
         : metadata.creator[0] === "@"
         ? metadata.creator
         : "@" + metadata.creator;
+
+    const privateKeyString = await encrypt(
+      zkAppPrivateKey.toBase58(),
+      nft.name
+    );
+    if (
+      privateKeyString === undefined ||
+      zkAppPrivateKey.toBase58() !== (await decrypt(privateKeyString, nft.name))
+    ) {
+      throw new Error("Error encrypting private key");
+    }
+
     let deployedNFT: NamesData = {
       username: nft.name,
       id,
       timeCreated: Date.now(),
-      uri: metadata,
+      storage: nft.storage,
+      uri,
       creator,
       language: language,
-      ipfs: nft.storage.slice(2),
+      privateKey: privateKeyString,
+      publicKey: zkAppPrivateKey.toPublicKey().toBase58(),
     };
-    const newURI = nft.toJSON() as any;
-    const properties: string = JSON.stringify(newURI.properties);
-    newURI.properties = properties;
-    deployedNFT.testworld2 = deployData;
-    deployedNFT.testworld2uri = newURI;
+
     console.log("Writing deployment to Names", deployedNFT);
     await names.create(deployedNFT);
     await algoliaWriteToken(deployedNFT);
+    Memory.info("end");
+    await JobsTable.updateStatus({
+      username: id,
+      jobId: jobId,
+      status: "finished",
+      result: hash,
+      billedDuration: Date.now() - timeStarted,
+    });
+
+    await sleep(1000);
+    console.timeEnd("all");
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+export async function post_v3(
+  id: string,
+  jobId: string,
+  transactions: string[],
+  args: string[],
+  language: string
+): Promise<void> {
+  const timeStarted = Date.now();
+  console.time("all");
+  Memory.info("start");
+  console.log("post_v3", id, language);
+  if (args.length !== 6) {
+    console.error("Wrong args length", args.length);
+    return;
+  }
+
+  try {
+    const JobsTable = new Jobs(process.env.JOBS_TABLE!);
+    await JobsTable.updateStatus({
+      username: id,
+      jobId: jobId,
+      status: "started",
+    });
+    const bot = new BotMessage(id, language);
+    const commitData: MinaNFTCommitData = {
+      transactions: transactions,
+      signature: args[0],
+      address: args[1],
+      update: args[2],
+    };
+    const ownerPublicKey = args[3];
+    const nftName = args[4];
+    const postName = args[5];
+
+    /*
+    const metadata = JSON.parse(uri);
+    const names = new Names(NAMES_TABLE);
+    const name = await names.get(metadata.name);
+    if (name) {
+      console.log("Found name record", name);
+    }
+    */
+
+    const oraclePrivateKey = PrivateKey.fromBase58(NAMES_ORACLE_SK!);
+    const oraclePublicKey = oraclePrivateKey.toPublicKey();
+    const nameServiceAddress = PublicKey.fromBase58(MINANFT_NAME_SERVICE);
+    const verificationKeyHash = Field.fromJSON(VERIFICATION_KEY_HASH);
+
+    const nameService = new MinaNFTNameService({
+      oraclePrivateKey,
+      address: nameServiceAddress,
+    });
+
+    MinaNFT.minaInit(blockchainToDeploy);
+    const deployer = await getDeployer();
+
+    console.log(
+      `Deployer balance: ${await accountBalanceMina(deployer.toPublicKey())}`
+    );
+
+    const cacheDir = "/mnt/efs/cache";
+    await listFiles(cacheDir);
+
+    Memory.info("before compiling");
+    console.log("Compiling...");
+    MinaNFT.setCacheFolder(cacheDir);
+    console.time("compiled");
+    await MinaNFT.compile();
+    console.timeEnd("compiled");
+    Memory.info("after compiling");
+    if (MinaNFT.verificationKey?.hash?.toJSON() !== VERIFICATION_KEY_HASH) {
+      console.error(
+        "Verification key is wrong",
+        MinaNFT.verificationKey?.hash?.toJSON()
+      );
+      await bot.tmessage("ErrordeployingNFT");
+      await JobsTable.updateStatus({
+        username: id,
+        jobId: jobId,
+        status: "failed",
+        billedDuration: Date.now() - timeStarted,
+      });
+      Memory.info("deploy error");
+      console.timeEnd("all");
+      return;
+    }
+
+    console.time("post");
+    const tx = await MinaNFT.commitPreparedData({
+      nameService,
+      deployer,
+      preparedCommitData: commitData,
+      ownerPublicKey,
+    });
+    console.timeEnd("post");
+
+    Memory.info("post commited");
+    if (tx === undefined) {
+      console.error("Error deploying NFT");
+      await bot.tmessage("ErrordeployingNFT");
+      await JobsTable.updateStatus({
+        username: id,
+        jobId: jobId,
+        status: "failed",
+        billedDuration: Date.now() - timeStarted,
+      });
+      Memory.info("deploy error");
+      console.timeEnd("all");
+      return;
+    }
+    Memory.info("deployed");
+    const hash: string | undefined = tx.hash();
+    if (hash === undefined) {
+      console.error("Error deploying NFT");
+      await bot.tmessage("ErrordeployingNFT");
+      await JobsTable.updateStatus({
+        username: id,
+        jobId: jobId,
+        status: "failed",
+        billedDuration: Date.now() - timeStarted,
+      });
+      Memory.info("deploy error");
+      console.timeEnd("all");
+      return;
+    }
+
+    await MinaNFT.transactionInfo(tx, "post", false);
+
+    const update = Update.fromFields(
+      JSON.parse(commitData.update).update.map((f: string) => Field.fromJSON(f))
+    );
+    const storage = MinaNFT.stringFromFields(update.storage.toFields());
+    const url = MinaNFT.urlFromStorageString(storage);
+    console.log("post storage:", storage, url);
+    const uri = (await axios.get(url)).data;
+    console.log("post uri:", uri);
+    const names = new Names(NAMES_TABLE);
+    await names.updateStorage(nftName, storage, JSON.stringify(uri, null, 2));
+    await bot.tmessage("sucessDeploymentMessage", {
+      nftname: nftName + " : " + postName,
+      hash,
+    });
+    // TODO: Enable invoices after the New Year
+    //await bot.invoice(nft.name.slice(1), image);
+    await sleep(1000);
+    const deployedNFT = await names.get({ username: nftName });
+    if (deployedNFT === undefined) {
+      console.error("Error getting deployed NFT");
+      await bot.tmessage("ErrordeployingNFT");
+      await JobsTable.updateStatus({
+        username: id,
+        jobId: jobId,
+        status: "failed",
+        billedDuration: Date.now() - timeStarted,
+      });
+      Memory.info("deploy error");
+      console.timeEnd("all");
+      return;
+    }
+    await algoliaWriteToken(deployedNFT);
+
     Memory.info("end");
     await JobsTable.updateStatus({
       username: id,

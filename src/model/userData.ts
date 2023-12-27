@@ -1,5 +1,4 @@
 import AccountData from "./accountData";
-import DeployData from "./deployData";
 
 export default interface UserData {
   id: string;
@@ -18,5 +17,4 @@ export default interface UserData {
   why?: string;
   fileUrl?: string;
   account?: AccountData;
-  deployment?: DeployData;
 }

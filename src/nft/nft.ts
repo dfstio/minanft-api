@@ -174,6 +174,27 @@ async function mint_v3(
   );
 }
 
+async function post_v3(
+  id: string,
+  jobId: string,
+  transactions: string[],
+  args: string[]
+): Promise<void> {
+  console.log("post_v3", id, "NFT address: ", args[1]);
+
+  const language = await getLanguage(id);
+  await callLambda(
+    "post_v3",
+    JSON.stringify({
+      id,
+      jobId,
+      transactions,
+      args,
+      language,
+    })
+  );
+}
+
 function generateFilename(timeNow: number): string {
   let outString: string = "";
   let inOptions: string = "abcdefghijklmnopqrstuvwxyz0123456789_";
@@ -190,5 +211,6 @@ export {
   startDeploymentApi,
   mint_v2,
   mint_v3,
+  post_v3,
   generateFilename,
 };

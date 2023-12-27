@@ -210,6 +210,13 @@ provider:
         - elasticfilesystem:ClientWrite
         - elasticfilesystem:DescribeMountTargets
       Resource: "*"
+    - Effect: Allow
+      Action:
+        - kms:Encrypt
+        - kms:Decrypt
+        - kms:Encrypt*
+        - kms:Decrypt*
+      Resource: "*"
 
 functions:
   send:
@@ -246,9 +253,22 @@ functions:
     timeout: 900
     memorySize: 256
   test:
-    handler: test.mint
+    handler: test.kms
     timeout: 90
     memorySize: 512
+  tasks:
+    handler: tasks.check
+    timeout: 300
+    memorySize: 192
+    events:
+      - schedule:
+          rate: rate(60 minutes)
+          enabled: true
+          name: ts
+  deploynft:
+    handler: mina.deploynft
+    timeout: 900
+    memorySize: 8192
     fileSystemConfig:
       localMountPath: /mnt/efs
       arn: arn:aws:elasticfilesystem:eu-west-1:615834060610:access-point/fsap-0424e24fcb8a4b112
@@ -259,30 +279,6 @@ functions:
         - subnet-0def2b77c0fca2e95
         - subnet-067d779572f8cf00d
         - subnet-0b2c3a1af7dd7aa46
-
-  tasks:
-    handler: tasks.check
-    timeout: 300
-    memorySize: 192
-    events:
-      - schedule:
-          rate: rate(60 minutes)
-          enabled: true
-          name: ts
-  deploy:
-    handler: mina.deploy
-    timeout: 900
-    memorySize: 2048
-  deploynft:
-    handler: mina.deploynft
-    timeout: 900
-    memorySize: 8192
-    ephemeralStorageSize: 4096
-  mint_v2:
-    handler: mina.mint_v2
-    timeout: 900
-    memorySize: 8192
-    ephemeralStorageSize: 4096
   mint_v3:
     handler: mina.mint_v3
     timeout: 900
@@ -297,11 +293,20 @@ functions:
         - subnet-0def2b77c0fca2e95
         - subnet-067d779572f8cf00d
         - subnet-0b2c3a1af7dd7aa46
-
-  topup:
-    handler: mina.topup
+  post_v3:
+    handler: mina.post_v3
     timeout: 900
-    memorySize: 512
+    memorySize: 8192
+    fileSystemConfig:
+      localMountPath: /mnt/efs
+      arn: arn:aws:elasticfilesystem:eu-west-1:615834060610:access-point/fsap-0424e24fcb8a4b112
+    vpc:
+      securityGroupIds:
+        - sg-07cb6569b6537753d
+      subnetIds:
+        - subnet-0def2b77c0fca2e95
+        - subnet-067d779572f8cf00d
+        - subnet-0b2c3a1af7dd7aa46
   sequencer:
     handler: sequencer.run
     timeout: 900
@@ -329,10 +334,6 @@ functions:
         - subnet-0b2c3a1af7dd7aa46
   deployipfs:
     handler: mina.deployipfs
-    timeout: 900
-    memorySize: 2048
-  create:
-    handler: mina.create
     timeout: 900
     memorySize: 2048
 
