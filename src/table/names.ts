@@ -1,41 +1,48 @@
 import Table from "./table";
-import NamesData from '../model/namesData';
-import DeployData from '../model/deployData';
+import NamesData from "../model/namesData";
 
 export default class Names extends Table<NamesData> {
-
+  /*
   public async updateDeploy(username: string, data: DeployData): Promise<void> {
-    await this.updateData({
-      username: username,
-    }, { '#D': 'deploy' }, { ':data': data }, 'set #D = :data')
+    await this.updateData(
+      {
+        username: username,
+      },
+      { "#D": "deploy" },
+      { ":data": data },
+      "set #D = :data"
+    );
   }
+  */
 
-  public async updateUri(
+  public async updateStorage(
     username: string,
-    ipfs: string,
-    uri: any,
+    storage: string,
+    uri: any
   ): Promise<void> {
     await this.updateData(
       { username: username },
-      { "#I": 'ipfs', '#U': 'uri' },
-      { ':ipfs': ipfs, ':uri': uri },
-      'set #I = :ipfs, #U = :uri')
+      { "#S": "storage", "#U": "uri" },
+      { ":storage": storage, ":uri": uri },
+      "set #S = :storage, #U = :uri"
+    );
   }
 
   public async sell(
     username: string,
     price: number,
-    currency: string,
+    currency: string
   ): Promise<void> {
     await this.updateData(
       { username: username },
-      { "#P": 'price', '#C': 'currency', '#S': 'onSale' },
+      { "#P": "price", "#C": "currency", "#S": "onSale" },
       {
-        ':p': price,
-        ':c': currency.toLowerCase(),
-        ':s': true,
+        ":p": price,
+        ":c": currency.toLowerCase(),
+        ":s": true,
       },
-      'set #P = :p, #C = :c, #S = :s')
+      "set #P = :p, #C = :c, #S = :s"
+    );
   }
 }
 

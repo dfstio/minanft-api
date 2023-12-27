@@ -83,8 +83,10 @@ async function handleFunctionCall(
               price: request.price,
             });
             await names.sell(username, Number(request.price), request.currency);
+            console.log("Before sleep");
             await sleep(5000);
-            const nft: NamesData | undefined = await names.get(username);
+            console.log("After sleep");
+            const nft: NamesData | undefined = await names.get({ username });
             console.log("NFT sale handleFunctionCall", nft);
             if (nft && nft.onSale == true) await algoliaWriteToken(nft);
             else console.error("Error NFT sale handleFunctionCall");

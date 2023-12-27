@@ -1,7 +1,6 @@
 import Table from "./table";
 import UserData from "../model/userData";
 import AccountData from "../model/accountData";
-import DeployData from "../model/deployData";
 import AIUsage from "../model/aiusage";
 import Questions from "../questions";
 
@@ -14,23 +13,25 @@ export default class Users extends Table<UserData> {
   }
 
   public async getItem(id: string): Promise<UserData | undefined> {
-    return await this.get({ id: id })
+    return await this.get({ id: id });
   }
 
   public async getAccount(id: string): Promise<AccountData | undefined> {
-    const data: UserData | undefined = await this.get({ id: id })
+    const data: UserData | undefined = await this.get({ id: id });
     if (data === undefined) return undefined;
     return data.account;
   }
 
+  /*
   public async getDeployment(id: string): Promise<DeployData | undefined> {
     const data: UserData | undefined = await this.get({ id: id })
     if (data === undefined) return undefined;
     return data.deployment;
   }
+  */
 
   public async getCurrentLanguage(id: string): Promise<string> {
-    const data: UserData | undefined = await this.get({ id: id })
+    const data: UserData | undefined = await this.get({ id: id });
     if (data === undefined) return "en";
     return data.language_code;
   }
@@ -38,7 +39,7 @@ export default class Users extends Table<UserData> {
   private getExpAttrValue(
     shortName: string,
     answer: string,
-    num: number,
+    num: number
   ): object {
     return JSON.parse(`{":ans" : ${num},"${shortName}" : "${answer}"}`);
   }
@@ -46,53 +47,52 @@ export default class Users extends Table<UserData> {
   public async updateAnswer(
     id: string,
     currAnswer: number,
-    val: string,
+    val: string
   ): Promise<void> {
     const currFormQuestion = this.formQuestions.getCurrentQuestion(currAnswer);
     if (currFormQuestion && currFormQuestion.shortName) {
       const nextNum = currAnswer + 1;
       await this.updateData(
-        { id: id, },
+        { id: id },
         {
-          '#A': 'currentAnswer',
-          '#Q': currFormQuestion.name,
+          "#A": "currentAnswer",
+          "#Q": currFormQuestion.name,
         },
-        this.getExpAttrValue(
-          currFormQuestion.shortName,
-          val,
-          nextNum,
-        ),
-        `set #A = :ans, #Q = ${currFormQuestion.shortName}`)
+        this.getExpAttrValue(currFormQuestion.shortName, val, nextNum),
+        `set #A = :ans, #Q = ${currFormQuestion.shortName}`
+      );
     }
   }
 
   public async resetAnswer(id: string): Promise<void> {
     await this.updateData(
-      { id: id, },
+      { id: id },
       {
-        '#A': 'currentAnswer',
-        '#U': 'username',
+        "#A": "currentAnswer",
+        "#U": "username",
       },
       {
         ":ans": 0,
         ":usr": "",
       },
-      `set #A = :ans, #U = :usr`)
-  };
+      `set #A = :ans, #U = :usr`
+    );
+  }
 
   public async updateAccount(id: string, account: AccountData): Promise<void> {
     await this.updateData(
-      { id: id, },
+      { id: id },
       {
-        '#A': 'account',
+        "#A": "account",
       },
       { ":acc": account },
-      `set #A = :acc`)
+      `set #A = :acc`
+    );
   }
 
   public async updateUsage(id: string, usage: AIUsage): Promise<void> {
     await this.updateData(
-      { id: id, },
+      { id: id },
       {
         "#P": "prompt_tokens",
         "#C": "completion_tokens",
@@ -103,43 +103,47 @@ export default class Users extends Table<UserData> {
         ":c": usage.completion_tokens,
         ":t": usage.total_tokens,
       },
-      `ADD #P :p, #C :c, #T :t`)
+      `ADD #P :p, #C :c, #T :t`
+    );
   }
 
   public async updateImageUsage(id: string): Promise<void> {
     await this.updateData(
-      { id: id, },
+      { id: id },
       {
-        '#I': 'images_created',
+        "#I": "images_created",
       },
       { ":i": 1 },
-      `ADD #I :i`)
+      `ADD #I :i`
+    );
   }
 
+  /*
   public async updateDeployment(
     id: string,
-    account: DeployData,
+    account: DeployData
   ): Promise<void> {
     await this.updateData(
-      { id: id, },
+      { id: id },
       {
-        '#D': 'deployment',
+        "#D": "deployment",
       },
       { ":dp": account },
-      `set #D = :dp`)
+      `set #D = :dp`
+    );
   }
-
+*/
   public async increaseCounter(id: string, currAnswer: number): Promise<void> {
     const nextNum = currAnswer + 1;
     await this.updateData(
-      { id: id, },
+      { id: id },
       {
-        '#A': 'currentAnswer',
+        "#A": "currentAnswer",
       },
       { ":ans": nextNum },
-      `set #A = :ans`)
+      `set #A = :ans`
+    );
   }
-
 }
 
 /*

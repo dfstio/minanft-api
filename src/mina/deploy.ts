@@ -3,12 +3,12 @@ import {
   MinaNFT,
   MinaNFTNameService,
   MINANFT_NAME_SERVICE,
+  VERIFICATION_KEY_HASH,
   accountBalanceMina,
   Memory,
   blockchain,
   sleep,
 } from "minanft";
-import nftfiles from "./nftfiles.json";
 import { getFileData, convertIPFSFileData } from "../storage/filedata";
 import { listFiles, loadCache } from "./cache";
 import { algoliaWriteToken } from "../nft/algolia";
@@ -33,7 +33,7 @@ export async function deployNFT(
 
   try {
     const names = new Names(NAMES_TABLE);
-    const name = await names.get(nft.username);
+    const name = await names.get({ username: nft.username });
     if (name) {
       console.log("Found old deployment", name);
       return;
@@ -44,7 +44,7 @@ export async function deployNFT(
     const image = `https://res.cloudinary.com/minanft/image/fetch/h_300,q_100,f_auto/${nft.uri.image}`;
     const imageS3 = `https://minanft-storage.s3.eu-west-1.amazonaws.com/${nft.uri.image}`;
 
-    if (nft.ipfs !== undefined)
+    if (nft.storage !== undefined)
       axios
         .get(image, {
           responseType: "arraybuffer",
@@ -71,21 +71,26 @@ export async function deployNFT(
       `Deployer balance: ${await accountBalanceMina(deployer.toPublicKey())}`
     );
 
-    Memory.info("before cache");
-    const nftCacheDir = "/tmp/nft-cache";
-    console.time("loaded nft cache");
-    await loadCache(PROVER_KEYS_BUCKET!, nftCacheDir, nftfiles);
-    console.timeEnd("loaded nft cache");
-    await listFiles(nftCacheDir);
-    Memory.info("nft cache loaded");
+    const cacheDir = "/mnt/efs/cache";
+    await listFiles(cacheDir);
 
     Memory.info("before compiling");
     console.log("Compiling...");
-    MinaNFT.setCacheFolder(nftCacheDir);
+    MinaNFT.setCacheFolder(cacheDir);
     console.time("compiled");
     await MinaNFT.compile();
     console.timeEnd("compiled");
     Memory.info("after compiling");
+    if (MinaNFT.verificationKey?.hash?.toJSON() !== VERIFICATION_KEY_HASH) {
+      console.error(
+        "Verification key is wrong",
+        MinaNFT.verificationKey?.hash?.toJSON()
+      );
+      await bot.tmessage("ErrordeployingNFT");
+      Memory.info("deploy error");
+      console.timeEnd("all");
+      return;
+    }
 
     const mnft = new MinaNFT({
       name: nft.username,
@@ -98,7 +103,7 @@ export async function deployNFT(
         text: nft.uri.description,
       });
     const imageData =
-      nft.ipfs === undefined
+      nft.storage === undefined
         ? await getFileData(nft.uri.image)
         : convertIPFSFileData(nft.uri);
     mnft.updateFileData({
@@ -118,7 +123,7 @@ export async function deployNFT(
     //await bot.image(image, { caption: nft.uri.name.slice(1) });
     await bot.invoice(
       nft.uri.name.slice(1),
-      nft.ipfs === undefined ? imageS3 : image
+      nft.storage === undefined ? imageS3 : image
     );
 
     console.time("mint");
@@ -147,19 +152,8 @@ export async function deployNFT(
 
     Memory.info("deployed");
 
-    const deployData = {
-      privateKey: privateKey.toBase58(),
-      publicKey: privateKey.toPublicKey().toBase58(),
-      ownerPrivateKey: ownerPrivateKey.toBase58(),
-      storage: mnft.storage,
-      telegramId: id,
-    };
     let deployedNFT: NamesData = nft;
-    const uri = mnft.toJSON() as any;
-    const properties: string = JSON.stringify(uri.properties);
-    uri.properties = properties;
-    nft.testworld2 = deployData;
-    nft.testworld2uri = uri;
+    deployedNFT.uri = JSON.stringify(mnft.toJSON());
     console.log("Writing deployment to Names", deployedNFT);
     await names.create(deployedNFT);
     await algoliaWriteToken(deployedNFT);

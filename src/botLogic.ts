@@ -313,29 +313,6 @@ export default class BotLogic {
       return;
     }
 
-    if (command == "secret" || command == "/secret") {
-      if (!(currState && currState.username)) {
-        console.log("secret - No username", currState);
-        await this.message(T("NFTfirst"));
-        return;
-      }
-
-      const names = new Names(NAMES_TABLE);
-      const name = await names.get(currState.username);
-      if (name && name.deploy && name.deploy.secret)
-        // we do not add to history
-        this.bot.telegram
-          .sendMessage(chatIdString, name.deploy.secret)
-          .catch((error) => {
-            console.error("Telegraf error", error);
-          });
-      else
-        await this.message(
-          T("Secretkeynotcreated", { username: currState.username })
-        );
-      return;
-    }
-
     if (body.message.location) {
       await this.message(T(this.questions.typeError));
       return;
