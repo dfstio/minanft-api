@@ -4,7 +4,7 @@ import {
   mint_v3 as mint_v3_func,
   post_v3 as post_v3_func,
 } from "./src/api/mint_v3";
-import { startDeploymentIpfs } from "./src/nft/nft";
+//import { startDeploymentIpfs } from "./src/nft/nft";
 import { initLanguages, getLanguage } from "./src/lang/lang";
 
 /*
@@ -35,7 +35,7 @@ const deploynft: Handler = async (event: any, context: Context) => {
   try {
     console.log("deploy nft", event);
     await initLanguages();
-    await deployNFT(event.id, event);
+    await deployNFT(event);
 
     //context.succeed(event.id);
     return {

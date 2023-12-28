@@ -1,5 +1,5 @@
 import Table from "./table";
-import NamesData from "../model/namesData";
+import { NamesData } from "../model/namesData";
 
 export default class Names extends Table<NamesData> {
   /*

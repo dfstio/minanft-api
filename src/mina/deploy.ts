@@ -9,50 +9,37 @@ import {
   blockchain,
   sleep,
 } from "minanft";
-import { getFileData, convertIPFSFileData } from "../storage/filedata";
-import { listFiles, loadCache } from "./cache";
+import { getFileData } from "../storage/filedata";
+import { listFiles } from "./cache";
 import { algoliaWriteToken } from "../nft/algolia";
 import { getDeployer } from "./deployers";
 import axios from "axios";
+import { encrypt, decrypt } from "../nft/kms";
 
 import BotMessage from "./message";
 import Names from "../table/names";
-import NamesData from "../model/namesData";
+import { NamesData, BotMintData } from "../model/namesData";
+import MetadataData from "../model/metadata";
+import MetadataTable from "../table/metadata";
 
 const blockchainToDeploy: blockchain = "testworld2";
 
-const { PINATA_JWT, NAMES_ORACLE_SK, PROVER_KEYS_BUCKET } = process.env;
+const { PINATA_JWT, NAMES_ORACLE_SK, METADATA_TABLE } = process.env;
 const NAMES_TABLE = process.env.TESTWORLD2_NAMES_TABLE!;
 
-export async function deployNFT(
-  id: string,
-  nft: NamesData,
-  forceDeployment: boolean = false
-): Promise<void> {
-  console.log("deployNFT", id, nft.username, nft);
+export async function deployNFT(params: BotMintData): Promise<void> {
+  console.log("deployNFT", params);
+  const { id, language, filename, timeNow, username, creator } = params;
 
   try {
     const names = new Names(NAMES_TABLE);
-    const name = await names.get({ username: nft.username });
+    const name = await names.get({ username });
     if (name) {
       console.log("Found old deployment", name);
       return;
     }
 
-    const bot = new BotMessage(id, nft.language);
-
-    const image = `https://res.cloudinary.com/minanft/image/fetch/h_300,q_100,f_auto/${nft.uri.image}`;
-    const imageS3 = `https://minanft-storage.s3.eu-west-1.amazonaws.com/${nft.uri.image}`;
-
-    if (nft.storage !== undefined)
-      axios
-        .get(image, {
-          responseType: "arraybuffer",
-        })
-        .then((response: any) => {
-          console.log("cloudinary ping - aws");
-        })
-        .catch((e: any) => console.error("cloudinary ping - aws", e));
+    const bot = new BotMessage(id, language);
 
     console.time("all");
     Memory.info("start");
@@ -66,6 +53,29 @@ export async function deployNFT(
     const publicKey = privateKey.toPublicKey();
     const owner = Poseidon.hash(ownerPublicKey.toFields());
     const pinataJWT = PINATA_JWT!;
+
+    const nft = new MinaNFT({
+      name: username,
+      creator:
+        creator === ""
+          ? "@MinaNFT_bot"
+          : creator[0] === "@"
+          ? creator
+          : "@" + creator,
+      address: publicKey,
+      owner,
+    });
+
+    const imageData = await getFileData(filename);
+    const url = MinaNFT.urlFromStorageString(imageData.storage);
+    nft.updateFileData({
+      key: `image`,
+      type: "image",
+      data: imageData,
+      isPrivate: false,
+    });
+    console.log(`json:`, JSON.stringify(nft.toJSON(), null, 2));
+    Memory.info("json");
 
     console.log(
       `Deployer balance: ${await accountBalanceMina(deployer.toPublicKey())}`
@@ -92,42 +102,37 @@ export async function deployNFT(
       return;
     }
 
-    const mnft = new MinaNFT({
-      name: nft.username,
-      creator: nft.creator,
-      address: publicKey,
-    });
-    if (nft.uri.description !== undefined && nft.uri.description !== "")
-      mnft.updateText({
-        key: `description`,
-        text: nft.uri.description,
-      });
-    const imageData =
-      nft.storage === undefined
-        ? await getFileData(nft.uri.image)
-        : convertIPFSFileData(nft.uri);
-    mnft.updateFileData({
-      key: `image`,
-      type: "image",
-      data: imageData,
-      isPrivate: false,
-    });
-    console.log(`json:`, JSON.stringify(mnft.toJSON(), null, 2));
-    Memory.info("json");
+    await sleep(1000);
+    const image = `https://res.cloudinary.com/minanft/image/fetch/h_300,q_100,f_auto/${url}`;
+    axios
+      .get(image, {
+        responseType: "arraybuffer",
+      })
+      .then((response: any) => {
+        console.log("cloudinary ping - pinata");
+      })
+      .catch((e: any) => console.error("cloudinary ping - pinata", e));
 
     const nameService = new MinaNFTNameService({
       oraclePrivateKey,
       address: nameServiceAddress,
     });
 
-    //await bot.image(image, { caption: nft.uri.name.slice(1) });
-    await bot.invoice(
-      nft.uri.name.slice(1),
-      nft.storage === undefined ? imageS3 : image
-    );
+    await sleep(2000);
+    await bot.image(image, { caption: username.slice(1) });
+
+    const uri = nft.exportToString({
+      increaseVersion: true,
+      includePrivateData: false,
+    });
+
+    const privateUri = nft.exportToString({
+      increaseVersion: true,
+      includePrivateData: true,
+    });
 
     console.time("mint");
-    const tx = await mnft.mint({
+    const tx = await nft.mint({
       deployer,
       owner,
       pinataJWT,
@@ -136,7 +141,8 @@ export async function deployNFT(
     });
     console.timeEnd("mint");
     Memory.info("mint");
-    if (tx === undefined) {
+    const txId = tx?.hash();
+    if (tx === undefined || txId === undefined) {
       console.error("Error deploying NFT");
       await bot.tmessage("ErrordeployingNFT");
       Memory.info("deploy error");
@@ -145,18 +151,55 @@ export async function deployNFT(
     }
 
     await bot.tmessage("sucessDeploymentMessage", {
-      nftname: nft.username,
-      hash: tx.hash(),
+      nftname: username,
+      hash: txId,
     });
     await MinaNFT.transactionInfo(tx, "mint", false);
 
     Memory.info("deployed");
 
-    let deployedNFT: NamesData = nft;
-    deployedNFT.uri = JSON.stringify(mnft.toJSON());
+    const privateKeyString = await encrypt(privateKey.toBase58(), nft.name);
+    if (
+      privateKeyString === undefined ||
+      privateKey.toBase58() !== (await decrypt(privateKeyString, nft.name))
+    ) {
+      throw new Error("Error encrypting zkApp private key");
+    }
+
+    const ownerKeyString = await encrypt(ownerPrivateKey.toBase58(), nft.name);
+    if (
+      ownerKeyString === undefined ||
+      ownerPrivateKey.toBase58() !== (await decrypt(ownerKeyString, nft.name))
+    ) {
+      throw new Error("Error encrypting owner private key");
+    }
+
+    let deployedNFT: NamesData = {
+      username: nft.name,
+      id,
+      timeCreated: Date.now(),
+      storage: nft.storage,
+      uri,
+      creator: nft.creator,
+      language: language,
+      privateKey: privateKeyString,
+      ownerPrivateKey: ownerKeyString,
+      publicKey: privateKey.toPublicKey().toBase58(),
+    };
+
     console.log("Writing deployment to Names", deployedNFT);
     await names.create(deployedNFT);
     await algoliaWriteToken(deployedNFT);
+
+    const metadata = new MetadataTable(METADATA_TABLE!);
+    await metadata.createNewVersion({
+      username: nft.name,
+      version: 1,
+      uri: { username, version: 1, privateUri },
+      txId,
+    });
+
+    await bot.invoice(username.slice(1), image);
     Memory.info("end");
     await sleep(1000);
     console.timeEnd("all");

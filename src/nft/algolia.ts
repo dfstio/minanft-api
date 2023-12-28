@@ -1,6 +1,6 @@
 import algoliasearch from "algoliasearch";
 import removeMarkdown from "remove-markdown";
-import NamesData from "../model/namesData";
+import { NamesData } from "../model/namesData";
 import Names from "../table/names";
 import BotMessage from "../mina/message";
 import { MinaNFT } from "minanft";

@@ -6,6 +6,7 @@ import Users from "./table/users";
 import Names from "./table/names";
 import History from "./table/history";
 import { startDeployment, generateFilename } from "./nft/nft";
+import { BotMintData } from "./model/namesData";
 import DocumentData from "./model/documentData";
 import FileHandler from "./fileHandler";
 import VoiceData from "./model/voiceData";
@@ -348,16 +349,17 @@ export default class BotLogic {
           const timeNow = Date.now();
           const filename = generateFilename(timeNow) + ".jpg";
           await copyTelegramImageToS3(filename, photo.file_id);
-          await startDeployment(
-            chatIdString,
-            LANGUAGE,
+          await startDeployment({
+            id: chatIdString,
+            language: LANGUAGE,
             timeNow,
             filename,
-            currState.username,
-            currState.user && currState.user.username
-              ? currState.user.username
-              : ""
-          );
+            username: currState.username,
+            creator:
+              currState.user && currState.user.username
+                ? currState.user.username
+                : "",
+          } as BotMintData);
           this.users.updateAnswer(
             chatIdString,
             currIndexAnswer,

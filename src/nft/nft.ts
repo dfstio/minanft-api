@@ -4,18 +4,11 @@ import { initLanguages, getLanguage } from "../lang/lang";
 import axios from "axios";
 import { verifyJWT } from "../api/jwt";
 import { sleep } from "minanft";
+import { BotMintData } from "../model/namesData";
 
-async function startDeployment(
-  id: string,
-  language: string,
-  timeNow: number,
-  filename: string,
-  username: string,
-  creator: string
-): Promise<void> {
-  console.log("startDeployment", id, language, username, timeNow, filename);
-  const bot = new BotMessage(id, language);
-
+async function startDeployment(params: BotMintData): Promise<void> {
+  console.log("startDeployment", params);
+  /*
   let uri = {
     name: username[0] == "@" ? username : "@" + username,
     description: "",
@@ -34,8 +27,8 @@ async function startDeployment(
     creator: creator == "" ? "@MinaNFT_bot" : "@" + creator,
     language: language,
   };
-
-  await callLambda("deploynft", JSON.stringify(nft));
+*/
+  await callLambda("deploynft", JSON.stringify(params));
   await sleep(1000);
 }
 
@@ -78,6 +71,7 @@ async function startDeploymentOld(
 }
 */
 
+/*
 async function startDeploymentIpfs(
   id: string,
   language: string,
@@ -114,7 +108,9 @@ async function startDeploymentIpfs(
     );
   }
 }
+*/
 
+/*
 async function startDeploymentApi(id: string, ipfs: string): Promise<void> {
   console.log("startDeploymentApi", id, ipfs);
 
@@ -129,6 +125,7 @@ async function startDeploymentApi(id: string, ipfs: string): Promise<void> {
     })
   );
 }
+*/
 
 async function mint_v2(
   id: string,
@@ -205,12 +202,4 @@ function generateFilename(timeNow: number): string {
   return timeNow.toString() + "-" + outString;
 }
 
-export {
-  startDeployment,
-  startDeploymentIpfs,
-  startDeploymentApi,
-  mint_v2,
-  mint_v3,
-  post_v3,
-  generateFilename,
-};
+export { startDeployment, mint_v2, mint_v3, post_v3, generateFilename };

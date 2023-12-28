@@ -7,15 +7,15 @@ export default class MetadataTable extends Table<MetadataData> {
     username: string;
     version: number;
     uri: any;
-    txid: string;
+    txId: string;
   }): Promise<void> {
-    const { username, version, uri, txid } = params;
+    const { username, version, uri, txId } = params;
     const encrypted = await encryptJSON(uri, username);
     await this.create({
       username,
       version,
       metadata: encrypted,
-      txid,
+      txId,
     } as MetadataData);
   }
 

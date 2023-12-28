@@ -2,9 +2,10 @@ import { Handler, Context, Callback } from "aws-lambda";
 import ChatGPTMessage from "./src/chatgpt/chatgpt";
 import ImageGPT from "./src/model/imageGPT";
 import BotMessage from "./src/mina/message";
-import { initLanguages, getLanguage } from './src/lang/lang'
+import { initLanguages, getLanguage } from "./src/lang/lang";
 import { context as contextChatGPT } from "./src/chatgpt/context";
 import { functions } from "./src/chatgpt/functions";
+import { BotMintData } from "./src/model/namesData";
 import { startDeployment, generateFilename } from "./src/nft/nft";
 import { copyAIImageToS3 } from "./src/imageHandler";
 
@@ -14,7 +15,7 @@ const CHATGPTPLUGINAUTH = process.env.CHATGPTPLUGINAUTH!;
 const chatgpt: Handler = async (
   event: any,
   context: Context,
-  callback: Callback,
+  callback: Callback
 ) => {
   try {
     //console.log("event", event);
@@ -34,7 +35,7 @@ const chatgpt: Handler = async (
           CHATGPT_TOKEN,
           language,
           contextChatGPT,
-          functions,
+          functions
         );
         result = await chat.message(event);
       }
@@ -57,12 +58,11 @@ const chatgpt: Handler = async (
       if (result.answerType === "image")
         await bot.image(result.image, result.text);
 
-
       console.log(
         "ChatGPT result answerType:",
         result.answerType,
         "text",
-        result.text,
+        result.text
       );
       await sleep(1000);
     }
@@ -77,7 +77,7 @@ const chatgpt: Handler = async (
 const image: Handler = async (
   event: any,
   context: Context,
-  callback: Callback,
+  callback: Callback
 ) => {
   try {
     //console.log("event", event);
@@ -91,12 +91,12 @@ const image: Handler = async (
       if (event.message && event.id && event.username) {
         await initLanguages();
         const language = await getLanguage(event.id);
-        const chat = new ChatGPTMessage(CHATGPT_TOKEN, language, contextChatGPT);
-        result = await chat.image(
-          event.message,
-          event.id,
-          event.username,
+        const chat = new ChatGPTMessage(
+          CHATGPT_TOKEN,
+          language,
+          contextChatGPT
         );
+        result = await chat.image(event.message, event.id, event.username);
       }
       console.log("Image result", result);
       if (event.id && event.username && result.image !== "") {
@@ -105,14 +105,14 @@ const image: Handler = async (
         const timeNow = Date.now();
         const filename = generateFilename(timeNow) + ".jpg";
         await copyAIImageToS3(filename, result.image);
-        await startDeployment(
-          event.id,
+        await startDeployment({
+          id: event.id,
           language,
           timeNow,
           filename,
-          event.username,
-          event.creator,
-        );
+          username: event.username,
+          creator: event.creator,
+        } as BotMintData);
       }
     }
 
@@ -130,7 +130,7 @@ const image: Handler = async (
 const archetype: Handler = async (
   event: any,
   context: Context,
-  callback: Callback,
+  callback: Callback
 ) => {
   try {
     //console.log("event", event);
@@ -141,15 +141,19 @@ const archetype: Handler = async (
       text: "Authentification failed",
     };
     await initLanguages();
-    const language = event.id ? await getLanguage(event.id) : 'en'
+    const language = event.id ? await getLanguage(event.id) : "en";
     if (event && event.auth && event.auth === CHATGPTPLUGINAUTH) {
       if (event.message && event.id && event.username) {
-        const chat = new ChatGPTMessage(CHATGPT_TOKEN, language, contextChatGPT);
+        const chat = new ChatGPTMessage(
+          CHATGPT_TOKEN,
+          language,
+          contextChatGPT
+        );
         result = await chat.image(
           event.message,
           event.id,
           event.username,
-          true,
+          true
         );
       }
       console.log("Image result", result);

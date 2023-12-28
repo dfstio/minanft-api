@@ -1,11 +1,11 @@
 import { Handler, Context, Callback } from "aws-lambda";
-import { startDeploymentApi, mint_v2, mint_v3, post_v3 } from "./src/nft/nft";
+import { mint_v2, mint_v3, post_v3 } from "./src/nft/nft";
 import { verifyJWT } from "./src/api/jwt";
 import { runSumSequencer } from "./src/api/sum";
 import Sequencer from "./src/api/sequencer";
 import JobsTable from "./src/table/jobs";
 import Names from "./src/table/names";
-import NamesData from "./src/model/namesData";
+import { NamesData } from "./src/model/namesData";
 import { getBackupPlugin } from "./src/api/plugin";
 import { reserveName, indexName } from "./src/api/mint_v3";
 import { initLanguages, getLanguage } from "./src/lang/lang";
@@ -60,6 +60,7 @@ const botapi: Handler = async (
           return;
           break;
 
+        /*
         case "mint":
           if (body.data.ipfs === undefined) {
             console.error("No IPFS hash");
@@ -75,6 +76,7 @@ const botapi: Handler = async (
           }
           await startDeploymentApi(id, body.data.ipfs);
           break;
+        */
 
         case "lookupName":
           {
