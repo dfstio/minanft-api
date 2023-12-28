@@ -1,5 +1,5 @@
 import type { Handler, Context, Callback } from "aws-lambda";
-import { encrypt, decrypt } from "./src/nft/kms";
+import { encrypt, decrypt, encryptJSON, decryptJSON } from "./src/nft/kms";
 import { PrivateKey } from "o1js";
 
 const kms: Handler = async (
@@ -21,7 +21,17 @@ const kms: Handler = async (
       const decrypted = await decrypt(encrypted, name);
       console.log("decrypted", decrypted);
     }
-    //await example("contracts", "TreeFunction", 5);
+
+    const json = { name, privateKey, a: "ghdfjsgfs", event };
+    console.log("json", json);
+    const encryptedJSON = await encryptJSON(json, name);
+    console.log("encryptedJSON", encryptedJSON);
+    if (encryptedJSON === undefined) throw Error("encryptedJSON is undefined");
+    else {
+      const decryptedJSON = await decryptJSON(encryptedJSON, name);
+      console.log("decryptedJSON", decryptedJSON);
+    }
+
     console.log("test finished");
     console.timeEnd("test");
     return 200;
