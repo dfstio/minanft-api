@@ -1,6 +1,6 @@
 import BotMessage from "../mina/message";
 import Names from "../table/names";
-import type NamesData from "../model/namesData";
+import type { NamesData } from "../model/namesData";
 import { algoliaWriteToken } from "../nft/algolia";
 import { botCommandList } from "../payments/botcommands";
 

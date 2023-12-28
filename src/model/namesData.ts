@@ -1,4 +1,4 @@
-export default interface NamesData {
+export interface NamesData {
   username: string;
   //description?: string;
   //url?: string;
@@ -18,4 +18,13 @@ export default interface NamesData {
   creator?: string;
   //testworld2?: any;
   //testworld2uri?: any;
+}
+
+export interface BotMintData {
+  id: string;
+  language: string;
+  timeNow: number;
+  filename: string;
+  username: string;
+  creator: string;
 }

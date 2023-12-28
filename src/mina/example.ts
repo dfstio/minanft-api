@@ -26,8 +26,9 @@ import {
   Field,
 } from "o1js";
 */
-import { getCache, listFiles, loadCache } from "./cache";
-import { getFileData } from "../storage/filedata";
+//import { getCache, listFiles, loadCache } from "./cache";
+import { listFiles } from "./cache";
+//import { getFileData } from "../storage/filedata";
 /*
 const { PINATA_JWT, DEPLOYER, NAMES_ORACLE_SK, PROVER_KEYS_BUCKET } =
   process.env;

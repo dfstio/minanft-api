@@ -1,33 +1,4 @@
-import { Cache } from "o1js";
-import S3File from "../storage/s3";
 import fs from "fs/promises";
-
-export function getCache(cacheBucket: string, debug?: boolean): Cache {
-  return FileSystem(cacheBucket, debug);
-}
-
-export async function loadCache(
-  cacheBucket: string,
-  folder: string,
-  files: string[]
-): Promise<void> {
-  const existingFiles = await listFiles(folder);
-  for (const file of files) {
-    if (!existingFiles.includes(file)) {
-      try {
-        //console.log(`downloading ${file}`);
-        const s3File = new S3File(cacheBucket, file);
-        const data = await s3File.get();
-        await fs.writeFile(`${folder}/${file}`, data.Body);
-        //console.log(`downloaded ${file}`);
-      } catch (error) {
-        console.log(`error downloading ${file}`, error);
-      }
-    } else {
-      //console.log(`file ${file} already exists`);
-    }
-  }
-}
 
 export async function listFiles(
   folder: string,
@@ -51,6 +22,43 @@ export async function listFiles(
     }
   }
 }
+
+/*
+
+import { Cache } from "o1js";
+import S3File from "../storage/s3";
+
+
+export function getCache(cacheBucket: string, debug?: boolean): Cache {
+  return FileSystem(cacheBucket, debug);
+}
+
+
+export async function loadCache(
+  cacheBucket: string,
+  folder: string,
+  files: string[]
+): Promise<void> {
+  const existingFiles = await listFiles(folder);
+  for (const file of files) {
+    if (!existingFiles.includes(file)) {
+      try {
+        //console.log(`downloading ${file}`);
+        const s3File = new S3File(cacheBucket, file);
+        const data = await s3File.get();
+        await fs.writeFile(`${folder}/${file}`, data.Body);
+        //console.log(`downloaded ${file}`);
+      } catch (error) {
+        console.log(`error downloading ${file}`, error);
+      }
+    } else {
+      //console.log(`file ${file} already exists`);
+    }
+  }
+}
+*/
+
+/*
 
 async function readFile(
   cacheBucket: string,
@@ -124,6 +132,8 @@ const FileSystem = (cacheBucket: string, debug?: boolean): Cache => ({
   canWrite: false,
   debug,
 });
+
+*/
 
 /*
 export { writeFileSync, readFileSync, mkdirSync } from "node:fs";

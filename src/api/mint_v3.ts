@@ -19,7 +19,7 @@ import axios from "axios";
 
 import BotMessage from "../mina/message";
 import Names from "../table/names";
-import NamesData from "../model/namesData";
+import { NamesData } from "../model/namesData";
 import { isReservedName } from "../nft/reservednames";
 import { nftPrice } from "../payments/pricing";
 import { use } from "i18next";
