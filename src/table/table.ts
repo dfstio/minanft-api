@@ -72,11 +72,11 @@ export default class Table<T> {
         Key: marshall(key),
         ConsistentRead: true,
       };
-      console.log("Table: get", params);
+      //console.log("Table: get", params);
       const command = new GetItemCommand(params);
       const data = await this._client.send(command);
       if (data.Item === undefined) return undefined;
-      console.log("Read result: Table: get", data.Item);
+      //console.log("Read result: Table: get", data.Item);
       return unmarshall(data.Item) as T;
     } catch (error: any) {
       console.log("Cannot get item:", key, "Table: get error", error);
