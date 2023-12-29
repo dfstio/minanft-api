@@ -86,7 +86,7 @@ export default class Jobs extends Table<JobsData> {
     return await this.queryData(
       "id = :id",
       { ":id": id },
-      "id, jobId, billedDuration, timeCreated, timeFinished, jobStatus, developer, jobName, task"
+      "id, billedDuration, timeCreated, timeFinished, jobStatus, jobName, task"
     );
   }
 }

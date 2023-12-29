@@ -148,11 +148,28 @@ export default class Table<T> {
         params.ProjectionExpression = projectionExpression;
       //console.log("Table: queryData", params);
       const command = new QueryCommand(params);
-      const data = await this._client.send(command);
+      let data = await this._client.send(command);
       let result: T[] = [];
       if (data.Items === undefined) return result;
       for (let i = 0; i < data.Items.length; i++) {
         result.push(unmarshall(data.Items[i]) as T);
+      }
+      let count = 0;
+      while (
+        data.LastEvaluatedKey !== undefined &&
+        data.LastEvaluatedKey.id !== undefined &&
+        count < 100
+      ) {
+        const command1 = new QueryCommand({
+          ...params,
+          ExclusiveStartKey: data.LastEvaluatedKey,
+        });
+        data = await this._client.send(command1);
+        if (data.Items === undefined) return result;
+        for (let i = 0; i < data.Items.length; i++) {
+          result.push(unmarshall(data.Items[i]) as T);
+        }
+        count++;
       }
       //console.log("Success: Table: queryData", result);
       return result;
