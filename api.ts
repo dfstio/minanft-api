@@ -1,19 +1,17 @@
 import { Handler, Context, Callback } from "aws-lambda";
-import { mint_v2, mint_v3, post_v3 } from "./src/nft/nft";
+import callLambda from "./src/lambda/lambda";
 import { verifyJWT } from "./src/api/jwt";
-import { runSumSequencer } from "./src/api/sum";
 import Sequencer from "./src/api/sequencer";
 import JobsTable from "./src/table/jobs";
 import Names from "./src/table/names";
-import { NamesData } from "./src/model/namesData";
 import { getBackupPlugin } from "./src/api/plugin";
 import { reserveName, indexName } from "./src/api/mint_v3";
-import { initLanguages, getLanguage } from "./src/lang/lang";
+import { getLanguage } from "./src/lang/lang";
 
 const BOTAPIAUTH = process.env.BOTAPIAUTH!;
 const NAMES_TABLE = process.env.TESTWORLD2_NAMES_TABLE!;
 
-const botapi: Handler = async (
+const api: Handler = async (
   event: any,
   context: Context,
   callback: Callback
@@ -235,13 +233,16 @@ const botapi: Handler = async (
               body: jobIdTask ?? "error",
             });
             if (jobIdTask !== undefined)
-              await mint_v3(
-                id,
-                jobIdTask,
-                transactions[0],
-                args[0],
-                args[1],
-                args[2]
+              await callLambda(
+                "mint_v3",
+                JSON.stringify({
+                  id,
+                  jobId: jobIdTask,
+                  uri: transactions[0],
+                  signature: args[0],
+                  privateKey: args[1],
+                  useArweave: args[2],
+                })
               );
           }
           return;
@@ -291,7 +292,15 @@ const botapi: Handler = async (
               body: jobIdTask ?? "error",
             });
             if (jobIdTask !== undefined)
-              await post_v3(id, jobIdTask, transactions, args);
+              await callLambda(
+                "post_v3",
+                JSON.stringify({
+                  id,
+                  jobId: jobIdTask,
+                  transactions,
+                  args,
+                })
+              );
           }
           return;
 
@@ -317,7 +326,7 @@ const botapi: Handler = async (
             }
             const { transactions, developer, name, task, args } = body.data;
             try {
-              const plugin = await getBackupPlugin({
+              await getBackupPlugin({
                 developer,
                 name,
                 task,
@@ -334,13 +343,13 @@ const botapi: Handler = async (
               });
               return;
             }
-            const sequencerTree = new Sequencer({
+            const sequencer = new Sequencer({
               jobsTable: process.env.JOBS_TABLE!,
               stepsTable: process.env.STEPS_TABLE!,
               proofsTable: process.env.PROOFS_TABLE!,
               username: id,
             });
-            const jobIdTask = await sequencerTree.createJob({
+            const jobIdTask = await sequencer.createJob({
               username: id,
               developer,
               name,
@@ -563,4 +572,4 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export { botapi };
+export { api };

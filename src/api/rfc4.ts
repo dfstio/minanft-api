@@ -1,8 +1,6 @@
 import { BackendPlugin, MinaNFT } from "minanft";
 import {
   Cache,
-  verify,
-  JsonProof,
   VerificationKey,
   MerkleWitness,
   SmartContract,
@@ -86,6 +84,16 @@ export class RFCvoting extends BackendPlugin {
     proof1: string,
     proof2: string
   ): Promise<string | undefined> {
+    throw new Error("not implemented");
+  }
+
+  public async mint(transaction: string): Promise<string | undefined> {
+    throw new Error("not implemented");
+  }
+  public async verify(proof: string): Promise<string | undefined> {
+    throw new Error("not implemented");
+  }
+  public async send(transaction: string): Promise<string | undefined> {
     throw new Error("not implemented");
   }
 }

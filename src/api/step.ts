@@ -48,11 +48,29 @@ export async function runStep(
       if (step.stepData.length !== 2)
         throw new Error("Input length not 2 for merge");
 
-      console.time(`merged proofs`);
+      console.time(`step: merged proofs`);
       result = await plugin.merge(step.stepData[0], step.stepData[1]);
-      console.timeEnd(`merged proofs`);
+      console.timeEnd(`step: merged proofs`);
+    } else if (step.task === "verify") {
+      if (step.stepData.length !== 1)
+        throw new Error("Input length not 1 for verify");
+      console.time(`step: verified proof`);
+      result = await plugin.verify(step.stepData[0]);
+      console.timeEnd(`step: verified proof`);
+    } else if (step.task === "send") {
+      if (step.stepData.length !== 1)
+        throw new Error("Input length not 1 for send");
+      console.time(`step: sent`);
+      result = await plugin.send(step.stepData[0]);
+      console.timeEnd(`step: sent`);
+    } else if (step.task === "mint") {
+      if (step.stepData.length !== 1)
+        throw new Error("Input length not 1 for mint");
+      console.time(`step: minted`);
+      result = await plugin.mint(step.stepData[0]);
+      console.timeEnd(`step: minted`);
     } else throw new Error("unknown task");
-    Memory.info(`calculated proof`);
+    Memory.info(`calculated or verified or minted`);
     if (result === undefined) throw new Error("result is undefined");
 
     await StepsTable.updateStatus({

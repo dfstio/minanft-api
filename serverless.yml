@@ -238,7 +238,7 @@ functions:
           path: send
           method: post
   api:
-    handler: api.botapi
+    handler: api.api
     timeout: 30
     memorySize: 1024
     events:

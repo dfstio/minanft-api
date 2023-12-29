@@ -127,6 +127,7 @@ async function startDeploymentApi(id: string, ipfs: string): Promise<void> {
 }
 */
 
+/*
 async function mint_v2(
   id: string,
   uri: string,
@@ -145,7 +146,8 @@ async function mint_v2(
     })
   );
 }
-
+*/
+/*
 async function mint_v3(
   id: string,
   jobId: string,
@@ -191,6 +193,7 @@ async function post_v3(
     })
   );
 }
+*/
 
 function generateFilename(timeNow: number): string {
   let outString: string = "";
@@ -202,4 +205,4 @@ function generateFilename(timeNow: number): string {
   return timeNow.toString() + "-" + outString;
 }
 
-export { startDeployment, mint_v2, mint_v3, post_v3, generateFilename };
+export { startDeployment, generateFilename };

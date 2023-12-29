@@ -43,6 +43,8 @@ export default class Sequencer {
   }): Promise<string | undefined> {
     const { username, developer, name, jobData, task, args } = params;
     if (this.username !== params.username) throw new Error("username mismatch");
+    if ((task === "verify" || task === "send") && jobData.length !== 1)
+      throw new Error("jobData length is not 1 for task:verify or send");
     const JobsTable = new Jobs(this.jobsTable);
     const jobId = await JobsTable.createJob({
       username,
@@ -52,7 +54,7 @@ export default class Sequencer {
       task,
       args,
     });
-    if (jobId !== undefined && params.name !== "mint" && params.name !== "post")
+    if (jobId !== undefined && task !== "mint")
       await callLambda(
         "sequencer",
         JSON.stringify({ task: "start", username: this.username, jobId })
@@ -82,8 +84,21 @@ export default class Sequencer {
       jobId: this.jobId,
     });
     if (job === undefined) throw new Error("job not found");
+    if (
+      (job.task === "verify" || job.task === "send") &&
+      job.jobData.length !== 1
+    )
+      throw new Error("jobData length is not 1 for task:verify or send");
     for (let i = 0; i < job.jobData.length; i++) {
       const stepId: string = i.toString();
+      const task =
+        job.task === "verify"
+          ? "verify"
+          : job.task === "mint"
+          ? "mint"
+          : job.task === "send"
+          ? "send"
+          : "create";
       const stepData: StepsData = {
         jobId: this.jobId,
         stepId,
@@ -92,7 +107,7 @@ export default class Sequencer {
         name: job.jobName,
         jobTask: job.task,
         args: job.args,
-        task: "create" as StepTask,
+        task: task as StepTask,
         origins: [i.toString()],
         stepData: [job.jobData[i]],
         timeCreated: Date.now(),

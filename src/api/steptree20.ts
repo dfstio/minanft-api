@@ -85,4 +85,13 @@ export class MinaNFTTreeVerifierPlugin20 extends BackendPlugin {
     if (!ok) throw new Error("proof verification failed");
     return JSON.stringify(proof.toJSON(), null, 2);
   }
+  public async mint(transaction: string): Promise<string | undefined> {
+    throw new Error("not implemented");
+  }
+  public async verify(proof: string): Promise<string | undefined> {
+    throw new Error("not implemented");
+  }
+  public async send(transaction: string): Promise<string | undefined> {
+    throw new Error("not implemented");
+  }
 }

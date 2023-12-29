@@ -1,7 +1,6 @@
 import Table from "./table";
 import { StepsData } from "../model/stepsData";
 import { JobStatus } from "../model/jobsData";
-import { makeString } from "minanft";
 
 export default class Steps extends Table<StepsData> {
   public async updateStatus(params: {

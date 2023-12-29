@@ -9,12 +9,15 @@ var deployer3: number | undefined;
 
 //TODO stop relying on AWS saving state in short term and replace with DynamoDB table logic
 export async function getDeployer(): Promise<PrivateKey> {
+  let count = 0;
   let i: number = Math.floor(Math.random() * (GASTANKS.length - 1));
   let replenish: boolean = await checkGasTank(GASTANKS[i]);
   while (i === deployer1 || i === deployer2 || i === deployer3 || replenish) {
     console.log(`Deployer ${i} was recently used or empty, finding another`);
     i = Math.floor(Math.random() * (GASTANKS.length - 1));
     replenish = await checkGasTank(GASTANKS[i]);
+    count++;
+    if (count > GASTANKS.length * 2) throw new Error("No deployers available");
   }
   // shifting last deployers
   deployer3 = deployer2;
