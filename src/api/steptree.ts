@@ -1,9 +1,5 @@
-import Steps from "../table/steps";
-import { StepsData } from "../model/stepsData";
-import callLambda from "../lambda/lambda";
 import {
   MinaNFTTreeVerifierFunction,
-  Memory,
   TreeElement,
   BackendPlugin,
 } from "minanft";
@@ -110,5 +106,14 @@ export class MinaNFTTreeVerifierPlugin extends BackendPlugin {
     console.timeEnd("verified proof");
     if (!ok) throw new Error("proof verification failed");
     return JSON.stringify(proof.toJSON(), null, 2);
+  }
+  public async mint(transaction: string): Promise<string | undefined> {
+    throw new Error("not implemented");
+  }
+  public async verify(proof: string): Promise<string | undefined> {
+    throw new Error("not implemented");
+  }
+  public async send(transaction: string): Promise<string | undefined> {
+    throw new Error("not implemented");
   }
 }

@@ -231,14 +231,9 @@ export async function mint_v3(
     }
 
     MinaNFT.minaInit(blockchainToDeploy);
-    const deployer = await getDeployer();
 
     const pinataJWT: string = PINATA_JWT!;
     const arweaveKey: string = ARWEAVE_KEY_STRING!;
-
-    console.log(
-      `Deployer balance: ${await accountBalanceMina(deployer.toPublicKey())}`
-    );
 
     const cacheDir = "/mnt/efs/cache";
     await listFiles(cacheDir);
@@ -278,6 +273,10 @@ export async function mint_v3(
       })
       .catch((e: any) => console.error("cloudinary ping - aws error"));
 
+    const deployer = await getDeployer();
+    console.log(
+      `Deployer balance: ${await accountBalanceMina(deployer.toPublicKey())}`
+    );
     console.time("mint");
     const tx = await nft.mint(
       {
@@ -433,11 +432,6 @@ export async function post_v3(
     });
 
     MinaNFT.minaInit(blockchainToDeploy);
-    const deployer = await getDeployer();
-
-    console.log(
-      `Deployer balance: ${await accountBalanceMina(deployer.toPublicKey())}`
-    );
 
     const cacheDir = "/mnt/efs/cache";
     await listFiles(cacheDir);
@@ -466,6 +460,10 @@ export async function post_v3(
       return;
     }
 
+    const deployer = await getDeployer();
+    console.log(
+      `Deployer balance: ${await accountBalanceMina(deployer.toPublicKey())}`
+    );
     console.time("post");
     const tx = await MinaNFT.commitPreparedData({
       nameService,

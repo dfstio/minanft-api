@@ -54,6 +54,7 @@ const deploynft: Handler = async (event: any, context: Context) => {
 const mint_v3: Handler = async (event: any, context: Context) => {
   try {
     console.log("mint_v3", event);
+    const language = await getLanguage(event.id);
     await initLanguages();
     await mint_v3_func(
       event.id,
@@ -62,7 +63,7 @@ const mint_v3: Handler = async (event: any, context: Context) => {
       event.signature,
       event.privateKey,
       event.useArweave,
-      event.language
+      language
     );
 
     //context.succeed(event.id);
@@ -82,13 +83,14 @@ const mint_v3: Handler = async (event: any, context: Context) => {
 const post_v3: Handler = async (event: any, context: Context) => {
   try {
     console.log("post_v3", event);
+    const language = await getLanguage(event.id);
     await initLanguages();
     await post_v3_func(
       event.id,
       event.jobId,
       event.transactions,
       event.args,
-      event.language
+      language
     );
 
     //context.succeed(event.id);

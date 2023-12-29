@@ -1,6 +1,6 @@
 import { JobStatus } from "./jobsData";
 
-export type StepTask = "create" | "merge";
+export type StepTask = "create" | "merge" | "verify" | "mint" | "send";
 
 export interface StepsData {
   jobId: string;

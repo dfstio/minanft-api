@@ -2,6 +2,7 @@ import { BackendPlugin } from "minanft";
 import { MinaNFTTreeVerifierPlugin } from "./steptree";
 import { MinaNFTTreeVerifierPlugin20 } from "./steptree20";
 import { RFCvoting } from "./rfc4";
+import { MapProofPlugin } from "./map_proof";
 
 export async function getBackupPlugin(params: {
   developer: string;
@@ -18,6 +19,8 @@ export async function getBackupPlugin(params: {
         return new MinaNFTTreeVerifierPlugin20({ name, task, args });
       case "rfc-voting":
         return new RFCvoting({ name, task, args });
+      case "map-proof":
+        return new MapProofPlugin({ name, task, args });
       default:
         throw new Error("unknown plugin name");
     }
