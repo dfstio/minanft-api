@@ -61,7 +61,7 @@ export async function runStep(
       if (step.stepData.length !== 1)
         throw new Error("Input length not 1 for send");
       console.time(`step: sent`);
-      result = await plugin.mint(step.stepData[0]);
+      result = await plugin.send(step.stepData[0]);
       console.timeEnd(`step: sent`);
     } else if (step.task === "mint") {
       if (step.stepData.length !== 1)

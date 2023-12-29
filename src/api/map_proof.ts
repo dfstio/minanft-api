@@ -9,6 +9,7 @@ import {
   VERIFIER,
   MINANFT_NAME_SERVICE,
   accountBalanceMina,
+  blockchain,
 } from "minanft";
 import {
   Cache,
@@ -19,6 +20,7 @@ import {
   PublicKey,
 } from "o1js";
 import { getDeployer } from "../mina/deployers";
+const blockchainToDeploy: blockchain = "testworld2";
 
 export class MapProofPlugin extends BackendPlugin {
   static verificationKey: VerificationKey | undefined = undefined;
@@ -27,7 +29,10 @@ export class MapProofPlugin extends BackendPlugin {
     super(params);
   }
   public async compile(cache: Cache): Promise<void> {
-    if (MapProofPlugin.verificationKey === undefined)
+    if (this.task === "send") {
+      MinaNFT.setCache(cache);
+      await MinaNFT.compileVerifier();
+    } else if (MapProofPlugin.verificationKey === undefined)
       MapProofPlugin.verificationKey = (
         await RedactedMinaNFTMapCalculation.compile({
           cache,
@@ -96,9 +101,8 @@ export class MapProofPlugin extends BackendPlugin {
     return ok ? "true" : "false";
   }
 
-  public async mint(transaction: string): Promise<string | undefined> {
-    if (MapProofPlugin.verificationKey === undefined)
-      throw new Error("verificationKey is undefined");
+  public async send(transaction: string): Promise<string | undefined> {
+    MinaNFT.minaInit(blockchainToDeploy);
     const proof: RedactedMinaNFTMapStateProof =
       RedactedMinaNFTMapStateProof.fromJSON(
         JSON.parse(transaction) as JsonProof
@@ -123,7 +127,7 @@ export class MapProofPlugin extends BackendPlugin {
     return hash;
   }
 
-  public async send(transaction: string): Promise<string | undefined> {
+  public async mint(transaction: string): Promise<string | undefined> {
     throw new Error("not implemented");
   }
 }
