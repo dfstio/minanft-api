@@ -4009,7 +4009,7 @@ __metadata:
     form-data: "npm:^4.0.0"
     i18next: "npm:^23.7.8"
     jsonwebtoken: "npm:^9.0.2"
-    minanft: "npm:^1.3.34"
+    minanft: "npm:^1.4.1"
     o1js: "npm:^0.15.1"
     openai: "npm:^4.21.0"
     remove-markdown: "npm:^0.5.0"
@@ -4019,9 +4019,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"minanft@npm:^1.3.34":
-  version: 1.3.34
-  resolution: "minanft@npm:1.3.34"
+"minanft@npm:^1.4.1":
+  version: 1.4.1
+  resolution: "minanft@npm:1.4.1"
   dependencies:
     arweave: "npm:^1.14.4"
     axios: "npm:^1.6.2"
@@ -4029,7 +4029,7 @@ __metadata:
     mime: "npm:^3.0.0"
   peerDependencies:
     o1js: ^0.15.1
-  checksum: e8bdf03a217f54e125e0e3bc3cca347b16bb1b209b8d7f64d0180e041d2650e6bcda66794cdc69d44346aea63cda03eb8b2fd3709b090edbee018a0081830661
+  checksum: b05cd159216378c22889743c2275e86650a2804a931781100c8b6f89fe340faa10e72a8afe3006adf01fd0f12e90ec60596a273fe4f8f6fcb429f7ac3ddd9cf7
   languageName: node
   linkType: hard
 
