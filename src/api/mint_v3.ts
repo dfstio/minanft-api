@@ -111,6 +111,7 @@ export async function indexName(
   if (nftName.length > 30) return { success: false, reason: "name too long" };
 
   try {
+    MinaNFT.minaInit(blockchainToDeploy);
     const names = new Names(NAMES_TABLE);
     const nftData = await names.get({ username: nftName });
     if (nftData === undefined || nftData.publicKey === undefined) {
@@ -123,13 +124,14 @@ export async function indexName(
 
     const nameService = PublicKey.fromBase58(MINANFT_NAME_SERVICE);
     const address = PublicKey.fromBase58(nftData.publicKey);
-    MinaNFT.minaInit(blockchainToDeploy);
+
+    console.log("Loading metadata for", nftName, nftData.publicKey);
     const nft = new MinaNFT({
       name: nftName,
       address,
       nameService,
     });
-    await nft.loadMetadata();
+    await nft.loadMetadata(undefined, true);
 
     let deployedNFT: NamesData = nftData;
     deployedNFT.uri = JSON.stringify(nft.toJSON());
@@ -142,9 +144,9 @@ export async function indexName(
       success: true,
       reason: "",
     };
-  } catch (err) {
+  } catch (err: any) {
     console.error(err);
-    return { success: false, reason: "error" };
+    return { success: false, reason: `error: ${err.toString()}` };
   }
 }
 
