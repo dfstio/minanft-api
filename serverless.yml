@@ -20,6 +20,7 @@ provider:
     TASKS_TABLE: ${file(./env.json):TASKS_TABLE, env:TASKS_TABLE}
     DOCS_TABLE: ${file(./env.json):DOCS_TABLE, env:DOCS_TABLE}
     NAMES_TABLE: ${file(./env.json):NAMES_TABLE, env:NAMES_TABLE}
+    OWNERS_TABLE: ${file(./env.json):OWNERS_TABLE, env:OWNERS_TABLE}
     JOBS_TABLE: ${file(./env.json):JOBS_TABLE, env:JOBS_TABLE}
     STEPS_TABLE: ${file(./env.json):STEPS_TABLE, env:STEPS_TABLE}
     PROOFS_TABLE: ${file(./env.json):PROOFS_TABLE, env:PROOFS_TABLE}
@@ -111,6 +112,15 @@ provider:
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
       Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.JOBS_TABLE}"
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.OWNERS_TABLE}"
     - Effect: Allow
       Action:
         - dynamodb:Query
@@ -289,6 +299,20 @@ functions:
         - subnet-0def2b77c0fca2e95
         - subnet-067d779572f8cf00d
         - subnet-0b2c3a1af7dd7aa46
+  addkeys:
+    handler: mina.addkeys
+    timeout: 900
+    memorySize: 8192
+    fileSystemConfig:
+      localMountPath: /mnt/efs
+      arn: arn:aws:elasticfilesystem:eu-west-1:615834060610:access-point/fsap-0424e24fcb8a4b112
+    vpc:
+      securityGroupIds:
+        - sg-07cb6569b6537753d
+      subnetIds:
+        - subnet-0def2b77c0fca2e95
+        - subnet-067d779572f8cf00d
+        - subnet-0b2c3a1af7dd7aa46
   mint_v3:
     handler: mina.mint_v3
     timeout: 900
@@ -381,6 +405,22 @@ resources:
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:provider.environment.NAMES_TABLE}
+    OwnersDynamoDbTable:
+      Type: "AWS::DynamoDB::Table"
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: username
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+          - AttributeName: username
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:provider.environment.OWNERS_TABLE}
     JobsDynamoDbTable:
       Type: "AWS::DynamoDB::Table"
       DeletionPolicy: Retain

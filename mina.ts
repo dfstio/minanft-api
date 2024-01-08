@@ -1,5 +1,5 @@
 import { Handler, Context } from "aws-lambda";
-import { deployNFT } from "./src/mina/deploy";
+import { deployNFT, addKeys } from "./src/mina/deploy";
 import {
   mint_v3 as mint_v3_func,
   post_v3 as post_v3_func,
@@ -47,6 +47,26 @@ const deploynft: Handler = async (event: any, context: Context) => {
     return {
       statusCode: 200,
       body: "mina.deploy error",
+    };
+  }
+};
+
+const addkeys: Handler = async (event: any, context: Context) => {
+  try {
+    console.log("add keys", event);
+    await initLanguages();
+    await addKeys(event);
+
+    //context.succeed(event.id);
+    return {
+      statusCode: 200,
+      body: event.id,
+    };
+  } catch (error) {
+    console.error("catch", (<any>error).toString());
+    return {
+      statusCode: 200,
+      body: "mina.addkeys error",
     };
   }
 };
@@ -183,4 +203,4 @@ const deployipfs: Handler = async (event: any, context: Context) => {
   }
 };
 */
-export { deploynft, mint_v3, post_v3 };
+export { deploynft, addkeys, mint_v3, post_v3 };

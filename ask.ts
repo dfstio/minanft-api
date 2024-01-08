@@ -4,7 +4,7 @@ import ImageGPT from "./src/model/imageGPT";
 import BotMessage from "./src/mina/message";
 import { initLanguages, getLanguage } from "./src/lang/lang";
 import { context as contextChatGPT } from "./src/chatgpt/context";
-import { functions } from "./src/chatgpt/functions";
+import { getAIfunctions } from "./src/chatgpt/functions";
 import { BotMintData } from "./src/model/namesData";
 import { startDeployment, generateFilename } from "./src/nft/nft";
 import { copyAIImageToS3 } from "./src/imageHandler";
@@ -35,7 +35,7 @@ const chatgpt: Handler = async (
           CHATGPT_TOKEN,
           language,
           contextChatGPT,
-          functions
+          await getAIfunctions(event.id)
         );
         result = await chat.message(event);
       }

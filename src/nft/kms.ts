@@ -82,7 +82,9 @@ export async function decryptJSON(
 ): Promise<any> {
   try {
     const data = JSON.parse(encryptedJSON);
+    //console.log("decryptJSON data", data);
     const key = await decrypt(data.key, name, true);
+    //console.log("decryptJSON key", key);
     if (key === undefined) throw Error("decryptJSON: key is undefined");
     let iv = Buffer.from(data.iv, "hex");
     let encryptedText = Buffer.from(data.data, "hex");
