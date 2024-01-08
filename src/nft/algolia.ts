@@ -5,6 +5,7 @@ import Names from "../table/names";
 import BotMessage from "../mina/message";
 import { MinaNFT } from "minanft";
 import { kind } from "openai/_shims";
+import OwnersTable from "../table/owners";
 
 const ALGOLIA_KEY = process.env.ALGOLIA_KEY!;
 const ALGOLIA_PROJECT = process.env.ALGOLIA_PROJECT!;
@@ -15,6 +16,7 @@ async function algoliaWriteTokens(): Promise<void> {
   const client = algoliasearch(ALGOLIA_PROJECT, ALGOLIA_KEY);
   const index = client.initIndex("minanft");
   const names = new Names(NAMES_TABLE);
+
   const bot = new BotMessage(process.env.SUPPORT_CHAT!, "en");
   const tokens: NamesData[] = await names.scan();
   tokens.sort((a, b) => b.timeCreated - a.timeCreated);
@@ -61,6 +63,14 @@ async function algoliaWriteTokenHelper(
 ): Promise<boolean> {
   try {
     console.log("algoliaWriteTokenHelper", token.username);
+    if (token.ownerPrivateKey !== undefined && token.ownerPrivateKey !== "") {
+      const owners = new OwnersTable(process.env.OWNERS_TABLE!);
+      await owners.create({
+        id: token.id,
+        username: token.username,
+      });
+    }
+
     let params = JSON.parse(token.uri);
     if (token.username !== params.name) console.error("name mismatch");
     const markdown = params.description;

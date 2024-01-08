@@ -4566,9 +4566,9 @@ __metadata:
     form-data: "npm:^4.0.0"
     i18next: "npm:^23.7.8"
     jsonwebtoken: "npm:^9.0.2"
-    minanft: "npm:^1.4.9"
+    minanft: "npm:^1.4.10"
     o1js: "npm:^0.15.1"
-    openai: "npm:^4.21.0"
+    openai: "npm:^4.24.1"
     remove-markdown: "npm:^0.5.0"
     serverless-plugin-typescript: "npm:^2.1.5"
     telegraf: "npm:^4.15.3"
@@ -4576,9 +4576,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"minanft@npm:^1.4.9":
-  version: 1.4.9
-  resolution: "minanft@npm:1.4.9"
+"minanft@npm:^1.4.10":
+  version: 1.4.10
+  resolution: "minanft@npm:1.4.10"
   dependencies:
     arweave: "npm:^1.14.4"
     axios: "npm:^1.6.2"
@@ -4589,7 +4589,7 @@ __metadata:
     tslib: "npm:^2.6.2"
   peerDependencies:
     o1js: ^0.15.1
-  checksum: 60a998834914a4594af0fc48e4d96741c22708c570974a8a8a49766f045e351140b61789d04ced1b0818df2733b792800fbd548dce0690cb03472db616bcfd73
+  checksum: fabf0fc155d5919c4981eba5339ef74e2b3b1e954767f89b428fe0b083453c95704c3957e07f4caf160302cff8a897a5701bd308120e23c330478d5b3484a828
   languageName: node
   linkType: hard
 
@@ -4774,9 +4774,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"openai@npm:^4.21.0":
-  version: 4.21.0
-  resolution: "openai@npm:4.21.0"
+"openai@npm:^4.24.1":
+  version: 4.24.1
+  resolution: "openai@npm:4.24.1"
   dependencies:
     "@types/node": "npm:^18.11.18"
     "@types/node-fetch": "npm:^2.6.4"
@@ -4789,7 +4789,7 @@ __metadata:
     web-streams-polyfill: "npm:^3.2.1"
   bin:
     openai: bin/cli
-  checksum: b744461c3458f8297dc606851c12ceadcc7939ba0d4f0da45b3a07fe0d9a6fbca6bdfa332bacb8d883c66239a1213c5d2dde02b14579d7d7971c9a3f9fc36d17
+  checksum: 3dbcd1cd53aeb7772eed30e3e7814191db79267985b83fafad85038ea7639c6bf3d896331552e131cfbf9ae6b68901c7ab33aad0f025f3b7926535ca1454fce3
   languageName: node
   linkType: hard
 
