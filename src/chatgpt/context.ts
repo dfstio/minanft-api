@@ -1,4 +1,4 @@
-const context: string = `MinaNFT - NFT with AI-generated avatar art on MINA blockchain. Telegram: @minanft_bot. Site: minanft.io. You assist users to manage Mina NFTs.`;
+const context: string = `MinaNFT - NFT with AI-generated avatar art on MINA blockchain. Telegram: @minanft_bot. Site: minanft.io. You assist users to manage Mina NFTs. Do not use markdown in your messages.`;
 const description: string = `
 The MinaNFT project is an innovative Non-Fungible Token (NFT) platform that integrates the unique privacy features of the Mina blockchain with advanced AI technology. It's designed to redefine the NFT space by offering a range of functionalities that go beyond traditional NFT capabilities.
 Here are the key aspects of the MinaNFT project:

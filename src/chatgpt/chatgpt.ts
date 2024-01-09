@@ -34,6 +34,7 @@ export default class ChatGPTMessage {
     let isImage: boolean = false;
 
     let prompt = message;
+    let role = params.role === "system" ? "system" : "user";
     const errorMsg = "ChatGPT error. Please try again in few minutes";
     let answer: ImageGPT = {
       image: "",
@@ -94,6 +95,7 @@ export default class ChatGPTMessage {
 
     try {
       const messages = await history.build(chatcontext);
+      console.log("ChatGPT messages", messages);
 
       let needsReply = true;
       let count = 0;
@@ -184,8 +186,9 @@ export default class ChatGPTMessage {
   public async image(
     msg: string,
     id: string,
-    username: string,
-    isArchetype: boolean = false
+    //username: string,
+    isArchetype: boolean = false,
+    ai: boolean = false
   ): Promise<ImageGPT> {
     const users = new Users(process.env.DYNAMODB_TABLE!);
     const errorMsg = "ChatGPT error. Please try again in few minutes";
@@ -197,62 +200,63 @@ export default class ChatGPTMessage {
     let prompt: string = msg.substring(0, 999);
     let fullPrompt: string = msg;
 
-    const art: string = isArchetype ? dalle : archetypes;
-    const messages: any[] = [
-      {
-        role: "system",
-        content: isArchetype ? art : art + username,
-      },
-      {
-        role: "user",
-        content: msg,
-      },
-    ];
+    if (ai === false) {
+      const art: string = isArchetype ? dalle : archetypes;
+      const messages: any[] = [
+        {
+          role: "system",
+          content: art,
+        },
+        {
+          role: "user",
+          content: msg,
+        },
+      ];
 
-    try {
-      const completion = await this.api.chat.completions.create({
-        model: "gpt-4-1106-preview", // "gpt-3.5-turbo"
-        messages,
-        user: id,
-      });
-      console.log("ChatGPT", completion.choices[0].message?.content);
-      if (
-        completion?.choices[0]?.message?.content !== undefined &&
-        completion?.choices[0]?.message?.content !== null
-      ) {
-        fullPrompt = completion.choices[0].message.content;
-        prompt = completion.choices[0].message.content.substring(0, 999);
-      }
-      await users.updateUsage(id, completion.usage as AIUsage);
-      if (isArchetype && fullPrompt.length > 999) {
+      try {
         const completion = await this.api.chat.completions.create({
-          model: "gpt-4-1106-preview",
-          messages: [
-            {
-              role: "system",
-              content:
-                "Maximum size of description should be strictly 1000 characters. Do not provide description with the size more than 1000 characters. Please shorten the user input so it would be not more than 1000 characters",
-            },
-            {
-              role: "user",
-              content: fullPrompt,
-            },
-          ],
+          model: "gpt-4-1106-preview", // "gpt-3.5-turbo"
+          messages,
           user: id,
         });
+        console.log("ChatGPT", completion.choices[0].message?.content);
         if (
           completion?.choices[0]?.message?.content !== undefined &&
-          completion?.choices[0]?.message?.content !== null &&
-          completion?.usage !== undefined
+          completion?.choices[0]?.message?.content !== null
         ) {
+          fullPrompt = completion.choices[0].message.content;
           prompt = completion.choices[0].message.content.substring(0, 999);
-          await users.updateUsage(id, completion.usage as AIUsage);
         }
+        await users.updateUsage(id, completion.usage as AIUsage);
+        if (isArchetype && fullPrompt.length > 999) {
+          const completion = await this.api.chat.completions.create({
+            model: "gpt-4-1106-preview",
+            messages: [
+              {
+                role: "system",
+                content:
+                  "Maximum size of description should be strictly 1000 characters. Do not provide description with the size more than 1000 characters. Please shorten the user input so it would be not more than 1000 characters",
+              },
+              {
+                role: "user",
+                content: fullPrompt,
+              },
+            ],
+            user: id,
+          });
+          if (
+            completion?.choices[0]?.message?.content !== undefined &&
+            completion?.choices[0]?.message?.content !== null &&
+            completion?.usage !== undefined
+          ) {
+            prompt = completion.choices[0].message.content.substring(0, 999);
+            await users.updateUsage(id, completion.usage as AIUsage);
+          }
+        }
+      } catch (err) {
+        console.error(err);
       }
-    } catch (err) {
-      console.error(err);
     }
-
     console.log("Image prompt:", prompt);
     console.log("Image full prompt:", fullPrompt);
     let imageUrl = "";

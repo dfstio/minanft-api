@@ -8,6 +8,7 @@ export default interface UserData {
   message: string;
   currentAnswer: number;
   language_code: string;
+  voice?: boolean;
   chatGPTinit: boolean;
   user?: any;
   name?: string;

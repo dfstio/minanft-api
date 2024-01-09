@@ -1,8 +1,11 @@
-import { ElasticTranscoderClient, CreateJobCommand } from '@aws-sdk/client-elastic-transcoder'
+import {
+  ElasticTranscoderClient,
+  CreateJobCommand,
+} from "@aws-sdk/client-elastic-transcoder";
 
 export default async function oggToMP3(key: string): Promise<void> {
   try {
-    const elasticTranscoder = new ElasticTranscoderClient({})
+    const elasticTranscoder = new ElasticTranscoderClient({});
     const elasticParams = {
       PipelineId: process.env.VOICE_PIPELINEID!, //voice
       Input: {
@@ -14,9 +17,9 @@ export default async function oggToMP3(key: string): Promise<void> {
       },
     };
 
-    const elsticcommand = new CreateJobCommand(elasticParams)
-    await elasticTranscoder.send(elsticcommand)
+    const elsticcommand = new CreateJobCommand(elasticParams);
+    await elasticTranscoder.send(elsticcommand);
   } catch (error: any) {
-    console.error("Error: oggToMP3", error)
+    console.error("Error: oggToMP3", error);
   }
 }

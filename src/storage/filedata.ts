@@ -41,11 +41,15 @@ export function convertIPFSFileData(uri: any): FileData {
   });
 }
 
-export async function getFileData(filename: string): Promise<FileData> {
-  const file = new S3File(process.env.BUCKET!, filename);
+export async function getFileData(
+  id: string,
+  filename: string
+): Promise<FileData> {
+  const key = id + "/" + filename;
+  const file = new S3File(process.env.BUCKET!, key);
   const metadata = await file.metadata();
   if (metadata === undefined)
-    throw new Error(`S3 error getting metadata for ${filename}`);
+    throw new Error(`S3 error getting metadata for ${key}`);
   const { size, mimeType } = metadata;
   console.time("Calculated SHA-3 512 hash");
   const hash = await file.sha3_512();
@@ -61,7 +65,7 @@ export async function getFileData(filename: string): Promise<FileData> {
   // = await treeData(stream);
   console.timeEnd("Calculated Merkle tree root");
   const ipfs = new IPFS(process.env.PINATA_JWT!);
-  let cidImage = await ipfs.addLink(filename);
+  let cidImage = await ipfs.addLink(key);
   if (cidImage === undefined)
     throw new Error(`IPFS error uploading ${filename}`);
   return new FileData({

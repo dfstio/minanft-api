@@ -21,6 +21,7 @@ import Names from "../table/names";
 import { NamesData, BotMintData } from "../model/namesData";
 import MetadataData from "../model/metadata";
 import MetadataTable from "../table/metadata";
+import { Job } from "../table/job";
 
 const blockchainToDeploy: blockchain = "testworld2";
 
@@ -30,6 +31,11 @@ const NAMES_TABLE = process.env.TESTWORLD2_NAMES_TABLE!;
 export async function deployNFT(params: BotMintData): Promise<void> {
   console.log("deployNFT", params);
   const { id, language, filename, timeNow, username, creator } = params;
+  const job = new Job({
+    id,
+    task: "mint",
+  });
+  await job.start();
 
   try {
     const names = new Names(NAMES_TABLE);
@@ -66,7 +72,7 @@ export async function deployNFT(params: BotMintData): Promise<void> {
       owner,
     });
 
-    const imageData = await getFileData(filename);
+    const imageData = await getFileData(id, filename);
     const url = MinaNFT.urlFromStorageString(imageData.storage);
     nft.updateFileData({
       key: `image`,
@@ -96,8 +102,9 @@ export async function deployNFT(params: BotMintData): Promise<void> {
         "Verification key is wrong",
         MinaNFT.verificationKey?.hash?.toJSON()
       );
-      await bot.tmessage("ErrordeployingNFT");
+      await bot.smessage("ErrordeployingNFT");
       Memory.info("deploy error");
+      await job.failed("Verification key is wrong");
       console.timeEnd("all");
       return;
     }
@@ -144,8 +151,9 @@ export async function deployNFT(params: BotMintData): Promise<void> {
     const txId = tx?.hash();
     if (tx === undefined || txId === undefined) {
       console.error("Error deploying NFT");
-      await bot.tmessage("ErrordeployingNFT");
+      await bot.smessage("ErrordeployingNFT");
       Memory.info("deploy error");
+      await job.failed("deploy error");
       console.timeEnd("all");
       return;
     }
@@ -202,9 +210,11 @@ export async function deployNFT(params: BotMintData): Promise<void> {
     await bot.invoice(username.slice(1), image);
     Memory.info("end");
     await sleep(1000);
+    await job.finish(txId);
     console.timeEnd("all");
   } catch (err) {
     console.error(err);
+    await job.failed("deploy error");
   }
 }
 
@@ -216,10 +226,16 @@ export async function addKeys(params: {
 }): Promise<void> {
   console.log("addKeys", params);
   const { id, language, username, keys } = params;
+  const job = new Job({
+    id,
+    task: "add_keys",
+  });
+  await job.start();
 
   try {
     if (keys.length === 0) {
       console.error("No keys to add");
+      await job.failed("No keys to add");
       return;
     }
     const names = new Names(NAMES_TABLE);
@@ -235,6 +251,7 @@ export async function addKeys(params: {
       console.log("Found name record", name);
     } else {
       console.log("Wrong nft format or no nft", name);
+      await job.failed("Wrong nft format or no nft");
       return;
     }
 
@@ -252,6 +269,9 @@ export async function addKeys(params: {
       typeof ownerPrivateKeyStr !== "string"
     ) {
       console.error("Error decrypting owner private key");
+      await bot.smessage("ErrordeployingNFT");
+      Memory.info("deploy error");
+      await job.failed("Error decrypting owner private key");
       return;
     }
 
@@ -278,12 +298,18 @@ export async function addKeys(params: {
       currentPrivateURI.metadata === undefined
     ) {
       console.error("Error getting current private URI", currentPrivateURI);
+      await bot.smessage("ErrordeployingNFT");
+      Memory.info("deploy error");
+      await job.failed("Error getting current private URI");
       return;
     }
 
     const metadataURI = await decryptJSON(currentPrivateURI.metadata, username);
     if (metadataURI === undefined) {
       console.error("Error decrypting metadata");
+      await bot.smessage("ErrordeployingNFT");
+      Memory.info("deploy error");
+      await job.failed("Error decrypting metadata");
       return;
     }
     console.log("metadataURI", metadataURI);
@@ -320,9 +346,11 @@ export async function addKeys(params: {
         "Verification key is wrong",
         MinaNFT.verificationKey?.hash?.toJSON()
       );
-      await bot.tmessage("ErrordeployingNFT");
+      await bot.smessage("ErrordeployingNFT");
       Memory.info("deploy error");
       console.timeEnd("all");
+      await bot.smessage("ErrordeployingNFT");
+      await job.failed("Verification key is wrong");
       return;
     }
 
@@ -360,8 +388,9 @@ export async function addKeys(params: {
     const txId = tx?.hash();
     if (tx === undefined || txId === undefined) {
       console.error("Error deploying NFT");
-      await bot.tmessage("ErrordeployingNFT");
+      await bot.smessage("ErrordeployingNFT");
       Memory.info("deploy error");
+      await job.failed("deploy error");
       console.timeEnd("all");
       return;
     }
@@ -394,6 +423,7 @@ export async function addKeys(params: {
     //await bot.invoice(username.slice(1), image);
     Memory.info("end");
     await sleep(1000);
+    await job.finish(txId);
     console.timeEnd("all");
   } catch (err) {
     console.error(err);

@@ -10,9 +10,20 @@ export default class Jobs extends Table<JobsData> {
     task: string;
     args: string[];
     jobData: string[];
+    isStarted?: boolean;
+    timeStarted?: number;
   }): Promise<string | undefined> {
-    const { username, developer, jobName, jobData, task, args } = params;
-    const timeCreated: number = Date.now();
+    const {
+      username,
+      developer,
+      jobName,
+      jobData,
+      task,
+      args,
+      isStarted,
+      timeStarted,
+    } = params;
+    const timeCreated: number = timeStarted ?? Date.now();
     const jobId: string =
       username + "." + timeCreated.toString() + "." + makeString(32);
     const item: JobsData = {
@@ -26,6 +37,7 @@ export default class Jobs extends Table<JobsData> {
       timeCreated,
       jobStatus: "created" as JobStatus,
     };
+    if (isStarted === true) item.timeStarted = timeCreated;
     try {
       await this.create(item);
       return jobId;

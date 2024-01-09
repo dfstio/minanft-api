@@ -36,6 +36,23 @@ export default class Users extends Table<UserData> {
     return data.language_code;
   }
 
+  public async getVoice(id: string): Promise<boolean> {
+    const data: UserData | undefined = await this.get({ id: id });
+    if (data === undefined) return false;
+    return data.voice === true ? true : false;
+  }
+
+  public async setVoice(id: string, voice: boolean): Promise<void> {
+    await this.updateData(
+      { id: id },
+      {
+        "#V": "voice",
+      },
+      { ":voice": voice },
+      `set #V = :voice`
+    );
+  }
+
   private getExpAttrValue(
     shortName: string,
     answer: string,

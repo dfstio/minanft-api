@@ -27,9 +27,20 @@ async function getLanguage(id: string): Promise<string> {
   return LANGUAGE;
 }
 
+async function getVoice(id: string): Promise<boolean> {
+  const users = new Users(process.env.DYNAMODB_TABLE!);
+  const voice: boolean = await users.getVoice(id);
+  return voice;
+}
+
+async function setVoice(id: string, voice: boolean): Promise<void> {
+  const users = new Users(process.env.DYNAMODB_TABLE!);
+  await users.setVoice(id, voice);
+}
+
 function getT(language: string): any {
   const systemLocale = Intl.DateTimeFormat().resolvedOptions().locale;
   return i18next.getFixedT(language || systemLocale);
 }
 
-export { getT, initLanguages, getLanguage };
+export { getT, initLanguages, getLanguage, getVoice, setVoice };
