@@ -1,4 +1,8 @@
-import { S3Client, GetObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
+import {
+  S3Client,
+  GetObjectCommand,
+  HeadObjectCommand,
+} from "@aws-sdk/client-s3";
 import axios from "axios";
 import FormData from "form-data";
 
@@ -23,7 +27,7 @@ export default class IPFS {
       const res = await axios.post(
         "https://api.pinata.cloud/pinning/pinJSONToIPFS",
         data,
-        config,
+        config
       );
 
       return res.data.IpfsHash;
@@ -53,8 +57,7 @@ export default class IPFS {
           const headresponse = await client.send(headcommand);
           finished = true;
           console.log("S3 is ready:", file, headresponse);
-        }
-        catch (e) {
+        } catch (e) {
           console.log("S3 is not ready yet", file);
           await sleep(500);
         }
@@ -65,7 +68,7 @@ export default class IPFS {
       const getresponse = await client.send(getcommand);
 
       // Get read object stream
-      const s3Stream = getresponse.Body
+      const s3Stream = getresponse.Body;
 
       const formData = new FormData();
 
@@ -85,7 +88,7 @@ export default class IPFS {
             ...formData.getHeaders(),
           },
           maxBodyLength: 25 * 1024 * 1024,
-        },
+        }
       );
 
       console.log("addLink result:", response.data);

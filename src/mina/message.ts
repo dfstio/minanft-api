@@ -1,7 +1,11 @@
-import { Telegraf, Context } from "telegraf";
+import { Telegraf, Context, Input } from "telegraf";
 import { mintInvoice, postInvoice, supportInvoice } from "../payments/stripe";
-import { getT } from "../lang/lang";
+import { getT, getVoice } from "../lang/lang";
 import History from "../table/history";
+import { InputFile } from "telegraf/typings/core/types/typegram";
+import { textToVoice } from "../voice/polly";
+import { sleep } from "minanft";
+import callLambda from "../lambda/lambda";
 const HISTORY_TABLE = process.env.HISTORY_TABLE!;
 
 export default class BotMessage {
@@ -9,6 +13,7 @@ export default class BotMessage {
   id: string;
   supportId: string;
   history: History;
+  language: string;
   T: any;
 
   constructor(
@@ -21,6 +26,7 @@ export default class BotMessage {
     this.id = id;
     this.supportId = supportId;
     this.history = new History(HISTORY_TABLE, id);
+    this.language = language ?? "en";
     this.T = getT(language);
     this.bot.catch((err, ctx) => {
       console.error(`Telegraf error for ${ctx.updateType}`, err);
@@ -32,7 +38,7 @@ export default class BotMessage {
     this.bot.telegram.sendMessage(this.id, msgTransalted).catch((error) => {
       console.error(`Telegraf error`, error);
     });
-    await this.history.add(msgTransalted);
+    await this.history.add(msgTransalted, false);
 
     const supportMsg: string = `Message for ${this.id}: ${msgTransalted}`;
     this.bot.telegram.sendMessage(this.supportId, supportMsg).catch((error) => {
@@ -41,13 +47,49 @@ export default class BotMessage {
     console.log(supportMsg);
   }
 
-  public async message(msg: string): Promise<void> {
+  public async message(
+    msg: string,
+    addToHistory: boolean = true
+  ): Promise<void> {
     this.bot.telegram.sendMessage(this.id, msg).catch((error) => {
       console.error(`Telegraf error`, error);
     });
-    await this.history.add(msg);
+    if (addToHistory) await this.history.add(msg);
 
     const supportMsg: string = `Message for ${this.id}: ${msg}`;
+    this.bot.telegram.sendMessage(this.supportId, supportMsg).catch((error) => {
+      console.error(`Telegraf error`, error);
+    });
+    console.log(supportMsg);
+    if (await getVoice(this.id)) {
+      console.log("Sending voice", this.id, msg);
+      const voice = await textToVoice(msg, this.id, this.language);
+      console.log("Voice", voice);
+      if (voice === undefined) {
+        console.error("Voice is undefined");
+        return;
+      }
+      await this.audio(voice, {});
+    }
+  }
+
+  /*
+   * system message
+   */
+  public async smessage(msg: string, params: any = {}): Promise<void> {
+    const msgTransalted: string = this.T(msg, params);
+    await this.history.add(msgTransalted, false);
+    await callLambda(
+      "ask",
+      JSON.stringify({
+        id: this.id,
+        message: "system message",
+        image: "",
+        auth: process.env.CHATGPTPLUGINAUTH!,
+      })
+    );
+
+    const supportMsg: string = `System message for ${this.id}: ${msgTransalted}`;
     this.bot.telegram.sendMessage(this.supportId, supportMsg).catch((error) => {
       console.error(`Telegraf error`, error);
     });
@@ -63,6 +105,12 @@ export default class BotMessage {
 
   public async image(image: string, params: any): Promise<void> {
     this.bot.telegram.sendPhoto(this.id, image, params).catch((error) => {
+      console.error(`Telegraf error`, error);
+    });
+  }
+
+  public async audio(mp3: string, params: any): Promise<void> {
+    this.bot.telegram.sendAudio(this.id, mp3, params).catch((error) => {
       console.error(`Telegraf error`, error);
     });
   }

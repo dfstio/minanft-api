@@ -20,6 +20,7 @@ provider:
     TASKS_TABLE: ${file(./env.json):TASKS_TABLE, env:TASKS_TABLE}
     DOCS_TABLE: ${file(./env.json):DOCS_TABLE, env:DOCS_TABLE}
     NAMES_TABLE: ${file(./env.json):NAMES_TABLE, env:NAMES_TABLE}
+    FILES_TABLE: ${file(./env.json):FILES_TABLE, env:FILES_TABLE}
     OWNERS_TABLE: ${file(./env.json):OWNERS_TABLE, env:OWNERS_TABLE}
     JOBS_TABLE: ${file(./env.json):JOBS_TABLE, env:JOBS_TABLE}
     STEPS_TABLE: ${file(./env.json):STEPS_TABLE, env:STEPS_TABLE}
@@ -94,6 +95,15 @@ provider:
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
       Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.NAMES_TABLE}"
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.FILES_TABLE}"
     - Effect: Allow
       Action:
         - dynamodb:Query
@@ -215,6 +225,11 @@ provider:
       Resource:
         - "arn:aws:elastictranscoder:${opt:region, self:provider.region}:*:pipeline/*"
         - "arn:aws:elastictranscoder:${opt:region, self:provider.region}:*:preset/*"
+    - Effect: Allow
+      Action:
+        - polly:*
+      Resource:
+        - "*"
     - Effect: Allow
       Action:
         - ec2:DescribeNetworkInterfaces
@@ -421,6 +436,22 @@ resources:
             KeyType: RANGE
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:provider.environment.OWNERS_TABLE}
+    FilesDynamoDbTable:
+      Type: "AWS::DynamoDB::Table"
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: filename
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+          - AttributeName: filename
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:provider.environment.FILES_TABLE}
     JobsDynamoDbTable:
       Type: "AWS::DynamoDB::Table"
       DeletionPolicy: Retain

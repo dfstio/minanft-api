@@ -1,11 +1,15 @@
 /* eslint-disable @typescript-eslint/consistent-type-imports */
 import { Telegraf, Context } from "telegraf";
 import Questions from "./questions";
-import { getT, initLanguages } from "./lang/lang";
+import { getT, initLanguages, getVoice, setVoice } from "./lang/lang";
 import Users from "./table/users";
 import Names from "./table/names";
 import History from "./table/history";
-import { startDeployment, generateFilename } from "./nft/nft";
+import {
+  startDeployment,
+  generateFilename,
+  getFormattedDateTime,
+} from "./nft/nft";
 import { BotMintData } from "./model/namesData";
 import DocumentData from "./model/documentData";
 import FileHandler from "./fileHandler";
@@ -25,10 +29,13 @@ import {
   botCommandCallback,
 } from "./payments/botcommands";
 import UserData from "./model/userData";
+import { FileData } from "./model/fileData";
+import { FilesTable } from "./table/files";
 
 const CHATGPTPLUGINAUTH = process.env.CHATGPTPLUGINAUTH!;
 const NAMES_TABLE = process.env.TESTWORLD2_NAMES_TABLE!;
 const HISTORY_TABLE = process.env.HISTORY_TABLE!;
+const FILES_TABLE = process.env.FILES_TABLE!;
 const LANG = process.env.LANG ? process.env.LANG : "en";
 console.log("Language", LANG);
 
@@ -95,7 +102,8 @@ export default class BotLogic {
       this.bot.telegram.sendMessage(this.id, msg).catch((error) => {
         console.error("Telegraf error", error);
       });
-      if (this.history != null && logHistory) await this.history.add(msg);
+      if (this.history != null && logHistory)
+        await this.history.add(msg, false);
     } else console.error("No id for message:", msg);
 
     if (logHistory) {
@@ -254,11 +262,56 @@ export default class BotLogic {
     if (
       command == "new" ||
       command == '"new"' ||
-      command == "\new" ||
+      command == "\\new" ||
       command == "/new"
     ) {
       await this.users.resetAnswer(chatIdString);
       await this.message(T("createNFT"));
+      return;
+    }
+
+    if (
+      command == "voice" ||
+      command == "voiceon" ||
+      command == '"voiceon"' ||
+      command == "\\voiceon" ||
+      command == "/voiceon"
+    ) {
+      await setVoice(chatIdString, true);
+      await this.history.add(T("voiceon"), false);
+      await callLambda(
+        "ask",
+        JSON.stringify({
+          id: chatIdString,
+          message: "voice is on", //  "Iwanttosell": "I want to sell my Mina NFT"
+          parentMessage: parentMessage,
+          image: "",
+          auth: CHATGPTPLUGINAUTH,
+        })
+      );
+      //await this.message(T("voiceon"));
+      return;
+    }
+
+    if (
+      command == "voiceoff" ||
+      command == '"voiceoff"' ||
+      command == "\\voiceoff" ||
+      command == "/voiceoff"
+    ) {
+      await setVoice(chatIdString, false);
+      await this.history.add(T("voiceoff"), false);
+      await callLambda(
+        "ask",
+        JSON.stringify({
+          id: chatIdString,
+          message: "voice is off", //  "Iwanttosell": "I want to sell my Mina NFT"
+          parentMessage: parentMessage,
+          image: "",
+          auth: CHATGPTPLUGINAUTH,
+        })
+      );
+      //await this.message(T("voiceoff"));
       return;
     }
 
@@ -341,18 +394,39 @@ export default class BotLogic {
     }
 
     if (body.message.photo) {
-      if (!(currState && currState.username)) {
-        console.log("No username", currState);
-        await this.message(T("chooseNFTname"));
+      const photo = body.message.photo[body.message.photo.length - 1];
+      const timeNow = Date.now();
+      const filename = "image." + getFormattedDateTime(timeNow) + ".jpg";
+      const file = await copyTelegramImageToS3(
+        chatIdString,
+        filename,
+        photo.file_id,
+        true
+      );
+      if (file === undefined) {
+        console.error("Image is undefined");
         return;
       }
+      const fileTable = new FilesTable(FILES_TABLE);
+      await fileTable.create(file);
       if (currIndexAnswer == 1) {
-        const photo = body.message.photo[body.message.photo.length - 1];
+        if (!(currState && currState.username)) {
+          console.log("No username", currState);
+          await this.message(T("chooseNFTname"));
+          return;
+        }
         console.log("Image  data:", body.message.caption, photo);
         try {
+          /*
           const timeNow = Date.now();
           const filename = generateFilename(timeNow) + ".jpg";
-          await copyTelegramImageToS3(filename, photo.file_id);
+          await copyTelegramImageToS3(
+            chatIdString,
+            filename,
+            photo.file_id,
+            false
+          );
+          */
           await startDeployment({
             id: chatIdString,
             language: LANGUAGE,
@@ -370,6 +444,28 @@ export default class BotLogic {
             "image uploaded"
           );
           await this.message(T(this.questions.finalWords));
+          return;
+        } catch (error) {
+          console.error("Image catch", (<any>error).toString());
+        }
+      } else {
+        try {
+          await this.history.add(
+            T("file.uploaded", { filedata: JSON.stringify(file) }),
+            false
+          );
+          await this.message(T(this.questions.fileSuccess));
+          await callLambda(
+            "ask",
+            JSON.stringify({
+              id: chatIdString,
+              message: "photo is uploaded", //  "Iwanttosell": "I want to sell my Mina NFT"
+              parentMessage: parentMessage,
+              image: "",
+              auth: CHATGPTPLUGINAUTH,
+            })
+          );
+          return;
         } catch (error) {
           console.error("Image catch", (<any>error).toString());
         }
@@ -427,22 +523,49 @@ export default class BotLogic {
     if (body.message.document) {
       console.log("Document", body.message.document);
       const documentData = <DocumentData>body.message.document;
+      const fileHandler = new FileHandler(chatIdString, documentData);
+      const file = await fileHandler.copyFileToS3(chatIdString); //, this.parseObjectToHtml(item));
+      if (file === undefined) {
+        console.error("File is undefined");
+        return;
+      }
+      const fileTable = new FilesTable(FILES_TABLE);
+      await fileTable.create(file);
+      await this.history.add(
+        T("file.uploaded", { filedata: JSON.stringify(file) }),
+        false
+      );
+      await this.message(T(this.questions.fileSuccess));
+      await callLambda(
+        "ask",
+        JSON.stringify({
+          id: chatIdString,
+          message: "file is uploaded", //  "Iwanttosell": "I want to sell my Mina NFT"
+          parentMessage: parentMessage,
+          image: "",
+          auth: CHATGPTPLUGINAUTH,
+        })
+      );
+      return;
+
+      /*
       if (this.validator.validateWrittenDocument(documentData)) {
         //await this.users.updateAnswer(chatIdString, currIndexAnswer, documentData.file_name);
         //const item = await this.users.getItem(chatIdString);
-        const fileHandler = new FileHandler(documentData);
-        await fileHandler.copyFileToS3(chatIdString); //, this.parseObjectToHtml(item));
+        const fileHandler = new FileHandler(chatIdString, documentData);
+        const file = await fileHandler.copyFileToS3(chatIdString); //, this.parseObjectToHtml(item));
         await this.message(T(this.questions.fileSuccess));
         //currIndexAnswer++;
       } else {
         await this.message(T(this.questions.typeError));
       }
+      */
     }
 
     if (
       currIndexAnswer >= formQuestions.length &&
       userInput &&
-      userInput.substr(0, 6) !== "/start"
+      userInput.substring(0, 6) !== "/start"
     ) {
       console.log("currIndexAnswer", currIndexAnswer);
       const askChatGPT = userInput;
@@ -463,7 +586,7 @@ export default class BotLogic {
     }
 
     if (userInput) {
-      if (userInput.substr(0, 6) === "/start" && currIndexAnswer === 0) {
+      if (userInput.substring(0, 6) === "/start" && currIndexAnswer === 0) {
         console.log(
           "New user",
           body.message.chat,
@@ -507,7 +630,7 @@ export default class BotLogic {
             console.error("Telegraf error", error);
           });
       } else {
-        if (userInput.substr(0, 6) === "/start" && userInput.length > 6) {
+        if (userInput.substring(0, 6) === "/start" && userInput.length > 6) {
           console.log("Deep link ", userInput);
           if (userInput.substring(7) == "auth") {
             await this.message(generateJWT(chatIdString), false);

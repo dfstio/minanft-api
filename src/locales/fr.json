@@ -51,5 +51,7 @@
   "MinaNFT1hoursupport": "Support de 1 heure Mina NFT",
   "SupportbyMinaNFTteam": "Support - une heure de support par l'équipe MinaNFT via appel ou chat Zoom ou Telegram",
   "Support1hour": "Support - 1 heure",
-  "PurchaseofAvatarNFT": "Achat du nom du NFT Avatar MINA sur la blockchain MINA"
+  "PurchaseofAvatarNFT": "Achat du nom du NFT Avatar MINA sur la blockchain MINA",
+  "voiceon": "Les messages vocaux sont activés",
+  "voiceoff": "Les messages vocaux sont désactivés"
 }
