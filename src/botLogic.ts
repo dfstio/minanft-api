@@ -437,6 +437,9 @@ export default class BotLogic {
               currState.user && currState.user.username
                 ? currState.user.username
                 : "",
+            keys: [],
+            files: [],
+            description: "",
           } as BotMintData);
           this.users.updateAnswer(
             chatIdString,

@@ -130,12 +130,7 @@ export default class ChatGPTMessage {
               //console.log("ChatGPT tool", tool.id, tool.function);
               let reply: AiData | undefined = undefined;
               try {
-                reply = await aiTool(
-                  id,
-                  tool.function,
-                  username,
-                  this.language
-                );
+                reply = await aiTool(id, tool.function, this.language);
                 reply.functionName = tool.function.name;
                 toolsResults.push(reply);
               } catch (error) {

@@ -25,7 +25,8 @@ export default class FileHandler {
       const filePath = telegramFileInfo.data.result.file_path;
       const file = new S3File(process.env.BUCKET!, key);
       await file.upload(
-        `https://api.telegram.org/file/bot${botToken}/${filePath}`
+        `https://api.telegram.org/file/bot${botToken}/${filePath}`,
+        this.documentData.mime_type
       );
       console.log("Saved", key);
       await file.wait();

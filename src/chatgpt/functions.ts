@@ -1,6 +1,6 @@
 import BotMessage from "../mina/message";
 import Names from "../table/names";
-import type { NamesData } from "../model/namesData";
+import type { NamesData, BotMintData, KeyData } from "../model/namesData";
 import { FileData } from "../model/fileData";
 import OwnersTable from "../table/owners";
 import { FilesTable } from "../table/files";
@@ -11,7 +11,7 @@ import { description } from "./context";
 import callLambda from "../lambda/lambda";
 import { listKeys as listPrivateKeys } from "../mina/deploy";
 import { getVoice, setVoice } from "../lang/lang";
-import { getFormattedDateTime } from "../nft/nft";
+import { getFormattedDateTime, startDeployment } from "../nft/nft";
 
 const NAMES_TABLE = process.env.TESTWORLD2_NAMES_TABLE!;
 const FILES_TABLE = process.env.FILES_TABLE!;
@@ -118,22 +118,6 @@ const aiFunctions = {
       },
     },
   },
-  view: {
-    type: "function",
-    function: {
-      name: "view",
-      description: "Shows to the user all NFTs or NFT with specific name",
-      parameters: {
-        type: "object",
-        properties: {
-          nft_name: {
-            type: "string",
-            description: "Mina NFT avatar name to view",
-          },
-        },
-      },
-    },
-  },
   sell: {
     type: "function",
     function: {
@@ -161,29 +145,71 @@ const aiFunctions = {
       },
     },
   },
-  post: {
+  create_post: {
     type: "function",
     function: {
-      name: "post",
-      description: "Create post for user's NFT",
+      name: "create_post",
+      description:
+        "Create new post for existing user's NFT. You should ask the user about all the parameters of the post and then call this function. Do not call this function without getting user's confirmation on all the parameters",
       parameters: {
         type: "object",
         properties: {
           nft_name: {
             type: "string",
-            description: "The name of the NFT",
+            description:
+              "The name of the existing user's NFT where the post will be added.",
             enum: nft_names,
           },
           post_name: {
             type: "string",
             description: "The name of the post, maximum 30 characters",
           },
+          post_image: {
+            type: "string",
+            description:
+              "The filename of the image to be used as NFT avatar. Must be one of the files uploaded by the user and have image mime type",
+          },
           post_description: {
             type: "string",
-            description: "The post description, can be long",
+            description: "The NFT description, can be long",
+          },
+          keys: {
+            type: "array",
+            description: "array of key-value pairs",
+            items: {
+              type: "object",
+              properties: {
+                key: {
+                  type: "string",
+                  description:
+                    "The key of the key-value pair, maximum 30 characters",
+                },
+                value: {
+                  type: "string",
+                  description:
+                    "The value of the key-value pair, maximum 30 characters",
+                },
+                isPrivate: {
+                  type: "boolean",
+                  description:
+                    "If this key is private, only the owner can see it",
+                },
+              },
+            },
+          },
+          files: {
+            type: "array",
+            description: "array of filenames",
+            items: {
+              filename: {
+                type: "string",
+                description:
+                  "The filename of the file. Must be one of the files uploaded by the user. Can have any mime type",
+              },
+            },
           },
         },
-        required: ["nft_name", "post_name"],
+        required: ["nft_name", "post_name", "post_image"],
       },
     },
   },
@@ -238,13 +264,10 @@ const aiFunctions = {
             type: "array",
             description: "array of filenames",
             items: {
-              type: "object",
-              properties: {
-                filename: {
-                  type: "string",
-                  description:
-                    "The filename of the file. Must be one of the files uploaded by the use. Can have any mime type",
-                },
+              filename: {
+                type: "string",
+                description:
+                  "The filename of the file. Must be one of the files uploaded by the user. Can have any mime type",
               },
             },
           },
@@ -310,7 +333,52 @@ const aiFunctions = {
             },
           },
         },
-        required: ["nft_name", "keyvalue"],
+        required: ["nft_name", "keys"],
+      },
+    },
+  },
+  prove: {
+    type: "function",
+    function: {
+      name: "prove",
+      description: "Generate ZK proof for public or private key-values pairs",
+      parameters: {
+        type: "object",
+        properties: {
+          nft_name: {
+            type: "string",
+            description: "The name of the nft",
+            enum: nft_names,
+          },
+          keys: {
+            type: "array",
+            description: "array of NFTs keys",
+            items: {
+              type: "string",
+              description:
+                "The key of the key-value pair. Should be the key of the NFT returned by the listKeys function",
+            },
+          },
+        },
+        required: ["nft_name", "keys"],
+      },
+    },
+  },
+  verify: {
+    type: "function",
+    function: {
+      name: "verify",
+      description:
+        "Verifies the ZK proof for public or private key-values pairs",
+      parameters: {
+        type: "object",
+        properties: {
+          proofFilename: {
+            type: "string",
+            description:
+              "Filename of the ZK proof json file. Should be one of the files of the user, ends with .proof.json and have application/json mime type",
+          },
+        },
       },
     },
   },
@@ -323,16 +391,16 @@ async function getAIfunctions(id: string): Promise<any[]> {
   functions.push(aiFunctions.set_voice);
   functions.push(aiFunctions.create_nft);
   functions.push(aiFunctions.generate_image);
+  functions.push(aiFunctions.verify);
   const owners = new OwnersTable(process.env.OWNERS_TABLE!);
   const names: string[] = await owners.listNFTs(id);
   if (names.length > 0) {
     functions.push(aiFunctions.list_NFTs);
     functions.push(aiFunctions.list_files);
-    functions.push(aiFunctions.view);
     const sell = aiFunctions.sell;
     sell.function.parameters.properties.nft_name.enum = names;
     functions.push(aiFunctions.sell);
-    const post = aiFunctions.post;
+    const post = aiFunctions.create_post;
     post.function.parameters.properties.nft_name.enum = names;
     functions.push(post);
     const edit = aiFunctions.edit;
@@ -341,6 +409,9 @@ async function getAIfunctions(id: string): Promise<any[]> {
     const listKeys = aiFunctions.listKeys;
     listKeys.function.parameters.properties.nft_name.enum = names;
     functions.push(listKeys);
+    const prove = aiFunctions.prove;
+    prove.function.parameters.properties.nft_name.enum = names;
+    functions.push(prove);
   }
   return functions;
 }
@@ -434,6 +505,88 @@ async function create_nft(
   };
 }
 
+async function create_post(
+  id: string,
+  request: any,
+  language: string
+): Promise<AiData> {
+  console.log("create_post", JSON.stringify(request, null, 2));
+
+  return <AiData>{
+    answer:
+      "Post creation is started. Please wait a few minutes. We will notify the user you when it is done",
+    needsPostProcessing: true,
+    data: { id, request, language },
+  };
+}
+
+async function verify(
+  id: string,
+  request: any,
+  language: string
+): Promise<AiData> {
+  console.log("verify", JSON.stringify(request, null, 2));
+
+  return <AiData>{
+    answer:
+      "Veification is started. Please wait a few minutes. We will notify the user about the result of the verification when it is done",
+    needsPostProcessing: true,
+    data: { id, proof: request.proofFilename, language, task: "verify" },
+  };
+}
+
+async function prove(
+  id: string,
+  request: any,
+  language: string
+): Promise<AiData> {
+  console.log("prove", id, JSON.stringify(request, null, 2));
+  let success = true;
+  let answer =
+    "The addition of the key-value pairs have been started. Please wait a few minutes. We will notify the user you when it is done";
+  if (request.nft_name && request.keys && request.keys.length > 0) {
+    const names = new Names(NAMES_TABLE);
+    const name: NamesData | undefined = await names.get({
+      username: request.nft_name,
+    });
+    if (name === undefined) {
+      console.error("Error: nft is not found", request.nft_name);
+      success = false;
+      answer = "Error: NFT is not found";
+    } else if (name.id !== id) {
+      console.error("Error: nft is not owned by the user", request.nft_name);
+      success = false;
+      answer = "Error: NFT is not owned by the user";
+    } else if (
+      name.ownerPrivateKey === undefined ||
+      name.ownerPrivateKey === ""
+    ) {
+      console.error("Error: owner key is empty", request.nft_name);
+      success = false;
+      answer =
+        "Error: This NFT does not have owner key. The user should use minanft.io to manage it";
+    }
+  } else {
+    success = false;
+    answer =
+      "Please provide the name of the NFT and the key-value pairs. The provided data is not valid";
+  }
+
+  const data = {
+    id,
+    username: request.nft_name,
+    keys: request.keys,
+    language,
+    task: "prove",
+  };
+
+  return <AiData>{
+    answer,
+    needsPostProcessing: success ? true : false,
+    data: success ? data : {},
+  };
+}
+
 async function edit(
   id: string,
   request: any,
@@ -484,6 +637,7 @@ export async function addKeys(params: {
     username: request.nft_name,
     keys: request.keys,
     language,
+    task: "add",
   };
 
   return <AiData>{
@@ -493,59 +647,38 @@ export async function addKeys(params: {
   };
 }
 
-async function post(
-  id: string,
-  request: any,
-  username: string | undefined,
-  language: string
-): Promise<AiData> {
-  return <AiData>{
-    answer:
-      "Ask the user to upload an image or describe the image to be created by DALL-E",
-    needsPostProcessing: false,
-    data: {},
-    message: JSON.stringify(request),
-    messageParams: {},
-    support: undefined,
-  };
-}
+async function sell(id: string, request: any): Promise<AiData> {
+  console.log("Function sell:", request);
+  let answer: string = "Error selling NFT";
+  const name = request.nft_name;
+  if (
+    request.price &&
+    request.currency &&
+    name &&
+    name !== "" &&
+    Number(request.price) &&
+    currencies.includes(request.currency)
+  ) {
+    const names = new Names(NAMES_TABLE);
+    await names.sell(name, Number(request.price), request.currency);
+    await sleep(5000);
+    const nft: NamesData | undefined = await names.get({ username: name });
+    //console.log("sell function", nft);
+    if (nft && nft.onSale == true) {
+      await algoliaWriteToken(nft);
+      answer = "NFT is on sale";
+    } else console.error("Error: NFT sale", nft);
+  }
 
-async function view(
-  id: string,
-  request: any,
-  username: string,
-  language: string
-): Promise<AiData> {
   return <AiData>{
-    answer: "view successfull",
+    answer,
     needsPostProcessing: false,
-    data: {},
-    message: JSON.stringify(request),
-    messageParams: {},
-    support: undefined,
-  };
-}
-
-async function sell(
-  id: string,
-  request: any,
-  username: string,
-  language: string
-): Promise<AiData> {
-  return <AiData>{
-    answer: "sell successfull",
-    needsPostProcessing: false,
-    data: {},
-    message: JSON.stringify(request),
-    messageParams: {},
-    support: undefined,
   };
 }
 
 async function listKeys(
   id: string,
   request: any,
-  username: string,
   language: string
 ): Promise<AiData> {
   console.log("listKeys", id, JSON.stringify(request, null, 2));
@@ -568,24 +701,17 @@ async function listKeys(
   };
 }
 
-async function aiTool(
-  id: string,
-  tool: any,
-  username: string,
-  language: string
-) {
-  console.log("aiTool", id, tool, username, language);
+async function aiTool(id: string, tool: any, language: string) {
+  console.log("aiTool", id, tool, language);
   const request = JSON.parse(tool.arguments);
   const name = tool.name;
   switch (name) {
     case "edit":
       return await edit(id, request, language);
-    case "post":
-      return await post(id, request, username, language);
-    case "view":
-      return await view(id, request, username, language);
+    case "create_post":
+      return await create_post(id, request, language);
     case "sell":
-      return await sell(id, request, username, language);
+      return await sell(id, request);
     case "list_NFTs":
       return await list_NFTs(id);
     case "list_files":
@@ -597,7 +723,11 @@ async function aiTool(
     case "description":
       return await getDescription();
     case "listKeys":
-      return await listKeys(id, request, username, language);
+      return await listKeys(id, request, language);
+    case "prove":
+      return await prove(id, request, language);
+    case "verify":
+      return await verify(id, request, language);
     case "get_voice":
       return await get_voice(id);
     case "set_voice":
@@ -613,14 +743,88 @@ async function aiTool(
 
 async function editPostProcess(data: any) {
   console.log("editPostProcess", JSON.stringify(data, null, 2));
-  await callLambda("addkeys", JSON.stringify(data));
+  await callLambda("keys", JSON.stringify(data));
   await sleep(1000);
   return;
 }
 
+async function provePostProcess(data: any) {
+  console.log("provePostProcess", JSON.stringify(data, null, 2));
+  await callLambda("keys", JSON.stringify(data));
+  await sleep(1000);
+  return;
+}
+
+async function verifyPostProcess(data: any) {
+  console.log("verifyPostProcess", JSON.stringify(data, null, 2));
+  await callLambda("keys", JSON.stringify(data));
+  await sleep(1000);
+  return;
+}
+
+/*
+export interface KeyData {
+  key: string;
+  value: string;
+  isPrivate: boolean;
+}
+
+export interface BotMintData {
+  id: string;
+  language: string;
+  timeNow: number;
+  filename: string;
+  username: string;
+  creator: string;
+  description?: string;
+  keys: KeyData[];
+  files: string[];
+}
+
+data: { id, request, language },
+*/
+
 async function create_nftPostProcess(data: any) {
   console.log("create_nftPostProcess", JSON.stringify(data, null, 2));
-  //await callLambda("addkeys", JSON.stringify(data));
+  const mintData: BotMintData = {
+    id: data.id,
+    language: data.language,
+    timeNow: Date.now(),
+    filename: data.request.nft_image,
+    username: data.request.nft_name,
+    creator: "@MinaNFT_bot",
+    description: data.request.nft_description,
+    keys: data.request.keys,
+    files: data.request.files ?? [],
+  };
+  console.log(
+    "create_nftPostProcess mintData",
+    JSON.stringify(mintData, null, 2)
+  );
+  await startDeployment(mintData);
+  await sleep(1000);
+  return;
+}
+
+async function create_postPostProcess(data: any) {
+  console.log("create_postPostProcess", JSON.stringify(data, null, 2));
+  const mintData: BotMintData = {
+    id: data.id,
+    language: data.language,
+    timeNow: Date.now(),
+    filename: data.request.post_image,
+    username: data.request.nft_name,
+    postname: data.request.post_name,
+    creator: "@MinaNFT_bot",
+    description: data.request.post_description,
+    keys: data.request.keys,
+    files: data.request.files ?? [],
+  };
+  console.log(
+    "create_postPostProcess mintData",
+    JSON.stringify(mintData, null, 2)
+  );
+  await startDeployment(mintData);
   await sleep(1000);
   return;
 }
@@ -653,8 +857,17 @@ async function aiPostProcess(results: AiData[], answer: string) {
         case "edit":
           await editPostProcess(data);
           break;
+        case "prove":
+          await provePostProcess(data);
+          break;
+        case "verify":
+          await verifyPostProcess(data);
+          break;
         case "create_nft":
           await create_nftPostProcess(data);
+          break;
+        case "create_post":
+          await create_postPostProcess(data);
           break;
         case "generate_image":
           await generate_imagePostProcess(data);

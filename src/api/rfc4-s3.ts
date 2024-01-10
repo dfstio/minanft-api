@@ -5,7 +5,7 @@ export async function copyStringtoS3(str: string): Promise<string> {
     console.log("copyJSONtoS3");
     const filename = Date.now().toString() + ".json";
     const file = new S3File(process.env.BUCKET!, filename);
-    await file.put(str);
+    await file.put(str, "application/json");
     console.log("Saved", filename);
     await file.wait();
     console.log("file is ready:", filename);

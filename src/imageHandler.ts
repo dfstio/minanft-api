@@ -18,7 +18,8 @@ async function copyTelegramImageToS3(
     const key = useFolder ? id + "/" + filename : filename;
     const file = new S3File(process.env.BUCKET!, key);
     await file.upload(
-      `https://api.telegram.org/file/bot${botToken}/${filePath}`
+      `https://api.telegram.org/file/bot${botToken}/${filePath}`,
+      "image/jpeg"
     );
     console.log("Saved", filename);
     await file.wait();
@@ -49,7 +50,7 @@ async function copyAIImageToS3(
     console.log("copyAIImageToS3", id, filename, url, ai);
     const key = ai ? id + "/" + filename : filename;
     const file = new S3File(process.env.BUCKET!, key);
-    await file.upload(url);
+    await file.upload(url, "image/jpeg");
     console.log("Saved", filename);
     await file.wait();
     console.log("File is uploaded:", filename);

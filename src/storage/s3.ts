@@ -35,12 +35,16 @@ export default class S3File {
     return this._client;
   }
 
-  public async put(data: Buffer | string): Promise<void> {
+  public async put(
+    data: Buffer | string,
+    mimeType: string | undefined
+  ): Promise<void> {
     try {
       const params = {
         Bucket: this.bucket,
         Key: this.key,
         Body: data,
+        ContentType: mimeType ?? "application/octet-stream",
       };
       console.log("S3File: put", params);
       const command = new PutObjectCommand(params);
@@ -197,11 +201,14 @@ export default class S3File {
     }
   }
 
-  public async upload(url: string): Promise<void> {
+  public async upload(
+    url: string,
+    mimeType: string | undefined
+  ): Promise<void> {
     try {
       const response = await axios.get(url, { responseType: "arraybuffer" });
       const buffer = Buffer.from(response.data, "binary");
-      await this.put(buffer);
+      await this.put(buffer, mimeType);
     } catch (error: any) {
       console.error("Error: S3File: upload", error);
     }
