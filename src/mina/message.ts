@@ -115,6 +115,17 @@ export default class BotMessage {
     });
   }
 
+  public async file(
+    data: Buffer,
+    filename: string | undefined,
+    params: any = {}
+  ): Promise<void> {
+    const file: InputFile = Input.fromBuffer(data, filename);
+    this.bot.telegram.sendDocument(this.id, file, params).catch((error) => {
+      console.error(`Telegraf error`, error);
+    });
+  }
+
   public async invoice(username: string, image: string): Promise<void> {
     this.bot.telegram
       .sendInvoice(this.id, mintInvoice(this.id, this.T, username, image))

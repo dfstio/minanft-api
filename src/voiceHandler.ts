@@ -1,11 +1,11 @@
 import VoiceData from "./model/voiceData";
 import axios from "axios";
 import S3File from "./storage/s3";
-import oggToMP3 from './voice/ElasticTranscoder';
+import oggToMP3 from "./voice/ElasticTranscoder";
 import FormData from "form-data";
 import callLambda from "./lambda/lambda";
 import BotMessage from "./mina/message";
-import { initLanguages, getLanguage } from './lang/lang'
+import { initLanguages, getLanguage } from "./lang/lang";
 
 const CHATGPT_TOKEN = process.env.CHATGPT_TOKEN!;
 const CHATGPTPLUGINAUTH = process.env.CHATGPTPLUGINAUTH!;
@@ -18,7 +18,7 @@ export default class VoiceHandler {
 
   public async copyVoiceToS3(
     id: string,
-    parentMessage: string,
+    parentMessage: string
   ): Promise<string | undefined> {
     try {
       const botToken = process.env.BOT_TOKEN!;
@@ -27,20 +27,23 @@ export default class VoiceHandler {
       const filename = Date.now().toString();
       const key = id + "-" + filename;
       const telegramFileInfo: any = await axios.get(
-        `https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`,
+        `https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`
       );
       const filePath = telegramFileInfo.data.result.file_path;
       const file = new S3File(process.env.BUCKET_VOICEIN!, key + ".ogg");
-      await file.upload(`https://api.telegram.org/file/bot${botToken}/${filePath}`);
+      await file.upload(
+        `https://api.telegram.org/file/bot${botToken}/${filePath}`,
+        "audio/ogg"
+      );
       console.log("Saved", key + ".ogg");
-      await file.wait()
+      await file.wait();
       console.log("OGG is uploaded:", filename);
       await sleep(1000);
 
       await oggToMP3(key);
 
-      const mp3file = new S3File(process.env.BUCKET_VOICEOUT!, key + ".mp3")
-      await mp3file.wait()
+      const mp3file = new S3File(process.env.BUCKET_VOICEOUT!, key + ".mp3");
+      await mp3file.wait();
       console.log("MP3 is uploaded:", filename);
       await sleep(1000);
 
@@ -50,7 +53,7 @@ export default class VoiceHandler {
       const getresponse = await mp3file.get();
 
       // Get read object stream
-      const s3Stream = getresponse.Body
+      const s3Stream = getresponse.Body;
 
       const formData = new FormData();
 
@@ -64,14 +67,17 @@ export default class VoiceHandler {
       formData.append("model", "whisper-1");
 
       try {
-        const response = await axios
-          .post("https://api.openai.com/v1/audio/transcriptions", formData, {
+        const response = await axios.post(
+          "https://api.openai.com/v1/audio/transcriptions",
+          formData,
+          {
             headers: {
               Authorization: `Bearer ${CHATGPT_TOKEN}`,
               ...formData.getHeaders(),
             },
             maxBodyLength: 25 * 1024 * 1024,
-          })
+          }
+        );
         if (response && response.data && response.data.text) {
           console.log("ChatGPT transcript:", response.data.text);
           chatGPT = response.data.text;
@@ -84,7 +90,7 @@ export default class VoiceHandler {
           const bot = new BotMessage(id, language);
 
           // "thankyouforprompt": "Thank you for your prompt: {{prompt}}"
-          await bot.tmessage("thankyouforprompt", { prompt: chatGPT })
+          await bot.tmessage("thankyouforprompt", { prompt: chatGPT });
           return chatGPT;
         } else {
           console.error("Chat GPT error", response.data.error);
@@ -93,7 +99,7 @@ export default class VoiceHandler {
       } catch (error: any) {
         console.error("Voice error - ChatGPT transcript", error);
         return undefined;
-      };
+      }
     } catch (error: any) {
       console.error("copyVoiceToS3", error);
       return undefined;

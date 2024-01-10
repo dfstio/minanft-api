@@ -1,5 +1,11 @@
 import { Handler, Context } from "aws-lambda";
-import { deployNFT, addKeys } from "./src/mina/deploy";
+import {
+  deployNFT,
+  addKeys,
+  proveKeys,
+  verifyKeys,
+  deployPost,
+} from "./src/mina/deploy";
 import {
   mint_v3 as mint_v3_func,
   post_v3 as post_v3_func,
@@ -35,7 +41,8 @@ const deploynft: Handler = async (event: any, context: Context) => {
   try {
     console.log("deploy nft", event);
     await initLanguages();
-    await deployNFT(event);
+    if (event.postname && event.postname.length > 0) await deployPost(event);
+    else await deployNFT(event);
 
     //context.succeed(event.id);
     return {
@@ -51,11 +58,23 @@ const deploynft: Handler = async (event: any, context: Context) => {
   }
 };
 
-const addkeys: Handler = async (event: any, context: Context) => {
+const keys: Handler = async (event: any, context: Context) => {
   try {
-    console.log("add keys", event);
+    console.log("keys", event);
     await initLanguages();
-    await addKeys(event);
+    switch (event.task) {
+      case "add":
+        await addKeys(event);
+        break;
+      case "prove":
+        await proveKeys(event);
+        break;
+      case "verify":
+        await verifyKeys(event);
+        break;
+      default:
+        console.error("unknown task");
+    }
 
     //context.succeed(event.id);
     return {
@@ -203,4 +222,4 @@ const deployipfs: Handler = async (event: any, context: Context) => {
   }
 };
 */
-export { deploynft, addkeys, mint_v3, post_v3 };
+export { deploynft, keys, mint_v3, post_v3 };

@@ -314,8 +314,8 @@ functions:
         - subnet-0def2b77c0fca2e95
         - subnet-067d779572f8cf00d
         - subnet-0b2c3a1af7dd7aa46
-  addkeys:
-    handler: mina.addkeys
+  keys:
+    handler: mina.keys
     timeout: 900
     memorySize: 8192
     fileSystemConfig:

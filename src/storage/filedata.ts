@@ -43,7 +43,8 @@ export function convertIPFSFileData(uri: any): FileData {
 
 export async function getFileData(
   id: string,
-  filename: string
+  filename: string,
+  fileMimeType: string | undefined = undefined
 ): Promise<FileData> {
   const key = id + "/" + filename;
   const file = new S3File(process.env.BUCKET!, key);
@@ -55,7 +56,7 @@ export async function getFileData(
   const hash = await file.sha3_512();
   console.timeEnd("Calculated SHA-3 512 hash");
 
-  console.time("Calculated Merkle tree root");
+  //console.time("Calculated Merkle tree root");
   // const stream = await file.getStream();
   const { root, height, leavesNumber } = {
     root: Field(0),
@@ -63,7 +64,7 @@ export async function getFileData(
     leavesNumber: 0,
   };
   // = await treeData(stream);
-  console.timeEnd("Calculated Merkle tree root");
+  //console.timeEnd("Calculated Merkle tree root");
   const ipfs = new IPFS(process.env.PINATA_JWT!);
   let cidImage = await ipfs.addLink(key);
   if (cidImage === undefined)
@@ -72,7 +73,7 @@ export async function getFileData(
     fileRoot: root,
     height,
     size,
-    mimeType,
+    mimeType: fileMimeType ?? mimeType,
     sha3_512: hash,
     filename: "image.jpg",
     storage: "i:" + cidImage,
