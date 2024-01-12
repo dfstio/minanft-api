@@ -66,7 +66,7 @@ https://github.com/dfstio/minanft-api
 
 ## Installation
 
-## Setting api link AWS-telegram
+### Setting api link AWS-telegram
 
 curl \
  --request POST \
@@ -74,7 +74,7 @@ curl \
  --header 'content-type: application/json' \
  --data '{"url": "API gateway domain/function"}'
 
-## Configuring AWS VPC
+### Configuring AWS VPC
 
 This repo uses EFS storage running in VPC to store the prover keys. To create VPC access for lambda functions:
 
