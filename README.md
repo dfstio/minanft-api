@@ -1,53 +1,57 @@
-# MinaNFT
+# MinaNFT API and telegram bot
 
-MinaNFT - NFT with AI-generated avatar art on MINA blockchain
-telegram: @minanft_bot
+The MinaNFT project is an innovative Non-Fungible Token (NFT) platform that integrates the unique privacy features of the Mina blockchain with advanced AI technology. It's designed to redefine the NFT space by offering a range of functionalities that go beyond traditional NFT capabilities.
 
-# Description
+## Telegram bot
 
-MinaNFT is an innovative NFT project leveraging the Mina blockchain's unique privacy features and AI technology. Our platform allows users to create personalised avatar NFTs and use them as an identity symbol across various social media. By interacting with our Telegram bot, users can describe avatar idea by texting or sending voice message in any language, and our AI will generate a unique NFT. Additionally, our avatar NFTs are equipped to host verifiable proofs of authenticity. Users can securely attach and share public and private sensitive content such as art, contracts, medical records, or ownership proofs, transforming traditional NFTs into versatile digital identities. Individuals and businesses are welcome to join MinaNFT, a space where art meets privacy, and personalize their digital footprint.
+telegram: [@MinaNFT_bot](https://t.me/minanft_bot?start)
 
-The architecture of our project will encompass two distinct contracts on the Mina blockchain:
+### Features
 
-Avatar NFT Contract: This contract is responsible for storing information about the name, NFT URI, and public as well as private posts, using eight variables on the Mina blockchain and the history of Mina blockchain transactions.
+- [Creates simple NFTs](https://t.me/minanft_bot?start) (name + image) in a lite mode. The bots always start in lite mode and automatically switch to the full mode after the user has minted the first NFT.
+- In full mode:
+  - Generates images using a DALL-E model
+  - Explain to a user how to create NFTs, posts, and key-value pairs for NFTs
+  - Accepts and stores any files uploaded by the user for adding to the NFT or post
+  - List NFTs of the user
+  - List files of the user
+  - List keys of the NFTs
+  - Adds private and public key-value pairs to the NFT
+  - Prove private and public key-values pairs of the NFT
+  - Verifies proofs of the private and public key-values pairs of the NFT
+- Accepts text messages and voice messages
+- In voice mode, send voice messages to the user. The communication can be fully in voice in voice mode.
 
-Name Service Contract: This contract complements the Avatar NFT contract by handling the name services. Username will be linked with avatar NFT and can be added to profile description on twitter, linkedin or corporate site.
+### Supported languages
 
-The user interface will be facilitated via a Telegram bot hosted on AWS. The bot will be constructed using the serverless and Telegram bot frameworks in conjunction with SnarkJS. Additionally, a frontend website developed with Algolia and Netlify will be available for user interaction.
+- Frontend: English, Turkish, Italian, Spanish, French
+- Telegram bot:
+  - Written system messages: English, Turkish, Italian, Spanish, French
+  - Voice chat messages: English, Spanish, French, Italian, Turkish, Arabic, Dutch, Catalan, Chinese, Danish, German, Japanese, Korean, Norwegian, Polish, Portuguese, Romanian, Russian, Swedish, Welsh.
+  - Voice comprehension: about [50 languages](https://github.com/openai/whisper)
+  - Text chat messages: almost any language
+  - Text comprehension: almost any language
+- CLI tool: English
 
-As for the storage of NFT data, reliable services such as nft.storage or Infura will be employed, ensuring a secure and efficient infrastructure for our project.
+## Links
 
-# Bot commands
+### Telegram bot
 
-`new` - Create new NFT
+https://t.me/minanft_bot
 
-`sell` - Sell NFT
+### Documentation
 
-`buy` - Buy NFT
+https://docs.minanft.io
 
-`list` - List all NFTs
-
-`auth` - Get authorisation code for minanft.io
-
-`secret` - Get secret key of your NFT
-
-`support` - Buy support ticket
-
-# Used Technologies
-
-- AWS lambda, S3 and DynamoDB
-- Serverless
-- ChatGPT
-- o1js
-- Telegram bot
-
-## Website
+### Website
 
 https://minanft.io
 
-## Library on NPM
+### Telegram bot, API, and serverless backend repo
 
-https://www.npmjs.com/package/minanft
+https://github.com/dfstio/minanft-api
+
+## Installation
 
 ## Setting api link AWS-telegram
 
