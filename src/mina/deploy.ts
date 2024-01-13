@@ -1277,10 +1277,9 @@ export async function proveKeys(params: {
 export async function listKeys(params: {
   id: string;
   username: string;
-  language: string;
 }): Promise<KeyData[] | undefined> {
   console.log("listKeys", params);
-  const { id, language, username } = params;
+  const { id, username } = params;
 
   try {
     const names = new Names(NAMES_TABLE);
