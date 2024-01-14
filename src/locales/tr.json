@@ -5,7 +5,7 @@
   "commonError": "Maalesef bir hata oluştu",
   "commonLongStringError": "Maalesef bir hata oluştu. Alanın 300 karakterden fazla olmaması gerekiyor",
   "welcomeWords": "MinaNFT'ye hoş geldiniz. Sizi MINA blockchain üzerinde Avatar NFT oluşturmada yardımcı olacağım",
-  "finalWords": "Teşekkürler! NFT'niz oluşturuluyor ve MINA blockchain'e yerleştirilecek. Bu arada bana Mina NFT hakkında sorular sorabilirsiniz ve ben AI ve projenin kurucusunun yardımıyla cevap vereceğim",
+  "finalWords": "Teşekkürler! NFT'niz oluşturuluyor ve MINA blok zincirine konuşlandırılacak. Bu arada, Mina NFT hakkında bana sorular sorabilir ve ben de yapay zeka yardımıyla yanıt vereceğim",
   "afterFinalWords": "Ek bilgi için teşekkürler!",
   "typeError": "Özür dilerim, bu dosya türünü desteklemiyorum. Kabul edilenler: pdf, doc, docx, odt ve txt. Ayrıca dosyanın 15 Mb'tan fazla olmamalıdır",
   "fileSuccess": "Dosya kabul edildi",
@@ -53,5 +53,10 @@
   "Support1hour": "Destek - 1 saat",
   "PurchaseofAvatarNFT": "MINA Avatar NFT adının MINA blockchain üzerinde satın alınması",
   "voiceon": "Sesli mesajlar açık",
-  "voiceoff": "Sesli mesajlar kapalı"
+  "voiceoff": "Sesli mesajlar kapalı",
+  "file.uploaded": "Kullanıcı tarafından yüklenen dosya: {{filedata}}",
+  "image.generated": "DALL-E tarafından oluşturulan resim: {{filedata}}",
+  "proof.generated": "Kanıt oluşturuldu",
+  "proof.is.valid": "Kanıt geçerli",
+  "proof.is.not.valid": "Kanıt GEÇERLİ DEĞİL"
 }
