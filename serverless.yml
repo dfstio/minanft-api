@@ -7,7 +7,7 @@ plugins:
 
 provider:
   name: aws
-  runtime: nodejs20.x
+  runtime: nodejs18.x
   region: eu-west-1
   logRetentionInDays: 7
   environment:
@@ -291,6 +291,15 @@ functions:
     handler: test.kms
     timeout: 90
     memorySize: 512
+  hash:
+    handler: hash.calculate
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: hash
+          method: post
+          cors: true
   tasks:
     handler: tasks.check
     timeout: 300
