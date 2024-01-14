@@ -5,7 +5,7 @@
   "commonError": "Desafortunadamente, ocurrió un error",
   "commonLongStringError": "Desafortunadamente, ocurrió un error. El campo no debe tener más de 300 caracteres",
   "welcomeWords": "Bienvenido a MinaNFT. Te ayudaré a crear un NFT Avatar en la blockchain de MINA",
-  "finalWords": "¡Gracias! Tu NFT se está creando y se desplegará en la blockchain de MINA. Mientras tanto, puedes hacerme preguntas sobre Mina NFT, y responderé con la ayuda de la IA y el fundador del proyecto",
+  "finalWords": "¡Gracias! Tu NFT se está creando y se desplegará en la blockchain de MINA. Mientras tanto, puedes hacerme preguntas sobre Mina NFT, y responderé con la ayuda de la AI",
   "afterFinalWords": "¡Gracias por la información adicional!",
   "typeError": "Lo siento, pero no admito este tipo de archivo. Acepto: pdf, doc, docx, odt y txt. Además, el archivo no debe tener más de 15 Mb",
   "fileSuccess": "Archivo aceptado",
@@ -53,5 +53,10 @@
   "Support1hour": "Soporte - 1 hora",
   "PurchaseofAvatarNFT": "Compra del nombre del NFT Avatar de MINA en la blockchain de MINA",
   "voiceon": "Los mensajes de voz estan activados",
-  "voiceoff": "Los mensajes de voz estan desactivados"
+  "voiceoff": "Los mensajes de voz estan desactivados",
+  "file.uploaded": "Archivo subido por el usuario: {{filedata}}",
+  "image.generated": "Imagen generada por DALL-E: {{filedata}}",
+  "proof.generated": "La prueba se ha generado",
+  "proof.is.valid": "La prueba es válida",
+  "proof.is.not.valid": "La prueba NO es válida"
 }
