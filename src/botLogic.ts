@@ -78,10 +78,18 @@ export default class BotLogic {
     this.bot.hears("Name", (ctx: any) => ctx.reply("MinaNFT"));
     this.bot.hears("Link", (ctx: any) => ctx.reply("https://minanft.io"));
     this.bot.on("message", async (ctx) => {
-      return await this.handleMessage(ctx);
+      try {
+        return await this.handleMessage(ctx);
+      } catch (error) {
+        console.error("Telegraf error on message", ctx, error);
+      }
     });
     this.bot.on("pre_checkout_query", async (ctx) => {
-      return await this.handleMessage(ctx);
+      try {
+        return await this.handleMessage(ctx);
+      } catch (error) {
+        console.error("Telegraf error on pre_checkout_query", ctx, error);
+      }
     });
     this.bot.catch((err, ctx: any) => {
       console.error(`Telegraf error for ${ctx.updateType}`, err);
@@ -480,6 +488,7 @@ export default class BotLogic {
               : T(this.questions.commonError)
           }`
         );
+        return;
       }
     }
 
