@@ -70,7 +70,7 @@
     "form-data": "^4.0.0",
     "i18next": "^23.7.8",
     "jsonwebtoken": "^9.0.2",
-    "minanft": "^1.4.11",
+    "minanft": "^1.4.14",
     "o1js": "^0.15.1",
     "openai": "^4.24.1",
     "remove-markdown": "^0.5.0",

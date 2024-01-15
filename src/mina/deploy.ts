@@ -89,14 +89,17 @@ export async function deployNFT(params: BotMintData): Promise<void> {
     username,
     creator,
     description,
-    keys,
-    files,
+    keys: keysArg,
+    files: filesArg,
   } = params;
   const job = new Job({
     id,
     task: "mint",
   });
   await job.start();
+  const keys: KeyData[] = keysArg ?? [];
+  const files: string[] = filesArg ?? [];
+  const bot = new BotMessage(id, language);
 
   try {
     const names = new Names(NAMES_TABLE);
@@ -105,8 +108,6 @@ export async function deployNFT(params: BotMintData): Promise<void> {
       console.log("Found old deployment", name);
       return;
     }
-
-    const bot = new BotMessage(id, language);
 
     console.time("all");
     Memory.info("start");
@@ -352,6 +353,9 @@ export async function deployNFT(params: BotMintData): Promise<void> {
   } catch (err) {
     console.error(err);
     await job.failed("deploy error");
+    await bot.smessage("ErrordeployingNFT");
+    await sleep(1000);
+    console.timeEnd("all");
   }
 }
 
@@ -366,14 +370,17 @@ export async function deployPost1(params: BotMintData): Promise<void> {
     postname,
     creator,
     description,
-    keys,
-    files,
+    keys: keysArg,
+    files: filesArg,
   } = params;
   const job = new Job({
     id,
     task: "post",
   });
   await job.start();
+  const bot = new BotMessage(id, language);
+  const keys: KeyData[] = keysArg ?? [];
+  const files: string[] = filesArg ?? [];
 
   try {
     const names = new Names(NAMES_TABLE);
@@ -382,8 +389,6 @@ export async function deployPost1(params: BotMintData): Promise<void> {
       console.log("Found old deployment", name);
       return;
     }
-
-    const bot = new BotMessage(id, language);
 
     console.time("all");
     Memory.info("start");
@@ -629,6 +634,9 @@ export async function deployPost1(params: BotMintData): Promise<void> {
   } catch (err) {
     console.error(err);
     await job.failed("deploy error");
+    await bot.smessage("ErrordeployingNFT");
+    await sleep(1000);
+    console.timeEnd("all");
   }
 }
 

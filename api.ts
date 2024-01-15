@@ -58,24 +58,6 @@ const api: Handler = async (
           return;
           break;
 
-        /*
-        case "mint":
-          if (body.data.ipfs === undefined) {
-            console.error("No IPFS hash");
-            callback(null, {
-              statusCode: 200,
-              headers: {
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Credentials": true,
-              },
-              body: "No IPFS hash",
-            });
-            return;
-          }
-          await startDeploymentApi(id, body.data.ipfs);
-          break;
-        */
-
         case "lookupName":
           {
             if (
