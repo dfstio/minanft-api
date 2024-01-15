@@ -556,14 +556,10 @@ async function add_keys(
 ): Promise<AiData> {
   console.log("add_keys", id, JSON.stringify(request, null, 2));
   const nameValidation = await validateName(id, request.nft_name);
-  const keysValidation = await validateKeys(id, request.nft_name, request.keys);
-  const validated =
-    nameValidation.validated && keysValidation.validated && request.keys;
+  const validated = nameValidation.validated && request.keys;
   const answer = validated
     ? "The addition of the key-value pairs have been started. Please wait a few minutes. We will notify the user you when it is done"
-    : nameValidation.reason ??
-      keysValidation.reason ??
-      "Error adding key-value pairs";
+    : nameValidation.reason ?? "Error adding key-value pairs";
 
   const data = {
     id,
@@ -622,13 +618,19 @@ async function listKeys(
   language: string
 ): Promise<AiData> {
   console.log("listKeys", id, JSON.stringify(request, null, 2));
-  let answer = "Error listing keys";
+  let answer =
+    "Error listing keys. If you have just changed the keys, please wait a few minutes for the transaction to be included into block and try again";
   if (request.nft_name !== undefined && request.nft_name !== "") {
-    const keys = await listPrivateKeys({
-      id,
-      username: request.nft_name,
-    });
-    console.log("listKeys keys", keys);
+    let keys: KeyData[] | undefined = undefined;
+    try {
+      keys = await listPrivateKeys({
+        id,
+        username: request.nft_name,
+      });
+      console.log("listKeys keys", keys);
+    } catch (error) {
+      console.error("listKeys error", error);
+    }
     if (keys !== undefined && keys.length !== 0) answer = JSON.stringify(keys);
     else if (keys !== undefined) answer = "No keys found";
   } else answer = "Please provide the name of the NFT";
@@ -645,7 +647,7 @@ async function aiTool(id: string, tool: any, language: string) {
   const request = JSON.parse(tool.arguments);
   const name = tool.name;
   switch (name) {
-    case "edit":
+    case "add_keys":
       return await add_keys(id, request, language);
     case "create_post":
       return await create_post(id, request, language);
@@ -771,7 +773,7 @@ async function aiPostProcess(results: AiData[], answer: string) {
       const functionName = result.functionName;
       const data = result.data;
       switch (functionName) {
-        case "addKeys":
+        case "add_keys":
           await addKeysPostProcess(data);
           break;
         case "prove":

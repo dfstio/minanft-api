@@ -66,18 +66,23 @@ export default class Users extends Table<UserData> {
     currAnswer: number,
     val: string
   ): Promise<void> {
-    const currFormQuestion = this.formQuestions.getCurrentQuestion(currAnswer);
-    if (currFormQuestion && currFormQuestion.shortName) {
-      const nextNum = currAnswer + 1;
-      await this.updateData(
-        { id: id },
-        {
-          "#A": "currentAnswer",
-          "#Q": currFormQuestion.name,
-        },
-        this.getExpAttrValue(currFormQuestion.shortName, val, nextNum),
-        `set #A = :ans, #Q = ${currFormQuestion.shortName}`
-      );
+    try {
+      const currFormQuestion =
+        this.formQuestions.getCurrentQuestion(currAnswer);
+      if (currFormQuestion && currFormQuestion.shortName) {
+        const nextNum = currAnswer + 1;
+        await this.updateData(
+          { id: id },
+          {
+            "#A": "currentAnswer",
+            "#Q": currFormQuestion.name,
+          },
+          this.getExpAttrValue(currFormQuestion.shortName, val, nextNum),
+          `set #A = :ans, #Q = ${currFormQuestion.shortName}`
+        );
+      }
+    } catch (error) {
+      console.error("updateAnswer", error);
     }
   }
 
