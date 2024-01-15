@@ -830,6 +830,7 @@ async function updateNFT(params: {
     includePrivateData: true,
   });
 
+  console.log(`privateUri:`, privateUri);
   console.time("commit");
   const tx = await nft.commit({
     deployer,
@@ -1097,24 +1098,28 @@ export async function addKeys(params: {
         console.error("Wrong key format", key);
         return;
       }
+      const keyStr = key.key.substring(0, 30);
+      const valueStr = key.value.substring(0, 30);
+      const isPrivate = key.isPrivate === true ? true : false;
+      console.log(`addKeys key:`, keyStr, valueStr, isPrivate);
       nft.update({
-        key: key.key.substring(0, 30),
-        value: key.value.substring(0, 30),
-        isPrivate: key.isPrivate === true ? true : false,
-      });
-      await updateNFT({
-        id,
-        language,
-        nft,
-        name,
-        job,
-        bot,
-        deployer,
-        nameService,
-        ownerPrivateKey,
-        pinataJWT,
+        key: keyStr,
+        value: valueStr,
+        isPrivate,
       });
     }
+    await updateNFT({
+      id,
+      language,
+      nft,
+      name,
+      job,
+      bot,
+      deployer,
+      nameService,
+      ownerPrivateKey,
+      pinataJWT,
+    });
   } catch (err) {
     console.error(err);
   }
@@ -1306,6 +1311,7 @@ export async function listKeys(params: {
       return;
     }
 
+    /*
     MinaNFT.minaInit(blockchainToDeploy);
     const nameServiceAddress = PublicKey.fromBase58(MINANFT_NAME_SERVICE);
     const nft = new MinaNFT({
@@ -1313,7 +1319,7 @@ export async function listKeys(params: {
       address: PublicKey.fromBase58(name.publicKey),
       nameService: nameServiceAddress,
     });
-
+    */
     const currentURI = JSON.parse(name.uri);
     const metadataTable = new MetadataTable(METADATA_TABLE!);
     const currentPrivateURI = await metadataTable.get({
@@ -1334,7 +1340,8 @@ export async function listKeys(params: {
       return;
     }
     console.log("metadataURI", metadataURI);
-    await nft.loadMetadata(metadataURI.privateUri);
+    //await nft.loadMetadata(metadataURI.privateUri);
+    //console.log("metadata loaded");
     const uri = JSON.parse(metadataURI.privateUri);
     if (uri.properties === undefined) {
       console.error("Error getting properties", uri);

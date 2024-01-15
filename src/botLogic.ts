@@ -451,7 +451,7 @@ export default class BotLogic {
         } catch (error) {
           console.error("Image catch", (<any>error).toString());
         }
-      } else {
+      } else if (currIndexAnswer > 1) {
         try {
           await this.history.add(
             T("file.uploaded", { filedata: JSON.stringify(file) }),
@@ -472,6 +472,14 @@ export default class BotLogic {
         } catch (error) {
           console.error("Image catch", (<any>error).toString());
         }
+      } else {
+        await this.message(
+          `${
+            currQuestion.error
+              ? T(currQuestion.error)
+              : T(this.questions.commonError)
+          }`
+        );
       }
     }
 
