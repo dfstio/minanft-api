@@ -256,15 +256,15 @@ provider:
 functions:
   send:
     handler: telegram.send
-    timeout: 30
-    memorySize: 256
+    timeout: 60
+    memorySize: 512
     events:
       - http:
           path: send
           method: post
   api:
     handler: api.api
-    timeout: 30
+    timeout: 60
     memorySize: 1024
     events:
       - http:
@@ -278,7 +278,7 @@ functions:
   image:
     handler: ask.image
     timeout: 900
-    memorySize: 256
+    memorySize: 512
   archetype:
     handler: ask.archetype
     timeout: 900
@@ -286,7 +286,7 @@ functions:
   audio:
     handler: audio.transcribe
     timeout: 900
-    memorySize: 256
+    memorySize: 512
   test:
     handler: test.kms
     timeout: 90
