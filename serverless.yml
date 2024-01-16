@@ -256,7 +256,7 @@ provider:
 functions:
   send:
     handler: telegram.send
-    timeout: 60
+    timeout: 30
     memorySize: 512
     events:
       - http:
@@ -264,7 +264,7 @@ functions:
           method: post
   api:
     handler: api.api
-    timeout: 60
+    timeout: 30
     memorySize: 1024
     events:
       - http:

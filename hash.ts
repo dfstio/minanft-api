@@ -1,5 +1,7 @@
 import type { Handler, Context, Callback } from "aws-lambda";
-import { PublicKey, Poseidon } from "o1js";
+import { PublicKey, Poseidon, fetchAccount, Mina, AccountUpdate } from "o1js";
+import { getDeployer } from "./src/mina/deployers";
+import { MinaNFT, sleep } from "minanft";
 
 const calculate: Handler = async (
   event: any,
@@ -8,7 +10,7 @@ const calculate: Handler = async (
 ) => {
   try {
     console.time("hash");
-    console.log("event", event);
+    //console.log("event", event);
     const body = JSON.parse(event.body);
     console.log("hash started", body);
     if (
@@ -32,19 +34,55 @@ const calculate: Handler = async (
       });
       return;
     }
+
     const publicKey = PublicKey.fromBase58(body.publicKey);
     console.log("publicKey", publicKey.toBase58());
-    const hash = Poseidon.hash(publicKey.toFields());
-    console.log("hash", hash.toJSON());
-    console.timeEnd("hash");
-    callback(null, {
-      statusCode: 200,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Credentials": true,
-      },
-      body: JSON.stringify({ hash: hash.toJSON(), isCalculated: true }),
-    });
+    if (body.faucet === "true") {
+      MinaNFT.minaInit("testworld2");
+      const deployer = await getDeployer();
+      const sender = deployer.toPublicKey();
+      await fetchAccount({ publicKey: sender });
+      await fetchAccount({ publicKey });
+      const hasAccount = Mina.hasAccount(publicKey);
+
+      const transaction = await Mina.transaction(
+        { sender, fee: await MinaNFT.fee(), memo: "faucet" },
+        () => {
+          if (!hasAccount) AccountUpdate.fundNewAccount(sender);
+          const senderUpdate = AccountUpdate.create(sender);
+          senderUpdate.requireSignature();
+          senderUpdate.send({ to: publicKey, amount: 10_000_000_000n });
+        }
+      );
+      await transaction.prove();
+      transaction.sign([deployer]);
+      const tx = await transaction.send();
+      await MinaNFT.transactionInfo(tx, "faucet", false);
+      const hash = tx.hash();
+      console.log("tx hash", hash);
+      await sleep(1000);
+      console.timeEnd("hash");
+      callback(null, {
+        statusCode: 200,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Credentials": true,
+        },
+        body: JSON.stringify({ hash: hash ?? "", isCalculated: true }),
+      });
+    } else {
+      const hash = Poseidon.hash(publicKey.toFields());
+      console.log("hash", hash.toJSON());
+      console.timeEnd("hash");
+      callback(null, {
+        statusCode: 200,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Credentials": true,
+        },
+        body: JSON.stringify({ hash: hash.toJSON(), isCalculated: true }),
+      });
+    }
   } catch (error) {
     console.error("catch", (error as any).toString());
     callback(null, {
