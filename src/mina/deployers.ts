@@ -1,7 +1,7 @@
 import { PrivateKey, PublicKey } from "o1js";
 import { accountBalanceMina } from "minanft";
 import { GASTANKS } from "./gastanks";
-const GASTANK_MINLIMIT = 3;
+const GASTANK_MINLIMIT = 12;
 
 var deployer1: number | undefined;
 var deployer2: number | undefined;
