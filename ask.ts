@@ -156,8 +156,14 @@ const image: Handler = async (
           } as BotMintData);
         } else {
           const history = new HistoryTable(HISTORY_TABLE, event.id);
+          const fileinfo = {
+            filename: file.filename,
+            mimeType: file.mimeType,
+            timeUploaded: getFormattedDateTime(file.timeUploaded),
+            size: file.size,
+          };
           await history.add(
-            T("image.generated", { filedata: JSON.stringify(file) }),
+            T("image.generated", { filedata: JSON.stringify(fileinfo) }),
             false
           );
           const bot = new BotMessage(event.id, language);
