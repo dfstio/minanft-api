@@ -3,6 +3,9 @@ import { PublicKey, Poseidon, fetchAccount, Mina, AccountUpdate } from "o1js";
 import { getDeployer } from "./src/mina/deployers";
 import { MinaNFT, sleep } from "minanft";
 
+const FAUCET_AMOUNT = 10_000_000_000n;
+const MINIMUM_BALANCE = 12;
+
 const calculate: Handler = async (
   event: any,
   context: Context,
@@ -39,7 +42,23 @@ const calculate: Handler = async (
     console.log("publicKey", publicKey.toBase58());
     if (body.faucet === "true") {
       MinaNFT.minaInit("testworld2");
-      const deployer = await getDeployer();
+      const deployer = await getDeployer(MINIMUM_BALANCE);
+      if (deployer === undefined) {
+        console.error("Faucet: No deployer available");
+        callback(null, {
+          statusCode: 200,
+          headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Credentials": true,
+          },
+          body: JSON.stringify({
+            hash: "",
+            isCalculated: false,
+            reason: "Faucet is empty",
+          }),
+        });
+        return;
+      }
       const sender = deployer.toPublicKey();
       await fetchAccount({ publicKey: sender });
       await fetchAccount({ publicKey });
@@ -51,7 +70,7 @@ const calculate: Handler = async (
           if (!hasAccount) AccountUpdate.fundNewAccount(sender);
           const senderUpdate = AccountUpdate.create(sender);
           senderUpdate.requireSignature();
-          senderUpdate.send({ to: publicKey, amount: 10_000_000_000n });
+          senderUpdate.send({ to: publicKey, amount: FAUCET_AMOUNT });
         }
       );
       await transaction.prove();
@@ -70,6 +89,7 @@ const calculate: Handler = async (
         },
         body: JSON.stringify({ hash: hash ?? "", isCalculated: true }),
       });
+      return;
     } else {
       const hash = Poseidon.hash(publicKey.toFields());
       console.log("hash", hash.toJSON());

@@ -19,6 +19,7 @@ provider:
     DYNAMODB_TABLE: ${file(./env.json):DYNAMODB_TABLE, env:DYNAMODB_TABLE}
     TASKS_TABLE: ${file(./env.json):TASKS_TABLE, env:TASKS_TABLE}
     DOCS_TABLE: ${file(./env.json):DOCS_TABLE, env:DOCS_TABLE}
+    DEPLOYERS_TABLE: ${file(./env.json):DEPLOYERS_TABLE, env:DEPLOYERS_TABLE}
     NAMES_TABLE: ${file(./env.json):NAMES_TABLE, env:NAMES_TABLE}
     FILES_TABLE: ${file(./env.json):FILES_TABLE, env:FILES_TABLE}
     OWNERS_TABLE: ${file(./env.json):OWNERS_TABLE, env:OWNERS_TABLE}
@@ -149,6 +150,15 @@ provider:
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
       Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.PROOFS_TABLE}"
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DEPLOYERS_TABLE}"
     - Effect: Allow
       Action:
         - dynamodb:Query
@@ -549,6 +559,18 @@ resources:
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:provider.environment.DOCS_TABLE}
+    DeployersDynamoDbTable:
+      Type: "AWS::DynamoDB::Table"
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: publicKey
+            AttributeType: S
+        KeySchema:
+          - AttributeName: publicKey
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:provider.environment.DEPLOYERS_TABLE}
     HistoryDynamoDbTable:
       Type: "AWS::DynamoDB::Table"
       DeletionPolicy: Retain
