@@ -31,20 +31,18 @@ import { algoliaWriteToken } from "../nft/algolia";
 import { getDeployer } from "./deployers";
 import axios from "axios";
 import { encrypt, decrypt, decryptJSON } from "../nft/kms";
+import { minaInit, explorerTransaction } from "../mina/init";
 
 import BotMessage from "./message";
 import Names from "../table/names";
 import { NamesData, BotMintData, KeyData } from "../model/namesData";
 import { FilesTable } from "../table/files";
 import { FileData } from "../model/fileData";
-import MetadataData from "../model/metadata";
 import MetadataTable from "../table/metadata";
 import { Job } from "../table/job";
 
-const blockchainToDeploy: blockchain = "testworld2";
-
 const { PINATA_JWT, NAMES_ORACLE_SK, METADATA_TABLE } = process.env;
-const NAMES_TABLE = process.env.TESTWORLD2_NAMES_TABLE!;
+const NAMES_TABLE = process.env.NAMES_TABLE!;
 const FILES_TABLE = process.env.FILES_TABLE!;
 
 interface LoadedNFT {
@@ -111,7 +109,7 @@ export async function deployNFT(params: BotMintData): Promise<void> {
 
     console.time("all");
     Memory.info("start");
-    MinaNFT.minaInit(blockchainToDeploy);
+    minaInit();
 
     let filesToAdd: FileData[] = [];
     let imageMimeType: string = "";
@@ -298,6 +296,7 @@ export async function deployNFT(params: BotMintData): Promise<void> {
 
     await bot.tmessage("sucessDeploymentMessage", {
       nftname: username,
+      explorer: explorerTransaction(),
       hash: txId,
     });
     await MinaNFT.transactionInfo(tx, "mint", false);
@@ -392,7 +391,7 @@ export async function deployPost1(params: BotMintData): Promise<void> {
 
     console.time("all");
     Memory.info("start");
-    MinaNFT.minaInit(blockchainToDeploy);
+    minaInit();
 
     let filesToAdd: FileData[] = [];
     let imageMimeType: string = "";
@@ -579,6 +578,7 @@ export async function deployPost1(params: BotMintData): Promise<void> {
 
     await bot.tmessage("sucessDeploymentMessage", {
       nftname: username,
+      explorer: explorerTransaction(),
       hash: txId,
     });
     await MinaNFT.transactionInfo(tx, "mint", false);
@@ -677,7 +677,7 @@ async function loadNFT(params: {
 
     console.time("all");
     Memory.info("start");
-    MinaNFT.minaInit(blockchainToDeploy);
+    minaInit();
 
     const oraclePrivateKey = PrivateKey.fromBase58(NAMES_ORACLE_SK!);
     const nameServiceAddress = PublicKey.fromBase58(MINANFT_NAME_SERVICE);
@@ -852,6 +852,7 @@ async function updateNFT(params: {
 
   await bot.tmessage("sucessDeploymentMessage", {
     nftname: nft.name,
+    explorer: explorerTransaction(),
     hash: txId,
   });
   await MinaNFT.transactionInfo(tx, "commit", false);
@@ -1312,7 +1313,7 @@ export async function listKeys(params: {
     }
 
     /*
-    MinaNFT.minaInit(blockchainToDeploy);
+    minaInit();;
     const nameServiceAddress = PublicKey.fromBase58(MINANFT_NAME_SERVICE);
     const nft = new MinaNFT({
       name: username,
@@ -1432,7 +1433,7 @@ async function check(json: any) {
     return false;
   }
 
-  MinaNFT.minaInit("testworld2");
+  minaInit();
   const nameServiceAddress = PublicKey.fromBase58(MINANFT_NAME_SERVICE);
   const zkNames = new MinaNFTNameServiceContract(nameServiceAddress);
   const zkApp = new MinaNFTContract(

@@ -25,11 +25,10 @@ import { nftPrice } from "../payments/pricing";
 import { use } from "i18next";
 import { ARWEAVE_KEY_STRING } from "../mina/gastanks";
 import { encrypt, decrypt } from "../nft/kms";
+import { explorerTransaction, minaInit } from "../mina/init";
 
-const { PINATA_JWT, NAMES_ORACLE_SK, PROVER_KEYS_BUCKET, BLOCKCHAIN } =
-  process.env;
-const NAMES_TABLE = process.env.TESTWORLD2_NAMES_TABLE!;
-const blockchainToDeploy: blockchain = "testworld2";
+const { PINATA_JWT, NAMES_ORACLE_SK } = process.env;
+const NAMES_TABLE = process.env.NAMES_TABLE!;
 
 export async function reserveName(
   id: string,
@@ -111,7 +110,7 @@ export async function indexName(
   if (nftName.length > 30) return { success: false, reason: "name too long" };
 
   try {
-    MinaNFT.minaInit(blockchainToDeploy);
+    minaInit();
     const names = new Names(NAMES_TABLE);
     const nftData = await names.get({ username: nftName });
     if (nftData === undefined || nftData.publicKey === undefined) {
@@ -163,15 +162,15 @@ export async function mint_v3(
   console.time("all");
   Memory.info("start");
   console.log("mint_v3", id, uri, signature, privateKey, language);
+  const JobsTable = new Jobs(process.env.JOBS_TABLE!);
+  const bot = new BotMessage(id, language);
 
   try {
-    const JobsTable = new Jobs(process.env.JOBS_TABLE!);
     await JobsTable.updateStatus({
       username: id,
       jobId: jobId,
       status: "started",
     });
-    const bot = new BotMessage(id, language);
 
     const metadata = JSON.parse(uri);
     const names = new Names(NAMES_TABLE);
@@ -232,7 +231,7 @@ export async function mint_v3(
       return;
     }
 
-    MinaNFT.minaInit(blockchainToDeploy);
+    minaInit();
 
     const pinataJWT: string = PINATA_JWT!;
     const arweaveKey: string = ARWEAVE_KEY_STRING!;
@@ -324,6 +323,7 @@ export async function mint_v3(
 
     await bot.tmessage("sucessDeploymentMessage", {
       nftname: nft.name,
+      explorer: explorerTransaction(),
       hash,
     });
     await MinaNFT.transactionInfo(tx, "mint", false);
@@ -377,6 +377,16 @@ export async function mint_v3(
     console.timeEnd("all");
   } catch (err) {
     console.error(err);
+    console.error("Error deploying NFT");
+    await bot.tmessage("ErrordeployingNFT");
+    await JobsTable.updateStatus({
+      username: id,
+      jobId: jobId,
+      status: "failed",
+      billedDuration: Date.now() - timeStarted,
+    });
+    Memory.info("deploy error");
+    console.timeEnd("all");
   }
 }
 
@@ -396,14 +406,16 @@ export async function post_v3(
     return;
   }
 
+  const JobsTable = new Jobs(process.env.JOBS_TABLE!);
+  const bot = new BotMessage(id, language);
+
   try {
-    const JobsTable = new Jobs(process.env.JOBS_TABLE!);
     await JobsTable.updateStatus({
       username: id,
       jobId: jobId,
       status: "started",
     });
-    const bot = new BotMessage(id, language);
+
     const commitData: MinaNFTCommitData = {
       transactions: transactions,
       signature: args[0],
@@ -433,7 +445,7 @@ export async function post_v3(
       address: nameServiceAddress,
     });
 
-    MinaNFT.minaInit(blockchainToDeploy);
+    minaInit();
 
     const cacheDir = "/mnt/efs/cache";
     await listFiles(cacheDir);
@@ -519,6 +531,7 @@ export async function post_v3(
     await names.updateStorage(nftName, storage, JSON.stringify(uri, null, 2));
     await bot.tmessage("sucessDeploymentMessage", {
       nftname: nftName + " : " + postName,
+      explorer: explorerTransaction(),
       hash,
     });
     // TODO: Enable invoices after the New Year
@@ -553,5 +566,15 @@ export async function post_v3(
     console.timeEnd("all");
   } catch (err) {
     console.error(err);
+    console.error("Error deploying NFT");
+    await bot.tmessage("ErrordeployingNFT");
+    await JobsTable.updateStatus({
+      username: id,
+      jobId: jobId,
+      status: "failed",
+      billedDuration: Date.now() - timeStarted,
+    });
+    Memory.info("deploy error");
+    console.timeEnd("all");
   }
 }

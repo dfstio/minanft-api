@@ -11,7 +11,7 @@ import { listKeys as listPrivateKeys } from "../mina/deploy";
 import { getVoice, setVoice } from "../lang/lang";
 import { getFormattedDateTime, startDeployment } from "../nft/nft";
 
-const NAMES_TABLE = process.env.TESTWORLD2_NAMES_TABLE!;
+const NAMES_TABLE = process.env.NAMES_TABLE!;
 const FILES_TABLE = process.env.FILES_TABLE!;
 
 const currencies: string[] = ["USD", "EUR", "GBP", "CAD", "JPY"];

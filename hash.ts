@@ -2,6 +2,7 @@ import type { Handler, Context, Callback } from "aws-lambda";
 import { PublicKey, Poseidon, fetchAccount, Mina, AccountUpdate } from "o1js";
 import { getDeployer } from "./src/mina/deployers";
 import { MinaNFT, sleep } from "minanft";
+import { minaInit } from "./src/mina/init";
 
 const FAUCET_AMOUNT = 10_000_000_000n;
 const MINIMUM_BALANCE = 12;
@@ -41,7 +42,7 @@ const calculate: Handler = async (
     const publicKey = PublicKey.fromBase58(body.publicKey);
     console.log("publicKey", publicKey.toBase58());
     if (body.faucet === "true") {
-      MinaNFT.minaInit("testworld2");
+      minaInit();
       const deployer = await getDeployer(MINIMUM_BALANCE);
       if (deployer === undefined) {
         console.error("Faucet: No deployer available");
@@ -65,7 +66,7 @@ const calculate: Handler = async (
       const hasAccount = Mina.hasAccount(publicKey);
 
       const transaction = await Mina.transaction(
-        { sender, fee: await MinaNFT.fee(), memo: "faucet" },
+        { sender, fee: "100000000", memo: "faucet" },
         () => {
           if (!hasAccount) AccountUpdate.fundNewAccount(sender);
           const senderUpdate = AccountUpdate.create(sender);
