@@ -20,7 +20,7 @@ import {
   PublicKey,
 } from "o1js";
 import { getDeployer } from "../mina/deployers";
-const blockchainToDeploy: blockchain = "testworld2";
+import { minaInit } from "../mina/init";
 
 export class MapProofPlugin extends BackendPlugin {
   static verificationKey: VerificationKey | undefined = undefined;
@@ -102,7 +102,7 @@ export class MapProofPlugin extends BackendPlugin {
   }
 
   public async send(transaction: string): Promise<string | undefined> {
-    MinaNFT.minaInit(blockchainToDeploy);
+    minaInit();
     const proof: RedactedMinaNFTMapStateProof =
       RedactedMinaNFTMapStateProof.fromJSON(
         JSON.parse(transaction) as JsonProof

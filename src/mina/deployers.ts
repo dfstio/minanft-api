@@ -3,7 +3,7 @@ import { accountBalanceMina, makeString, sleep } from "minanft";
 import { GASTANKS } from "./gastanks";
 import { Deployers } from "../table/deployers";
 import { check } from "../../tasks";
-const GASTANK_MINLIMIT = 3;
+const GASTANK_MINLIMIT = 4;
 const DELAY = 12 * 60 * 60 * 1000; // 12 hours
 
 var deployer1: number | undefined;

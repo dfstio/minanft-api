@@ -33,7 +33,7 @@ import { FileData } from "./model/fileData";
 import { FilesTable } from "./table/files";
 
 const CHATGPTPLUGINAUTH = process.env.CHATGPTPLUGINAUTH!;
-const NAMES_TABLE = process.env.TESTWORLD2_NAMES_TABLE!;
+const NAMES_TABLE = process.env.NAMES_TABLE!;
 const HISTORY_TABLE = process.env.HISTORY_TABLE!;
 const FILES_TABLE = process.env.FILES_TABLE!;
 const LANG = process.env.LANG ? process.env.LANG : "en";

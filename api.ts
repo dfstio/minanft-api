@@ -9,7 +9,7 @@ import { reserveName, indexName } from "./src/api/mint_v3";
 import { getLanguage } from "./src/lang/lang";
 
 const BOTAPIAUTH = process.env.BOTAPIAUTH!;
-const NAMES_TABLE = process.env.TESTWORLD2_NAMES_TABLE!;
+const NAMES_TABLE = process.env.NAMES_TABLE!;
 
 const api: Handler = async (
   event: any,
