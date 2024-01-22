@@ -4,8 +4,8 @@ import { getDeployer } from "./src/mina/deployers";
 import { MinaNFT, sleep } from "minanft";
 import { minaInit } from "./src/mina/init";
 
-const FAUCET_AMOUNT = 10_000_000_000n;
-const MINIMUM_BALANCE = 12;
+const FAUCET_AMOUNT = 20_000_000_000n;
+const MINIMUM_BALANCE = 22;
 
 const calculate: Handler = async (
   event: any,
