@@ -654,6 +654,7 @@ async function loadNFT(params: {
     task,
   });
   await job.start();
+  const bot = new BotMessage(id, language);
 
   try {
     const names = new Names(NAMES_TABLE);
@@ -670,10 +671,9 @@ async function loadNFT(params: {
     } else {
       console.log("Wrong nft format or no nft", name);
       await job.failed("Wrong nft format or no nft");
+      await bot.smessage("ErrordeployingNFT");
       return undefined;
     }
-
-    const bot = new BotMessage(id, language);
 
     console.time("all");
     Memory.info("start");
@@ -792,6 +792,8 @@ async function loadNFT(params: {
     };
   } catch (err) {
     console.error(err);
+    await job.failed("Wrong nft format or no nft");
+    await bot.smessage("ErrordeployingNFT");
     return undefined;
   }
 }
@@ -895,10 +897,12 @@ export async function deployPost(params: BotMintData): Promise<void> {
     postname,
     creator,
     description,
-    keys,
-    files,
+    keys: keysArg,
+    files: filesArg,
   } = params;
 
+  const keys: KeyData[] = keysArg ?? [];
+  const files: string[] = filesArg ?? [];
   try {
     if (postname === undefined || postname === "") {
       console.error("No postname");
@@ -927,118 +931,127 @@ export async function deployPost(params: BotMintData): Promise<void> {
       pinataJWT,
       ownerPrivateKey,
     } = loadedNFT;
-    if (
-      deployer === undefined ||
-      ownerPrivateKey === undefined ||
-      nameService === undefined ||
-      pinataJWT === undefined
-    ) {
-      console.error("Error loading NFT");
-      return;
-    }
 
-    const post = new MapData();
-    post.update({ key: "name", value: postname.substring(0, 30) });
-    post.update({ key: "post", value: "true" });
-    post.update({ key: "time", value: Date.now().toString() });
-
-    let filesToAdd: FileData[] = [];
-    let imageMimeType: string = "";
-    // check files
-
-    const filesTable = new FilesTable(FILES_TABLE);
-    const userFiles: FileData[] = await filesTable.listFiles(id);
-    userFiles.map((file) => {
-      if (files.includes(file.filename)) filesToAdd.push(file);
-      if (filename === file.filename) imageMimeType = file.mimeType;
-    });
-    console.log("list_files", files, filesToAdd);
-    if (filesToAdd.length !== files.length) {
-      console.error("Files do not exist", {
-        files,
-        userFiles,
-        filesToAdd,
-        imageMimeType,
-      });
-      await bot.smessage("ErrordeployingNFT");
-      await job.failed("Files do not exist");
-      console.timeEnd("all");
-      return;
-    }
-
-    if (imageMimeType === "") {
-      console.error("Image file do not exists", {
-        files,
-        userFiles,
-        filesToAdd,
-        imageMimeType,
-      });
-      await bot.smessage("ErrordeployingNFT");
-      await job.failed("Image file do not exists");
-      console.timeEnd("all");
-      return;
-    }
-
-    for (const key of keys) {
+    try {
       if (
-        key.key === undefined ||
-        key.key === "" ||
-        key.value === undefined ||
-        key.value === ""
+        deployer === undefined ||
+        ownerPrivateKey === undefined ||
+        nameService === undefined ||
+        pinataJWT === undefined
       ) {
-        console.error("Wrong key format", key);
+        console.error("Error loading NFT");
+        return;
+      }
+
+      const post = new MapData();
+      post.update({ key: "name", value: postname.substring(0, 30) });
+      post.update({ key: "post", value: "true" });
+      post.update({ key: "time", value: Date.now().toString() });
+
+      let filesToAdd: FileData[] = [];
+      let imageMimeType: string = "";
+      // check files
+
+      const filesTable = new FilesTable(FILES_TABLE);
+      const userFiles: FileData[] = await filesTable.listFiles(id);
+      userFiles.map((file) => {
+        if (files.includes(file.filename)) filesToAdd.push(file);
+        if (filename === file.filename) imageMimeType = file.mimeType;
+      });
+      console.log("list_files", files, filesToAdd);
+      if (filesToAdd.length !== files.length) {
+        console.error("Files do not exist", {
+          files,
+          userFiles,
+          filesToAdd,
+          imageMimeType,
+        });
         await bot.smessage("ErrordeployingNFT");
-        await job.failed("Wrong key format");
+        await job.failed("Files do not exist");
         console.timeEnd("all");
         return;
       }
-      post.update({
-        key: key.key.substring(0, 30),
-        value: key.value.substring(0, 30),
-        isPrivate: key.isPrivate === true ? true : false,
-      });
-    }
 
-    if (description !== undefined && description !== "") {
-      post.updateText({
-        key: `description`,
-        text: description,
-      });
-    }
+      if (imageMimeType === "") {
+        console.error("Image file do not exists", {
+          files,
+          userFiles,
+          filesToAdd,
+          imageMimeType,
+        });
+        await bot.smessage("ErrordeployingNFT");
+        await job.failed("Image file do not exists");
+        console.timeEnd("all");
+        return;
+      }
 
-    const imageData = await getFileData(id, filename, imageMimeType);
-    const url = MinaNFT.urlFromStorageString(imageData.storage);
-    post.updateFileData({
-      key: `image`,
-      fileData: imageData,
-      isPrivate: false,
-    });
+      for (const key of keys) {
+        if (
+          key.key === undefined ||
+          key.key === "" ||
+          key.value === undefined ||
+          key.value === ""
+        ) {
+          console.error("Wrong key format", key);
+          await bot.smessage("ErrordeployingNFT");
+          await job.failed("Wrong key format");
+          console.timeEnd("all");
+          return;
+        }
+        post.update({
+          key: key.key.substring(0, 30),
+          value: key.value.substring(0, 30),
+          isPrivate: key.isPrivate === true ? true : false,
+        });
+      }
 
-    for (const file of filesToAdd) {
-      const fileData = await getFileData(id, file.filename, file.mimeType);
+      if (description !== undefined && description !== "") {
+        post.updateText({
+          key: `description`,
+          text: description,
+        });
+      }
+
+      const imageData = await getFileData(id, filename, imageMimeType);
+      const url = MinaNFT.urlFromStorageString(imageData.storage);
       post.updateFileData({
-        key: file.filename.substring(0, 30),
-        fileData,
+        key: `image`,
+        fileData: imageData,
         isPrivate: false,
       });
+
+      for (const file of filesToAdd) {
+        const fileData = await getFileData(id, file.filename, file.mimeType);
+        post.updateFileData({
+          key: file.filename.substring(0, 30),
+          fileData,
+          isPrivate: false,
+        });
+      }
+
+      nft.updateMap({ key: postname.substring(0, 30), map: post });
+
+      await updateNFT({
+        id,
+        language,
+        nft,
+        name,
+        job,
+        bot,
+        deployer,
+        nameService,
+        ownerPrivateKey,
+        pinataJWT,
+      });
+    } catch (err) {
+      console.error(err);
+      await bot.smessage("ErrordeployingNFT");
+      await job.failed("Files do not exist");
+      console.timeEnd("all");
     }
-
-    nft.updateMap({ key: postname.substring(0, 30), map: post });
-
-    await updateNFT({
-      id,
-      language,
-      nft,
-      name,
-      job,
-      bot,
-      deployer,
-      nameService,
-      ownerPrivateKey,
-      pinataJWT,
-    });
   } catch (err) {
     console.error(err);
+    console.timeEnd("all");
   }
 }
 
