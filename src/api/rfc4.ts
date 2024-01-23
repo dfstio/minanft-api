@@ -11,8 +11,9 @@ import {
   PrivateKey,
   PublicKey,
   Mina,
+  fetchAccount,
 } from "o1js";
-import { minaInit } from "../mina/init";
+//import { minaInit } from "../mina/init";
 
 class MerkleTreeWitness20 extends MerkleWitness(20) {}
 
@@ -54,7 +55,7 @@ export class RFCvoting extends BackendPlugin {
   public async create(transaction: string): Promise<string | undefined> {
     if (RFCvoting.verificationKey === undefined)
       throw new Error("verificationKey is undefined");
-    minaInit();
+    MinaNFT.minaInit("testworld2");
     const deployer = PrivateKey.fromBase58(process.env.DEPLOYER!);
     const sender = deployer.toPublicKey();
     const args = JSON.parse(transaction);
@@ -70,6 +71,8 @@ export class RFCvoting extends BackendPlugin {
     const votingPublicKey: PublicKey = votingPrivateKey.toPublicKey();
 
     const zkApp = new RealTimeVoting(votingPublicKey);
+    //await fetchAccount({ publicKey: sender });
+    //await fetchAccount({ publicKey: votingPublicKey });
     const tx = await Mina.transaction(
       { sender, fee: transactionFee, nonce: nonce + id },
       () => {
