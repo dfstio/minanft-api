@@ -1,10 +1,7 @@
 import type { Handler, Context, Callback } from "aws-lambda";
-import { encrypt, decrypt, encryptJSON, decryptJSON } from "./src/nft/kms";
-import { PrivateKey } from "o1js";
-import { explorerTransaction } from "./src/mina/init";
-import { Berkeley } from "minanft";
+import { cloud as cloudFunc, runZip } from "./src//api/cloud";
 
-const kms: Handler = async (
+const cloud: Handler = async (
   event: any,
   context: Context,
   callback: Callback
@@ -13,33 +10,18 @@ const kms: Handler = async (
     console.time("test");
     console.log("event", event);
     console.log("test started");
-    console.log("explorerTransaction", explorerTransaction());
-    console.log("Berkeley", Berkeley);
-    console.log("Berkeley url", Berkeley.explorerTransactionUrl);
 
-    /*
-    const name = "@test_12345";
-    const privateKey = PrivateKey.random().toBase58();
-    console.log("privateKey", privateKey, "name", name);
-    const encrypted = await encrypt(privateKey, name);
-    console.log("encrypted", encrypted);
-    if (encrypted === undefined) throw Error("encrypted is undefined");
-    else {
-      const decrypted = await decrypt(encrypted, name);
-      console.log("decrypted", decrypted);
+    try {
+      const result = await runZip({
+        fileName: "mac.zip",
+        functionName: "compile",
+        args: ["arg1a", "arg2b"],
+      });
+      console.log("cloud test result", result);
+    } catch (error: any) {
+      console.error("cloud catch", (error as any).toString());
     }
 
-    const json = { name, privateKey, a: "ghdfjsgfs", event };
-    console.log("json", json);
-    const encryptedJSON = await encryptJSON(json, name);
-    console.log("encryptedJSON", encryptedJSON);
-    if (encryptedJSON === undefined) throw Error("encryptedJSON is undefined");
-    else {
-      const decryptedJSON = await decryptJSON(encryptedJSON, name);
-      console.log("decryptedJSON", decryptedJSON);
-    }
-
-    */
     console.log("test finished");
     console.timeEnd("test");
     return 200;
@@ -49,4 +31,4 @@ const kms: Handler = async (
   }
 };
 
-export { kms };
+export { cloud };

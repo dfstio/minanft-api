@@ -3,6 +3,7 @@ import { MinaNFTTreeVerifierPlugin } from "./steptree";
 import { MinaNFTTreeVerifierPlugin20 } from "./steptree20";
 import { RFCvoting } from "./rfc4";
 import { MapProofPlugin } from "./map_proof";
+import { MacPlugin } from "../external/Mac/plugin";
 
 export async function getBackupPlugin(params: {
   developer: string;
@@ -24,5 +25,7 @@ export async function getBackupPlugin(params: {
       default:
         throw new Error("unknown plugin name");
     }
+  } else if (developer === "@marek") {
+    return new MacPlugin({ name, task, args });
   } else throw new Error("unknown developer");
 }
