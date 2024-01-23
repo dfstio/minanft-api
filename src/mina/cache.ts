@@ -1,4 +1,5 @@
 import fs from "fs/promises";
+import S3File from "../storage/s3";
 
 export async function listFiles(
   folder: string,
@@ -33,30 +34,37 @@ export function getCache(cacheBucket: string, debug?: boolean): Cache {
   return FileSystem(cacheBucket, debug);
 }
 
+*/
 
-export async function loadCache(
-  cacheBucket: string,
-  folder: string,
-  files: string[]
-): Promise<void> {
-  const existingFiles = await listFiles(folder);
+export async function loadCache(params: {
+  cacheBucket: string;
+  folder: string;
+  files: string[];
+  overwrite?: boolean;
+}): Promise<void> {
+  const { cacheBucket, folder, files, overwrite } = params;
+  const existingFiles = await listFiles(folder, true);
   for (const file of files) {
-    if (!existingFiles.includes(file)) {
+    if (overwrite === true || !existingFiles.includes(file)) {
       try {
-        //console.log(`downloading ${file}`);
+        if (existingFiles.includes(file)) {
+          console.log(`deleting ${file}`);
+          await fs.unlink(`${folder}/${file}`);
+          await listFiles(folder, true);
+        }
+        console.log(`downloading ${file}`);
         const s3File = new S3File(cacheBucket, file);
         const data = await s3File.get();
         await fs.writeFile(`${folder}/${file}`, data.Body);
-        //console.log(`downloaded ${file}`);
+        console.log(`downloaded ${file}`);
       } catch (error) {
         console.log(`error downloading ${file}`, error);
       }
     } else {
-      //console.log(`file ${file} already exists`);
+      console.log(`file ${file} already exists`);
     }
   }
 }
-*/
 
 /*
 

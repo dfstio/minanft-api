@@ -87,8 +87,22 @@ export default class Sequencer {
     if (
       (job.task === "verify" || job.task === "send") &&
       job.jobData.length !== 1
-    )
+    ) {
+      await JobsTable.updateStatus({
+        username: this.username,
+        jobId: this.jobId,
+        status: "failed",
+      });
       throw new Error("jobData length is not 1 for task:verify or send");
+    }
+    if (job.jobData.length === 0) {
+      await JobsTable.updateStatus({
+        username: this.username,
+        jobId: this.jobId,
+        status: "failed",
+      });
+      throw new Error("jobData length is 0");
+    }
     for (let i = 0; i < job.jobData.length; i++) {
       const stepId: string = i.toString();
       const task =
