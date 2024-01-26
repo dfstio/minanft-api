@@ -1,8 +1,13 @@
 import { listFiles, loadCache } from "../mina/cache";
 import { unzip } from "../storage/zip";
 import fs from "fs/promises";
+import { CloudWorker } from "./cloudobject";
+import { Cache } from "o1js";
+import { runCLI } from "jest";
+import { minaInit } from "../mina/init";
 
 const { PROVER_KEYS_BUCKET } = process.env;
+const downloadZip = false;
 
 export async function runZip(params: {
   fileName: string;
@@ -15,43 +20,60 @@ export async function runZip(params: {
   const cacheDir = "/mnt/efs/cache";
   const files = [fileName];
 
-  // Copy compiled from TypeScript to JavaScript source code of the contracts
-  // from S3 bucket to AWS lambda /tmp/contracts folder
-  /*
-  await fs.rm(contractsDir, { recursive: true });
-  await listFiles(contractsDir, true);
-  await listFiles(cacheDir, false);
+  if (downloadZip) {
+    // Copy compiled from TypeScript to JavaScript source code of the contracts
+    // from S3 bucket to AWS lambda /tmp/contracts folder
 
-  await loadCache({
-    cacheBucket: PROVER_KEYS_BUCKET!,
-    folder: contractsDir,
-    files: files,
-    overwrite: true,
-  });
-  await listFiles(contractsDir, true);
-  console.log("loaded cache");
+    await fs.rm(contractsDir, { recursive: true });
+    await listFiles(contractsDir, true);
+    await listFiles(cacheDir, false);
 
-  console.time("unzipped");
-  await unzip({
-    folder: contractsDir,
-    filename: fileName,
-    targetDir: contractsDir,
-  });
-  console.timeEnd("unzipped");
-  */
+    await loadCache({
+      cacheBucket: PROVER_KEYS_BUCKET!,
+      folder: contractsDir,
+      files: files,
+      overwrite: true,
+    });
+    await listFiles(contractsDir, true);
+    console.log("loaded cache");
+
+    console.time("unzipped");
+    await unzip({
+      folder: contractsDir,
+      filename: fileName,
+      targetDir: contractsDir,
+    });
+    console.timeEnd("unzipped");
+  }
   await listFiles(contractsDir, true);
 
   const macDir = contractsDir + "/mac";
   const relativeDir = "../../../../mnt/efs/zip/mac/dist/index.js";
   await listFiles(macDir, true);
   await listFiles(macDir + "/dist", true);
+
+  const jestConfig = {
+    roots: ["../../../../mnt/efs/zip/mac/dist/tests"],
+    //testRegex: "\\.spec\\.js$",
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const jestResult = await runCLI(jestConfig as any, [
+    "../../../../mnt/efs/zip/mac",
+  ]);
+  console.log("jest result", jestResult.results?.success);
+
   console.log("Importing contracts...", __filename, "folder", __dirname);
   //await listFiles(relativeDir, true);
 
   try {
-    const { compile } = await import(relativeDir);
+    const zip = await import(relativeDir);
     console.log("imported contracts");
-    const result = await compile(cacheDir);
+    const functionName = "compile";
+    minaInit();
+    const cache: Cache = Cache.FileSystem(cacheDir);
+    const cloud = new CloudWorker(cache);
+    const result = await zip[functionName](cloud);
     console.log("compile function done", result);
     return result;
   } catch (error: any) {
