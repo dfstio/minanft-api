@@ -301,9 +301,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@aws-sdk/client-dynamodb@npm:^3.504.0":
-  version: 3.504.0
-  resolution: "@aws-sdk/client-dynamodb@npm:3.504.0"
+"@aws-sdk/client-dynamodb@npm:^3.506.0":
+  version: 3.506.0
+  resolution: "@aws-sdk/client-dynamodb@npm:3.506.0"
   dependencies:
     "@aws-crypto/sha256-browser": "npm:3.0.0"
     "@aws-crypto/sha256-js": "npm:3.0.0"
@@ -348,7 +348,7 @@ __metadata:
     "@smithy/util-waiter": "npm:^2.1.1"
     tslib: "npm:^2.5.0"
     uuid: "npm:^8.3.2"
-  checksum: 10c0/98d44348df0e787b0e2e784d65cb66cd2c4ee22810ab546da23c43065b013cb9efac93bee3b68c9b8297a8724edb4a75822c3d5b96477143e665dd596ce85c15
+  checksum: 10c0/cffab318e5d2cc2dc73945fdb7476bf91b4ce922d128e82dcd5cefdfba0680e0b0f9700f5a16cc06cc6fc867ce4473419409851e5e7f0cf9c827cc4ec2ad8e79
   languageName: node
   linkType: hard
 
@@ -1113,14 +1113,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@aws-sdk/util-dynamodb@npm:^3.504.0":
-  version: 3.504.0
-  resolution: "@aws-sdk/util-dynamodb@npm:3.504.0"
+"@aws-sdk/util-dynamodb@npm:^3.506.0":
+  version: 3.506.0
+  resolution: "@aws-sdk/util-dynamodb@npm:3.506.0"
   dependencies:
     tslib: "npm:^2.5.0"
   peerDependencies:
     "@aws-sdk/client-dynamodb": ^3.0.0
-  checksum: 10c0/ca088a5c057cdd5223dfbf4e32fd1ca0b8bd9e6fc95ec45eb8e32d1dc90f54a28075cec8999ae885619f3f920b440e3bf1f1257828027ef46c1a9a710b3d4388
+  checksum: 10c0/103157e9662362cbd32df5f893d15775380e360ddd21adae4d949aadb49db7404dacab59052ce2de4ac244cbc83bd338aa09476305fb785760cd15e380310fcf
   languageName: node
   linkType: hard
 
@@ -3250,7 +3250,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*, @types/node@npm:^20.11.15":
+"@types/node@npm:*, @types/node@npm:^20.11.16":
   version: 20.11.16
   resolution: "@types/node@npm:20.11.16"
   dependencies:
@@ -7273,17 +7273,17 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "minanft-api@workspace:."
   dependencies:
-    "@aws-sdk/client-dynamodb": "npm:^3.504.0"
+    "@aws-sdk/client-dynamodb": "npm:^3.506.0"
     "@aws-sdk/client-elastic-transcoder": "npm:^3.504.0"
     "@aws-sdk/client-kms": "npm:^3.504.0"
     "@aws-sdk/client-lambda": "npm:^3.504.0"
     "@aws-sdk/client-polly": "npm:^3.504.0"
     "@aws-sdk/client-s3": "npm:^3.504.0"
-    "@aws-sdk/util-dynamodb": "npm:^3.504.0"
+    "@aws-sdk/util-dynamodb": "npm:^3.506.0"
     "@types/adm-zip": "npm:^0.5.5"
     "@types/aws-lambda": "npm:^8.10.133"
     "@types/jsonwebtoken": "npm:^9.0.5"
-    "@types/node": "npm:^20.11.15"
+    "@types/node": "npm:^20.11.16"
     "@types/remove-markdown": "npm:^0.3.4"
     "@types/serverless": "npm:^3.12.22"
     adm-zip: "npm:^0.5.10"
@@ -7293,8 +7293,8 @@ __metadata:
     i18next: "npm:^23.8.2"
     jest: "npm:^29.7.0"
     jsonwebtoken: "npm:^9.0.2"
-    minanft: "npm:^1.6.0"
-    o1js: "npm:^0.15.4"
+    minanft: "npm:^1.6.2"
+    o1js: "npm:^0.16.0"
     openai: "npm:^4.26.0"
     remove-markdown: "npm:^0.5.0"
     serverless: "npm:^3.38.0"
@@ -7304,9 +7304,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"minanft@npm:^1.6.0":
-  version: 1.6.0
-  resolution: "minanft@npm:1.6.0"
+"minanft@npm:^1.6.2":
+  version: 1.6.2
+  resolution: "minanft@npm:1.6.2"
   dependencies:
     arweave: "npm:^1.14.4"
     axios: "npm:^1.6.7"
@@ -7314,8 +7314,8 @@ __metadata:
     jimp: "npm:^0.22.10"
     mime: "npm:^3.0.0"
   peerDependencies:
-    o1js: ^0.15.4
-  checksum: 10c0/a93e5597eca3b837d6042b7ec6da9fb54af1ca05e408c98c0a1fe035f9fd28722953a3fced0f99a9222879eaf4b33e522660e6147521d21e332e147da065a614
+    o1js: ^0.16.0
+  checksum: 10c0/f7791fbf98f455d0f688974897a180b20fc2b77a3fc8271993035d8301ea2a00bed92446da3131527e3d2cbadf3d0b614bca9ddb2b6160383f2d9f13f413e7d9
   languageName: node
   linkType: hard
 
@@ -7647,9 +7647,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"o1js@npm:^0.15.4":
-  version: 0.15.4
-  resolution: "o1js@npm:0.15.4"
+"o1js@npm:^0.16.0":
+  version: 0.16.0
+  resolution: "o1js@npm:0.16.0"
   dependencies:
     blakejs: "npm:1.2.1"
     cachedir: "npm:^2.4.0"
@@ -7660,7 +7660,7 @@ __metadata:
     tslib: "npm:^2.3.0"
   bin:
     snarky-run: src/build/run.js
-  checksum: 10c0/9271b6b2c241b3c793beb20115f6a3d88a185b03984e319c9e6473a6fbb2d9b7020bafe395f49c06579e006d96b259394d4cf3e57a5686a33e1bb9743dcdbd45
+  checksum: 10c0/5303c15a56fcf48519bf396adc00969179722d2892138323a17a2de5c5ab0c7cd6a4812f539b896884e77e3cc514b69e311373de0dfa944bc63452d97388bb5f
   languageName: node
   linkType: hard
 
