@@ -4,7 +4,7 @@ import { GASTANKS } from "./gastanks";
 import { Deployers } from "../table/deployers";
 import { check } from "../../tasks";
 const GASTANK_MINLIMIT = 4;
-const DELAY = 12 * 60 * 60 * 1000; // 12 hours
+const DELAY = 60 * 60 * 1000; // 1 hour
 
 var deployer1: number | undefined;
 var deployer2: number | undefined;
@@ -49,7 +49,8 @@ async function checkGasTank(
   const publicKey = gasTankPublicKeyMina.toBase58();
 
   const balanceGasTank = await accountBalanceMina(gasTankPublicKeyMina);
-  const replenishGasTank: boolean = balanceGasTank < minimumBalance;
+  const replenishGasTank: boolean =
+    minimumBalance === 0 ? false : balanceGasTank < minimumBalance;
   console.log(
     "Balance of gas tank",
     PublicKey.toBase58(gasTankPublicKeyMina),
