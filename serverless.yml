@@ -39,6 +39,7 @@ provider:
     SUPPORT_CHAT: ${file(./env.json):SUPPORT_CHAT, env:SUPPORT_CHAT}
     JWT_PRIVATEKEY: ${file(./env.json):JWT_PRIVATEKEY, env:JWT_PRIVATEKEY}
     BOTAPIAUTH: ${file(./env.json):BOTAPIAUTH, env:BOTAPIAUTH}
+    ZKCLOUDWORKER_AUTH: ${file(./env.json):ZKCLOUDWORKER_AUTH, env:ZKCLOUDWORKER_AUTH}
     CHATGPTPLUGINAUTH: ${file(./env.json):CHATGPTPLUGINAUTH, env:CHATGPTPLUGINAUTH}
     NFT_STORAGE_TOKEN: ${file(./env.json):NFT_STORAGE_TOKEN, env:NFT_STORAGE_TOKEN}
     PINATA_JWT: ${file(./env.json):PINATA_JWT, env:PINATA_JWT}
@@ -259,6 +260,29 @@ functions:
           path: api
           method: post
           cors: true
+  zkcloudworker:
+    handler: zkcloudworker.api
+    timeout: 30
+    memorySize: 1024
+    events:
+      - http:
+          path: zkcloudworker
+          method: post
+          cors: true
+  worker:
+    handler: zkcloudworker.worker
+    timeout: 900
+    memorySize: 8192
+    fileSystemConfig:
+      localMountPath: /mnt/efs
+      arn: arn:aws:elasticfilesystem:eu-west-1:615834060610:access-point/fsap-0424e24fcb8a4b112
+    vpc:
+      securityGroupIds:
+        - sg-07cb6569b6537753d
+      subnetIds:
+        - subnet-0def2b77c0fca2e95
+        - subnet-067d779572f8cf00d
+        - subnet-0b2c3a1af7dd7aa46
   ask:
     handler: ask.chatgpt
     timeout: 900

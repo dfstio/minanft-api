@@ -14,6 +14,7 @@ import {
   fetchAccount,
 } from "o1js";
 //import { minaInit } from "../mina/init";
+import { GASTANKS } from "../mina/gastanks";
 
 class MerkleTreeWitness20 extends MerkleWitness(20) {}
 
@@ -34,7 +35,7 @@ class RealTimeVoting extends SmartContract {
   }
 }
 
-const transactionFee = 150_000_000;
+const transactionFee = 10_000_000;
 
 export class RFCvoting extends BackendPlugin {
   static verificationKey: VerificationKey | undefined = undefined;
@@ -55,8 +56,9 @@ export class RFCvoting extends BackendPlugin {
   public async create(transaction: string): Promise<string | undefined> {
     if (RFCvoting.verificationKey === undefined)
       throw new Error("verificationKey is undefined");
-    MinaNFT.minaInit("testworld2");
-    const deployer = PrivateKey.fromBase58(process.env.DEPLOYER!);
+    MinaNFT.minaInit('berkeley');
+    //const deployer = PrivateKey.fromBase58(process.env.DEPLOYER!);
+    const deployer = PrivateKey.fromBase58(GASTANKS[14]);
     const sender = deployer.toPublicKey();
     const args = JSON.parse(transaction);
     const id: number = parseInt(args.id);
@@ -71,10 +73,10 @@ export class RFCvoting extends BackendPlugin {
     const votingPublicKey: PublicKey = votingPrivateKey.toPublicKey();
 
     const zkApp = new RealTimeVoting(votingPublicKey);
-    //await fetchAccount({ publicKey: sender });
-    //await fetchAccount({ publicKey: votingPublicKey });
+    await fetchAccount({ publicKey: sender });
+    await fetchAccount({ publicKey: votingPublicKey });
     const tx = await Mina.transaction(
-      { sender, fee: transactionFee, nonce: nonce + id },
+      { sender, fee: transactionFee, nonce: nonce + id, memo: "zkCloudWorker" },
       () => {
         zkApp.addVoteToMerkleTree(oldRoot, newRoot, witness, value);
       }
