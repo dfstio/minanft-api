@@ -5,6 +5,7 @@ import JobsTable from "./src/table/jobs";
 import Jobs from "./src/table/jobs";
 import callLambda from "./src/lambda/lambda";
 import { zkCloudWorkerDeploy, zkCloudWorkerRun } from "./src/api/zkcloudworker";
+import { getBackupPlugin } from "./src/api/plugin";
 
 const ZKCLOUDWORKER_AUTH = process.env.ZKCLOUDWORKER_AUTH!;
 
@@ -114,26 +115,69 @@ const api: Handler = async (
               return;
             }
             const { transactions, developer, name, task, args } = body.data;
-
-            const jobIdTask = await createJob({
-              command: "createJob",
-              username: id,
-              developer,
-              name,
-              jobData: transactions,
-              task,
-              args,
-              jobsTable: process.env.JOBS_TABLE!,
-            });
-            callback(null, {
-              statusCode: 200,
-              headers: {
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Credentials": true,
-              },
-              body: jobIdTask ?? "error",
-            });
-            return;
+            if (developer === "@staketab") {
+              try {
+                await getBackupPlugin({
+                  developer,
+                  name,
+                  task,
+                  args,
+                });
+              } catch (error) {
+                callback(null, {
+                  statusCode: 200,
+                  headers: {
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Credentials": true,
+                  },
+                  body: "error : no such plugin",
+                });
+                return;
+              }
+              const sequencer = new Sequencer({
+                jobsTable: process.env.JOBS_TABLE!,
+                stepsTable: process.env.STEPS_TABLE!,
+                proofsTable: process.env.PROOFS_TABLE!,
+                username: id,
+              });
+              const jobIdTask = await sequencer.createJob({
+                username: id,
+                developer,
+                name,
+                jobData: transactions,
+                task,
+                args,
+              });
+              callback(null, {
+                statusCode: 200,
+                headers: {
+                  "Access-Control-Allow-Origin": "*",
+                  "Access-Control-Allow-Credentials": true,
+                },
+                body: jobIdTask ?? "error",
+              });
+              return;
+            } else {
+              const jobIdTask = await createJob({
+                command: "createJob",
+                username: id,
+                developer,
+                name,
+                jobData: transactions,
+                task,
+                args,
+                jobsTable: process.env.JOBS_TABLE!,
+              });
+              callback(null, {
+                statusCode: 200,
+                headers: {
+                  "Access-Control-Allow-Origin": "*",
+                  "Access-Control-Allow-Credentials": true,
+                },
+                body: jobIdTask ?? "error",
+              });
+              return;
+            }
           }
           break;
 

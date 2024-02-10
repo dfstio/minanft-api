@@ -24,8 +24,8 @@
     "noFallthroughCasesInSwitch": true,
     "allowSyntheticDefaultImports": true,
     "strictPropertyInitialization": false, // to enable generic constructors, e.g. on CircuitValue
-    "skipLibCheck": true,
-
+    "skipLibCheck": true
   },
+  "include": ["*.ts", "src/**/*.ts"],
   "exclude": ["node_modules", ".build"]
 }

@@ -318,6 +318,83 @@ export default class Sequencer {
       }
     }
 
+    const matches: { first: number; second: number }[] = [];
+    if (job.jobName === "proofMap") {
+      const lowest: number[] = [];
+      const highest: number[] = [];
+      for (let i = 0; i < results.length; i++) {
+        const step: StepsData | undefined = await StepsTable.get({
+          jobId: this.jobId,
+          stepId: results[i].stepId,
+        });
+        if (step === undefined) throw new Error("step is undefined");
+        const origins = step.origins;
+        // find lowest and highest number in origins
+        lowest.push(Math.min(...origins.map((origin) => parseInt(origin))));
+        highest.push(Math.max(...origins.map((origin) => parseInt(origin))));
+      }
+      // find matches where the lowest and highest are the different by one
+      const matches: { first: number; second: number }[] = [];
+      for (let i = 0; i < lowest.length; i++)
+        for (let j = 0; j < highest.length; j++)
+          if (lowest[i] === highest[j] + 1) {
+            // we can merge these two proofs if the proof is not already merging
+            // check is i or j is already in matches
+            if (
+              i !== j &&
+              matches.find(
+                (match) =>
+                  match.first === j ||
+                  match.second === i ||
+                  match.first === i ||
+                  match.second === j
+              ) === undefined
+            )
+              matches.push({ first: j, second: i });
+          }
+    } else {
+      for (let i = 0; i < results.length; i += 2)
+        if (i + 1 < results.length) matches.push({ first: i, second: i + 1 });
+    }
+    const stepResults = [];
+    for (let i = 0; i < matches.length; i++) {
+      const updatedStep1 = await StepsTable.updateStatus({
+        jobId: this.jobId,
+        stepId: results[matches[i].first].stepId,
+        status: "used",
+        requiredStatus: "finished",
+      });
+      if (updatedStep1 === undefined)
+        console.log("Sequencer: run: updateStatus operation failed");
+      else if (updatedStep1.stepStatus !== "used")
+        console.log(
+          "Sequencer: run: updateStatus update failed, current status:",
+          updatedStep1.stepId,
+          updatedStep1.stepStatus
+        );
+      else stepResults.push(results[matches[i].first]);
+      const updatedStep2 = await StepsTable.updateStatus({
+        jobId: this.jobId,
+        stepId: results[matches[i].second].stepId,
+        status: "used",
+        requiredStatus: "finished",
+      });
+      if (updatedStep2 === undefined)
+        console.log("Sequencer: run: updateStatus operation failed");
+      else if (updatedStep2.stepStatus !== "used")
+        console.log(
+          "Sequencer: run: updateStatus update failed, current status:",
+          updatedStep2.stepId,
+          updatedStep2.stepStatus
+        );
+      else stepResults.push(results[matches[i].second]);
+    }
+
+    if (stepResults.length === 0) {
+      console.log("Sequencer: run: no results to merge after trying to lock");
+      return true;
+    }
+    /*
     const stepResults = [];
     //console.log("Sequencer: run: results", results.length);
     for (let i = 0; i < results.length; i++) {
@@ -363,102 +440,102 @@ export default class Sequencer {
           "Sequencer: run: odd number of results, returning last one"
         );
       }
-      const mergeStepsNumber = Math.floor(stepResults.length / 2);
-      if (mergeStepsNumber > 0) {
-        const JobsTable = new Jobs(this.jobsTable);
-        const job = await JobsTable.get({
-          id: this.username,
+      */
+    const mergeStepsNumber = Math.floor(stepResults.length / 2);
+    if (mergeStepsNumber > 0) {
+      const JobsTable = new Jobs(this.jobsTable);
+      const job = await JobsTable.get({
+        id: this.username,
+        jobId: this.jobId,
+      });
+      if (job === undefined) throw new Error("job not found");
+
+      if (job.jobStatus === "failed") {
+        console.log("Sequencer: run: job is failed, exiting");
+        return false;
+      }
+      // Let's give previous step instance to exit to reuse the lambda instance
+      await sleep(1000);
+
+      for (let i = 0; i < mergeStepsNumber; i++) {
+        const stepId: string = Date.now().toString() + "." + makeString(32);
+        const step1: StepsData | undefined = await StepsTable.get({
           jobId: this.jobId,
+          stepId: stepResults[2 * i].stepId,
         });
-        if (job === undefined) throw new Error("job not found");
+        const step2: StepsData | undefined = await StepsTable.get({
+          jobId: this.jobId,
+          stepId: stepResults[2 * i + 1].stepId,
+        });
+        if (step1 === undefined || step2 === undefined)
+          throw new Error("step is undefined");
 
-        if (job.jobStatus === "failed") {
-          console.log("Sequencer: run: job is failed, exiting");
-          return false;
-        }
-        // Let's give previous step instance to exit to reuse the lambda instance
-        await sleep(1000);
-
-        for (let i = 0; i < mergeStepsNumber; i++) {
-          const stepId: string = Date.now().toString() + "." + makeString(32);
-          const step1: StepsData | undefined = await StepsTable.get({
+        const name = step1.name;
+        const jobTask = step1.jobTask;
+        const args = step1.args;
+        const developer = step1.developer;
+        if (name !== step2.name) throw new Error("name mismatch");
+        if (jobTask !== step2.jobTask) throw new Error("jobTask mismatch");
+        if (args.length !== step2.args.length)
+          throw new Error("arguments mismatch");
+        if (developer !== step2.developer)
+          throw new Error("developer mismatch");
+        if (step1.result === undefined || step2.result === undefined)
+          throw new Error(`result is undefined`);
+        else if (
+          step1.timeStarted === undefined ||
+          step1.timeFinished === undefined ||
+          step2.timeStarted === undefined ||
+          step2.timeFinished === undefined
+        )
+          throw new Error(`time is undefined`);
+        else {
+          const billedDuration =
+            (step1.billedDuration ?? 0) +
+            (step2.billedDuration ?? 0) +
+            step1.timeFinished -
+            step1.timeStarted +
+            step2.timeFinished -
+            step2.timeStarted;
+          const stepData: StepsData = {
             jobId: this.jobId,
-            stepId: stepResults[2 * i].stepId,
-          });
-          const step2: StepsData | undefined = await StepsTable.get({
-            jobId: this.jobId,
-            stepId: stepResults[2 * i + 1].stepId,
-          });
-          if (step1 === undefined || step2 === undefined)
-            throw new Error("step is undefined");
-
-          const name = step1.name;
-          const jobTask = step1.jobTask;
-          const args = step1.args;
-          const developer = step1.developer;
-          if (name !== step2.name) throw new Error("name mismatch");
-          if (jobTask !== step2.jobTask) throw new Error("jobTask mismatch");
-          if (args.length !== step2.args.length)
-            throw new Error("arguments mismatch");
-          if (developer !== step2.developer)
-            throw new Error("developer mismatch");
-          if (step1.result === undefined || step2.result === undefined)
-            throw new Error(`result is undefined`);
-          else if (
-            step1.timeStarted === undefined ||
-            step1.timeFinished === undefined ||
-            step2.timeStarted === undefined ||
-            step2.timeFinished === undefined
-          )
-            throw new Error(`time is undefined`);
-          else {
-            const billedDuration =
-              (step1.billedDuration ?? 0) +
-              (step2.billedDuration ?? 0) +
-              step1.timeFinished -
-              step1.timeStarted +
-              step2.timeFinished -
-              step2.timeStarted;
-            const stepData: StepsData = {
+            stepId,
+            username: this.username,
+            developer,
+            name,
+            jobTask,
+            args,
+            task: "merge" as StepTask,
+            origins: [...step1.origins, ...step2.origins],
+            stepData: [step1.result!, step2.result!],
+            timeCreated: Date.now(),
+            stepStatus: "created" as JobStatus,
+            billedDuration,
+          };
+          try {
+            await StepsTable.create(stepData);
+            await callLambda("step", JSON.stringify({ stepData }));
+            console.log(
+              `Sequencer: run: started merging ${stepData.origins.length} proofs`
+            );
+            await StepsTable.remove({
               jobId: this.jobId,
-              stepId,
-              username: this.username,
-              developer,
-              name,
-              jobTask,
-              args,
-              task: "merge" as StepTask,
-              origins: [...step1.origins, ...step2.origins],
-              stepData: [step1.result!, step2.result!],
-              timeCreated: Date.now(),
-              stepStatus: "created" as JobStatus,
-              billedDuration,
-            };
-            try {
-              await StepsTable.create(stepData);
-              await callLambda("step", JSON.stringify({ stepData }));
-              console.log(
-                `Sequencer: run: started merging ${stepData.origins.length} proofs`
-              );
-              await StepsTable.remove({
-                jobId: this.jobId,
-                stepId: step1.stepId,
-              });
-              await StepsTable.remove({
-                jobId: this.jobId,
-                stepId: step2.stepId,
-              });
-              await ProofsTable.remove({
-                jobId: this.jobId,
-                stepId: step1.stepId,
-              });
-              await ProofsTable.remove({
-                jobId: this.jobId,
-                stepId: step2.stepId,
-              });
-            } catch (error: any) {
-              console.error("Error: Sequencer: createStep", error);
-            }
+              stepId: step1.stepId,
+            });
+            await StepsTable.remove({
+              jobId: this.jobId,
+              stepId: step2.stepId,
+            });
+            await ProofsTable.remove({
+              jobId: this.jobId,
+              stepId: step1.stepId,
+            });
+            await ProofsTable.remove({
+              jobId: this.jobId,
+              stepId: step2.stepId,
+            });
+          } catch (error: any) {
+            console.error("Error: Sequencer: createStep", error);
           }
         }
       }
