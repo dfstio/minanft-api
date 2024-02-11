@@ -142,9 +142,12 @@ export class NameServicePlugin extends BackendPlugin {
         ],
       });
 
-      tx = await Mina.transaction({ sender, fee: await MinaNFT.fee() }, () => {
-        zkApp.add(name, address, storage, signature);
-      });
+      tx = await Mina.transaction(
+        { sender, fee: await MinaNFT.fee(), memo: "add" },
+        () => {
+          zkApp.add(name, address, storage, signature);
+        }
+      );
     } else if (this.args[0] === "reduce") {
       try {
         const startActionState = Field.fromJSON(args.startActionState);
@@ -153,7 +156,9 @@ export class NameServicePlugin extends BackendPlugin {
           count: Field.fromJSON(args.reducerState.count),
           hash: Field.fromJSON(args.reducerState.hash),
         });
+        const count = Number(reducerState.count.toBigInt());
         console.log("ReducerState count", reducerState.count.toJSON());
+        await fetchMinaActions(contractAddress, startActionState);
 
         const proof: MapUpdateProof = MapUpdateProof.fromJSON(
           JSON.parse(args.proof) as JsonProof
@@ -162,7 +167,7 @@ export class NameServicePlugin extends BackendPlugin {
         const signature = Signature.fromBase58(args.signature);
 
         tx = await Mina.transaction(
-          { sender, fee: await MinaNFT.fee() },
+          { sender, fee: await MinaNFT.fee(), memo: "reduce" },
           () => {
             zkApp.reduce(
               startActionState,
@@ -181,9 +186,12 @@ export class NameServicePlugin extends BackendPlugin {
       const count = Field.fromJSON(args.count);
       const signature = Signature.fromBase58(args.signature);
 
-      tx = await Mina.transaction({ sender, fee: await MinaNFT.fee() }, () => {
-        zkApp.setRoot(root, count, signature);
-      });
+      tx = await Mina.transaction(
+        { sender, fee: await MinaNFT.fee(), memo: "reset" },
+        () => {
+          zkApp.setRoot(root, count, signature);
+        }
+      );
     } else throw new Error("unknown action");
 
     if (tx === undefined) throw new Error("tx is undefined");
@@ -218,4 +226,28 @@ async function fetchMinaAccount(publicKey: PublicKey) {
   }
   console.log("Timeout in fetchAccount");
   return result;
+}
+
+async function fetchMinaActions(
+  publicKey: PublicKey,
+  fromActionState: Field,
+  endActionState?: Field
+): Promise<void> {
+  const timeout = 1000 * 60 * 5; // 5 minutes
+  const startTime = Date.now();
+  while (Date.now() - startTime < timeout) {
+    try {
+      let actions = await Mina.fetchActions(publicKey, {
+        fromActionState,
+        endActionState,
+      });
+      if (Array.isArray(actions)) return;
+      else console.log("Cannot fetch actions - wrong format");
+    } catch (error) {
+      console.log("Error in fetchMinaActions", error);
+    }
+    await sleep(1000 * 10);
+  }
+  console.log("Timeout in fetchMinaActions");
+  return;
 }
