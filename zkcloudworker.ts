@@ -6,6 +6,7 @@ import Jobs from "./src/table/jobs";
 import callLambda from "./src/lambda/lambda";
 import { zkCloudWorkerDeploy, zkCloudWorkerRun } from "./src/api/zkcloudworker";
 import { getBackupPlugin } from "./src/api/plugin";
+import S3File from "./src/storage/s3";
 
 const ZKCLOUDWORKER_AUTH = process.env.ZKCLOUDWORKER_AUTH!;
 
@@ -134,6 +135,15 @@ const api: Handler = async (
                 });
                 return;
               }
+              const filename = "staketab." + Date.now().toString() + ".json";
+              const file = new S3File(
+                process.env.PROVER_KEYS_BUCKET!,
+                filename
+              );
+              await file.put(
+                JSON.stringify({ transactions }),
+                "application/json"
+              );
               const sequencer = new Sequencer({
                 jobsTable: process.env.JOBS_TABLE!,
                 stepsTable: process.env.STEPS_TABLE!,
@@ -144,9 +154,10 @@ const api: Handler = async (
                 username: id,
                 developer,
                 name,
-                jobData: transactions,
+                jobData: [filename],
                 task,
                 args,
+                txNumber: transactions.length,
               });
               callback(null, {
                 statusCode: 200,
@@ -315,6 +326,7 @@ async function createJob(params: {
     jobData,
     task,
     args,
+    txNumber: jobData.length,
   });
   await callLambda(
     "worker",

@@ -4,9 +4,11 @@ service: minanft-telegram-bot
 
 plugins:
   - serverless-plugin-typescript
+  - serverless-prune-plugin
 
 provider:
   name: aws
+  versionFunctions: false
   runtime: nodejs18.x
   region: eu-west-1
   logRetentionInDays: 7
@@ -390,7 +392,7 @@ functions:
   sequencer:
     handler: sequencer.run
     timeout: 900
-    memorySize: 512
+    memorySize: 4096
     vpc:
       securityGroupIds:
         - sg-07cb6569b6537753d
