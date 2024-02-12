@@ -12,6 +12,7 @@ export default class Jobs extends Table<JobsData> {
     jobData: string[];
     isStarted?: boolean;
     timeStarted?: number;
+    txNumber: number;
   }): Promise<string | undefined> {
     const {
       username,
@@ -34,6 +35,7 @@ export default class Jobs extends Table<JobsData> {
       task,
       args,
       jobData,
+      txNumber: params.txNumber,
       timeCreated,
       jobStatus: "created" as JobStatus,
     };

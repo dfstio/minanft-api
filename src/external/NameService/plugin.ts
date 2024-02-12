@@ -86,28 +86,33 @@ export class NameServicePlugin extends BackendPlugin {
     proof1: string,
     proof2: string
   ): Promise<string | undefined> {
-    if (NameServicePlugin.mapUpdateVerificationKey === undefined)
-      throw new Error("verificationKey is undefined");
-    console.time("merge mapPoof");
+    try {
+      if (NameServicePlugin.mapUpdateVerificationKey === undefined)
+        throw new Error("verificationKey is undefined");
+      console.time("merge mapPoof");
 
-    const sourceProof1: MapUpdateProof = MapUpdateProof.fromJSON(
-      JSON.parse(proof1) as JsonProof
-    );
-    const sourceProof2: MapUpdateProof = MapUpdateProof.fromJSON(
-      JSON.parse(proof2) as JsonProof
-    );
-    const state = MapTransition.merge(
-      sourceProof1.publicInput,
-      sourceProof2.publicInput
-    );
-    const proof = await MapUpdate.merge(state, sourceProof1, sourceProof2);
-    const ok = await verify(
-      proof.toJSON(),
-      NameServicePlugin.mapUpdateVerificationKey
-    );
-    if (!ok) throw new Error("proof verification failed");
-    console.timeEnd("merge mapPoof");
-    return JSON.stringify(proof.toJSON(), null, 2);
+      const sourceProof1: MapUpdateProof = MapUpdateProof.fromJSON(
+        JSON.parse(proof1) as JsonProof
+      );
+      const sourceProof2: MapUpdateProof = MapUpdateProof.fromJSON(
+        JSON.parse(proof2) as JsonProof
+      );
+      const state = MapTransition.merge(
+        sourceProof1.publicInput,
+        sourceProof2.publicInput
+      );
+      const proof = await MapUpdate.merge(state, sourceProof1, sourceProof2);
+      const ok = await verify(
+        proof.toJSON(),
+        NameServicePlugin.mapUpdateVerificationKey
+      );
+      if (!ok) throw new Error("proof verification failed");
+      console.timeEnd("merge mapPoof");
+      return JSON.stringify(proof.toJSON(), null, 2);
+    } catch (error) {
+      console.log("Error in merge", error);
+      throw error;
+    }
   }
 
   public async verify(proof: string): Promise<string | undefined> {
@@ -230,7 +235,7 @@ async function fetchMinaAccount(publicKey: PublicKey) {
 
 async function fetchMinaActions(
   publicKey: PublicKey,
-  fromActionState: Field,
+  fromActionState?: Field,
   endActionState?: Field
 ): Promise<void> {
   const timeout = 1000 * 60 * 5; // 5 minutes

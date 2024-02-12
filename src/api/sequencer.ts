@@ -7,6 +7,7 @@ import { StepsData, StepTask, ProofsData } from "../model/stepsData";
 import callLambda from "../lambda/lambda";
 import { makeString, sleep } from "minanft";
 import { copyStringtoS3 } from "./rfc4-s3";
+import S3File from "../storage/s3";
 
 export default class Sequencer {
   jobsTable: string;
@@ -40,6 +41,7 @@ export default class Sequencer {
     jobData: string[];
     task: string;
     args: string[];
+    txNumber?: number;
   }): Promise<string | undefined> {
     const { username, developer, name, jobData, task, args } = params;
     if (this.username !== params.username) throw new Error("username mismatch");
@@ -53,6 +55,7 @@ export default class Sequencer {
       jobData,
       task,
       args,
+      txNumber: params.txNumber ?? jobData.length,
     });
     if (jobId !== undefined && task !== "mint")
       await callLambda(
@@ -84,10 +87,7 @@ export default class Sequencer {
       jobId: this.jobId,
     });
     if (job === undefined) throw new Error("job not found");
-    if (
-      (job.task === "verify" || job.task === "send") &&
-      job.jobData.length !== 1
-    ) {
+    if ((job.task === "verify" || job.task === "send") && job.txNumber !== 1) {
       await JobsTable.updateStatus({
         username: this.username,
         jobId: this.jobId,
@@ -95,7 +95,7 @@ export default class Sequencer {
       });
       throw new Error("jobData length is not 1 for task:verify or send");
     }
-    if (job.jobData.length === 0) {
+    if (job.txNumber === 0) {
       await JobsTable.updateStatus({
         username: this.username,
         jobId: this.jobId,
@@ -103,7 +103,22 @@ export default class Sequencer {
       });
       throw new Error("jobData length is 0");
     }
-    for (let i = 0; i < job.jobData.length; i++) {
+    let transactions: string[] = job.jobData;
+    if (job.developer === "@staketab") {
+      const file = new S3File(process.env.PROVER_KEYS_BUCKET!, job.jobData[0]);
+      const data = await file.get();
+      const streamToString = await data.Body?.transformToString("utf8");
+      if (streamToString === undefined) {
+        throw new Error("Error: streamToString is undefined");
+      }
+      const json = JSON.parse(streamToString.toString());
+      transactions = json.transactions;
+      console.log(
+        "Sequencer: startJob: @staketab transactions",
+        transactions.length
+      );
+    }
+    for (let i = 0; i < transactions.length; i++) {
       const stepId: string = i.toString();
       const task =
         job.task === "verify"
@@ -123,7 +138,7 @@ export default class Sequencer {
         args: job.args,
         task: task as StepTask,
         origins: [i.toString()],
-        stepData: [job.jobData[i]],
+        stepData: [transactions[i]],
         timeCreated: Date.now(),
         stepStatus: "created" as JobStatus,
       };
@@ -224,7 +239,7 @@ export default class Sequencer {
       }
       if (result.result === undefined) throw new Error("result is undefined");
 
-      if (job.jobData.length !== result.origins.length) {
+      if (job.txNumber !== result.origins.length) {
         /*
         console.log(
           "final result check: jobData length does not match origins length, exiting"
@@ -291,7 +306,7 @@ export default class Sequencer {
             stepId: step.stepId,
           });
         }
-        if (txs.length === job.jobData.length) {
+        if (txs.length === job.txNumber) {
           const filename = await copyStringtoS3(JSON.stringify({ txs }));
           await JobsTable.updateStatus({
             username: this.username,
@@ -319,7 +334,7 @@ export default class Sequencer {
     }
 
     const matches: { first: number; second: number }[] = [];
-    if (job.jobName === "proofMap") {
+    if (job.task === "proofMap") {
       const lowest: number[] = [];
       const highest: number[] = [];
       for (let i = 0; i < results.length; i++) {
@@ -333,8 +348,9 @@ export default class Sequencer {
         lowest.push(Math.min(...origins.map((origin) => parseInt(origin))));
         highest.push(Math.max(...origins.map((origin) => parseInt(origin))));
       }
+      //console.log("Sequencer: run: lowest", lowest);
+      //console.log("Sequencer: run: highest", highest);
       // find matches where the lowest and highest are the different by one
-      const matches: { first: number; second: number }[] = [];
       for (let i = 0; i < lowest.length; i++)
         for (let j = 0; j < highest.length; j++)
           if (lowest[i] === highest[j] + 1) {
@@ -352,6 +368,14 @@ export default class Sequencer {
             )
               matches.push({ first: j, second: i });
           }
+      //console.log("Sequencer: run: matches", matches);
+      /*
+      matches.forEach((match) => {
+        const { first, second } = match;
+        if (first - second !== 1 && second - first !== 1)
+          throw new Error(`Sequencer: run: match error ${first}, ${second}`);
+      });
+      */
     } else {
       for (let i = 0; i < results.length; i += 2)
         if (i + 1 < results.length) matches.push({ first: i, second: i + 1 });

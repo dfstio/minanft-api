@@ -9,6 +9,7 @@ export interface JobsData {
   task: string;
   args: string[];
   jobData: string[];
+  txNumber: number;
   timeCreated: number;
   timeStarted?: number;
   timeFinished?: number;

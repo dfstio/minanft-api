@@ -32,6 +32,7 @@ export class Job {
       jobData: [],
       isStarted: true,
       timeStarted: this.timeStarted,
+      txNumber: 0,
     });
     this.jobId = jobId;
     return jobId;
