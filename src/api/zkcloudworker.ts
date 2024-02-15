@@ -91,7 +91,83 @@ export async function zkCloudWorkerDeploy(params: {
   }
 }
 
-export async function zkCloudWorkerRun(params: {
+export async function zkCloudWorkerRunJestOracle(params: {
+  name: string;
+  username: string;
+  jobId: string;
+}) {
+  console.log("zkCloudWorkerRunJestOracle", params);
+  const { name, username, jobId } = params;
+  const timeStarted = Date.now();
+  console.time("all");
+  Memory.info("start");
+  const JobsTable = new Jobs(process.env.JOBS_TABLE!);
+
+  try {
+    const job: JobsData | undefined = await JobsTable.get({
+      id: username,
+      jobId,
+    });
+    if (job === undefined) throw new Error("job not found");
+    if (job.jobName !== name) throw new Error("job name mismatch");
+    await JobsTable.updateStatus({
+      username,
+      jobId: jobId,
+      status: "started",
+    });
+    const contractsDirRoot = "/mnt/efs/worker";
+    const contractsDir = contractsDirRoot + "/" + name;
+    const cacheDir = "/mnt/efs/cache";
+    const fileName = name + ".zip";
+    const files = [fileName];
+    const functionName = job.task;
+    const args = job.args;
+
+    await listFiles(contractsDir, true);
+
+    const relativeDir = "../../../../mnt/efs/worker/" + name + "/dist/index.js";
+    await listFiles(contractsDir, true);
+    await listFiles(contractsDir + "/dist", true);
+
+    /*
+    Jest Oracle code for Proof-Of-Knowledge NFTs
+    */
+    const jestConfig = {
+      roots: [relativeDir + "/tests"],
+      //testRegex: "\\.spec\\.js$",
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const jestResult = await runCLI(jestConfig as any, [relativeDir]);
+    console.log("jest result", jestResult.results?.success);
+
+    await JobsTable.updateStatus({
+      username,
+      jobId: jobId,
+      status: "finished",
+      result: jestResult.results?.success ? "success" : "failure",
+      billedDuration: Date.now() - timeStarted,
+    });
+
+    console.timeEnd("all");
+    await sleep(1000);
+  } catch (err: any) {
+    console.error(err);
+    console.error("worker: Error running package");
+    await JobsTable.updateStatus({
+      username,
+      jobId: jobId,
+      status: "failed",
+      result: "run error: " + err.toString(),
+      billedDuration: Date.now() - timeStarted,
+    });
+    Memory.info("run error");
+    console.timeEnd("all");
+    await sleep(1000);
+  }
+}
+
+export async function zkCloudWorkerRunTypeScriptOracle(params: {
   name: string;
   username: string;
   jobId: string;
@@ -128,21 +204,6 @@ export async function zkCloudWorkerRun(params: {
     const relativeDir = "../../../../mnt/efs/worker/" + name + "/dist/index.js";
     await listFiles(contractsDir, true);
     await listFiles(contractsDir + "/dist", true);
-
-    /*
-    Jest Oracle code for Proof-Of-Knowledge NFTs
-
-    const jestConfig = {
-      roots: ["../../../../mnt/efs/zip/mac/dist/tests"],
-      //testRegex: "\\.spec\\.js$",
-    };
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const jestResult = await runCLI(jestConfig as any, [
-      "../../../../mnt/efs/zip/mac",
-    ]);
-    console.log("jest result", jestResult.results?.success);
-    */
 
     console.log("Importing contracts...");
 
