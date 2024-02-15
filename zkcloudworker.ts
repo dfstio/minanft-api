@@ -4,7 +4,11 @@ import Sequencer from "./src/api/sequencer";
 import JobsTable from "./src/table/jobs";
 import Jobs from "./src/table/jobs";
 import callLambda from "./src/lambda/lambda";
-import { zkCloudWorkerDeploy, zkCloudWorkerRun } from "./src/api/zkcloudworker";
+import {
+  zkCloudWorkerDeploy,
+  zkCloudWorkerRunTypeScriptOracle,
+  zkCloudWorkerRunJestOracle,
+} from "./src/api/zkcloudworker";
 import { getBackupPlugin } from "./src/api/plugin";
 import S3File from "./src/storage/s3";
 
@@ -273,7 +277,14 @@ const worker: Handler = async (event: any, context: Context) => {
         });
         success = true;
       } else if (event.command === "createJob") {
-        await zkCloudWorkerRun({
+        await zkCloudWorkerRunTypeScriptOracle({
+          name: event.name,
+          username: event.username,
+          jobId: event.jobId,
+        });
+        success = true;
+      } else if (event.command === "createJestJob") {
+        await zkCloudWorkerRunJestOracle({
           name: event.name,
           username: event.username,
           jobId: event.jobId,
