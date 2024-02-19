@@ -26,6 +26,6 @@
     "strictPropertyInitialization": false, // to enable generic constructors, e.g. on CircuitValue
     "skipLibCheck": true
   },
-  "include": ["*.ts", "src/**/*.ts"],
+  "include": ["*.ts", "src/**/*.ts", "depreciated/stepsum.ts"],
   "exclude": ["node_modules", ".build"]
 }
