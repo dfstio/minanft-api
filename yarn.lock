@@ -300,9 +300,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@aws-sdk/client-dynamodb@npm:^3.535.0":
-  version: 3.535.0
-  resolution: "@aws-sdk/client-dynamodb@npm:3.535.0"
+"@aws-sdk/client-dynamodb@npm:^3.538.0":
+  version: 3.538.0
+  resolution: "@aws-sdk/client-dynamodb@npm:3.538.0"
   dependencies:
     "@aws-crypto/sha256-browser": "npm:3.0.0"
     "@aws-crypto/sha256-js": "npm:3.0.0"
@@ -347,7 +347,7 @@ __metadata:
     "@smithy/util-waiter": "npm:^2.2.0"
     tslib: "npm:^2.6.2"
     uuid: "npm:^9.0.1"
-  checksum: 10c0/bb225d9cf1a81b908a50895c9e3c9164b964e5c7157af609a82b4a591e39ee70db61473b1e0282bb5a8122d9f4094dbfbde287fffd83bb367c6a88a1cc233cc1
+  checksum: 10c0/2b44c23dfa2a6a40f14fb6a5bdaed0704b458d042e8c0363cf10cf63e105f4fcb3cf063a54a35a02ed32435babacf220a48493df7f36a003730fc07381f26a55
   languageName: node
   linkType: hard
 
@@ -1112,14 +1112,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@aws-sdk/util-dynamodb@npm:^3.535.0":
-  version: 3.535.0
-  resolution: "@aws-sdk/util-dynamodb@npm:3.535.0"
+"@aws-sdk/util-dynamodb@npm:^3.538.0":
+  version: 3.538.0
+  resolution: "@aws-sdk/util-dynamodb@npm:3.538.0"
   dependencies:
     tslib: "npm:^2.6.2"
   peerDependencies:
     "@aws-sdk/client-dynamodb": ^3.0.0
-  checksum: 10c0/dbd13b50319cf1a046e51d8e742bf675ec153f0ecf4f5aa9d66523d322557ef6aa3f3bac054d3883a32b3de0fc46bf92dd09ad7e990c342c274273eac445444c
+  checksum: 10c0/c1fa2eaea3010ff4fae510ba737527630764e86a80635f0c5e3dd7b0c1a4b883e88ad0add5d0f975939d036400aeb3aa83fc51fa8026866da7955a0125a84748
   languageName: node
   linkType: hard
 
@@ -7311,13 +7311,13 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "minanft-api@workspace:."
   dependencies:
-    "@aws-sdk/client-dynamodb": "npm:^3.535.0"
+    "@aws-sdk/client-dynamodb": "npm:^3.538.0"
     "@aws-sdk/client-elastic-transcoder": "npm:^3.536.0"
     "@aws-sdk/client-kms": "npm:^3.536.0"
     "@aws-sdk/client-lambda": "npm:^3.536.0"
     "@aws-sdk/client-polly": "npm:^3.535.0"
     "@aws-sdk/client-s3": "npm:^3.537.0"
-    "@aws-sdk/util-dynamodb": "npm:^3.535.0"
+    "@aws-sdk/util-dynamodb": "npm:^3.538.0"
     "@types/adm-zip": "npm:^0.5.5"
     "@types/aws-lambda": "npm:^8.10.136"
     "@types/jsonwebtoken": "npm:^9.0.6"
@@ -7331,7 +7331,7 @@ __metadata:
     i18next: "npm:^23.10.1"
     jest: "npm:^29.7.0"
     jsonwebtoken: "npm:^9.0.2"
-    minanft: "npm:^1.8.1"
+    minanft: "npm:^1.8.5"
     o1js: "npm:^0.17.0"
     openai: "npm:^4.29.2"
     remove-markdown: "npm:^0.5.0"
@@ -7339,14 +7339,14 @@ __metadata:
     serverless-plugin-typescript: "npm:^2.1.5"
     serverless-prune-plugin: "npm:^2.0.2"
     telegraf: "npm:4.15.3"
-    typescript: "npm:^5.4.2"
+    typescript: "npm:^5.4.3"
     zkcloudworker: "npm:^0.1.15"
   languageName: unknown
   linkType: soft
 
-"minanft@npm:^1.8.1":
-  version: 1.8.1
-  resolution: "minanft@npm:1.8.1"
+"minanft@npm:^1.8.5":
+  version: 1.8.5
+  resolution: "minanft@npm:1.8.5"
   dependencies:
     arweave: "npm:^1.15.0"
     axios: "npm:^1.6.8"
@@ -7355,7 +7355,7 @@ __metadata:
     mime: "npm:^3.0.0"
   peerDependencies:
     o1js: ^0.17.0
-  checksum: 10c0/faf41aee4b49c5a587e9373191defa286a6485b49261c2f90db5f7a22383bcfedca4471bd693962ee871b0cb20dfb0cfd02e3261e64d8dc02c000d6daf4d83cd
+  checksum: 10c0/ecd3c972c7cbf91cf8dd9e0e792d835ba5ab2fce34f8d8653c068f36d372c6154c0498ce3f65bdffd0fc537fb7f6453b5babfb0cff7a5d399cae128e4f4247c4
   languageName: node
   linkType: hard
 
@@ -9326,23 +9326,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:^5.4.2":
-  version: 5.4.2
-  resolution: "typescript@npm:5.4.2"
+"typescript@npm:^5.4.3":
+  version: 5.4.3
+  resolution: "typescript@npm:5.4.3"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 10c0/583ff68cafb0c076695f72d61df6feee71689568179fb0d3a4834dac343df6b6ed7cf7b6f6c801fa52d43cd1d324e2f2d8ae4497b09f9e6cfe3d80a6d6c9ca52
+  checksum: 10c0/22443a8760c3668e256c0b34b6b45c359ef6cecc10c42558806177a7d500ab1a7d7aac1f976d712e26989ddf6731d2fbdd3212b7c73290a45127c1c43ba2005a
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@npm%3A^5.4.2#optional!builtin<compat/typescript>":
-  version: 5.4.2
-  resolution: "typescript@patch:typescript@npm%3A5.4.2#optional!builtin<compat/typescript>::version=5.4.2&hash=5adc0c"
+"typescript@patch:typescript@npm%3A^5.4.3#optional!builtin<compat/typescript>":
+  version: 5.4.3
+  resolution: "typescript@patch:typescript@npm%3A5.4.3#optional!builtin<compat/typescript>::version=5.4.3&hash=5adc0c"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 10c0/fcf6658073d07283910d9a0e04b1d5d0ebc822c04dbb7abdd74c3151c7aa92fcddbac7d799404e358197222006ccdc4c0db219d223d2ee4ccd9e2b01333b49be
+  checksum: 10c0/6e51f8b7e6ec55b897b9e56b67e864fe8f44e30f4a14357aad5dc0f7432db2f01efc0522df0b6c36d361c51f2dc3dcac5c832efd96a404cfabf884e915d38828
   languageName: node
   linkType: hard
 

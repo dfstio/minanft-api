@@ -34,16 +34,16 @@
     "serverless": "^3.38.0",
     "serverless-plugin-typescript": "^2.1.5",
     "serverless-prune-plugin": "^2.0.2",
-    "typescript": "^5.4.2"
+    "typescript": "^5.4.3"
   },
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.535.0",
+    "@aws-sdk/client-dynamodb": "^3.538.0",
     "@aws-sdk/client-elastic-transcoder": "^3.536.0",
     "@aws-sdk/client-kms": "^3.536.0",
     "@aws-sdk/client-lambda": "^3.536.0",
     "@aws-sdk/client-polly": "^3.535.0",
     "@aws-sdk/client-s3": "^3.537.0",
-    "@aws-sdk/util-dynamodb": "^3.535.0",
+    "@aws-sdk/util-dynamodb": "^3.538.0",
     "adm-zip": "^0.5.12",
     "algoliasearch": "^4.22.1",
     "axios": "^1.6.8",
@@ -51,7 +51,7 @@
     "i18next": "^23.10.1",
     "jest": "^29.7.0",
     "jsonwebtoken": "^9.0.2",
-    "minanft": "^1.8.1",
+    "minanft": "^1.8.5",
     "o1js": "^0.17.0",
     "openai": "^4.29.2",
     "remove-markdown": "^0.5.0",
