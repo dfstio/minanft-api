@@ -203,7 +203,7 @@ export class NameServicePlugin extends BackendPlugin {
     await tx.prove();
     const txSent = await tx.sign([deployer]).send();
     if (txSent === undefined) throw new Error("tx is undefined");
-    const hash: string | undefined = txSent.hash();
+    const hash: string | undefined = txSent.hash;
     if (hash === undefined) throw new Error("hash is undefined");
     return hash;
   }

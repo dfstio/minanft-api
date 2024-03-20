@@ -78,7 +78,7 @@ const calculate: Handler = async (
       transaction.sign([deployer]);
       const tx = await transaction.send();
       await MinaNFT.transactionInfo(tx, "faucet", false);
-      const hash = tx.hash();
+      const hash = tx.hash;
       console.log("tx hash", hash);
       await sleep(1000);
       console.timeEnd("hash");

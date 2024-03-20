@@ -14,12 +14,13 @@ import {
   fetchAccount,
 } from "o1js";
 //import { minaInit } from "../mina/init";
-import { GASTANKS } from "../mina/gastanks";
+//import { GASTANKS } from "../mina/gastanks";
 
 class MerkleTreeWitness20 extends MerkleWitness(20) {}
 
 class RealTimeVoting extends SmartContract {
   @state(Field) root = State<Field>();
+  @state(Field) counter = State<Field>();
 
   @method addVoteToMerkleTree(
     guaranteedState: Field,
@@ -32,6 +33,7 @@ class RealTimeVoting extends SmartContract {
     guaranteedState.assertEquals(oldCalculatedRoot);
     newState.assertEquals(calculatedRoot);
     this.root.set(newState);
+    this.counter.set(value);
   }
 }
 
@@ -56,9 +58,9 @@ export class RFCvoting extends BackendPlugin {
   public async create(transaction: string): Promise<string | undefined> {
     if (RFCvoting.verificationKey === undefined)
       throw new Error("verificationKey is undefined");
-    MinaNFT.minaInit('berkeley');
-    //const deployer = PrivateKey.fromBase58(process.env.DEPLOYER!);
-    const deployer = PrivateKey.fromBase58(GASTANKS[14]);
+    MinaNFT.minaInit("zeko");
+    const deployer = PrivateKey.fromBase58(process.env.DEPLOYER_LIB!);
+    //const deployer = PrivateKey.fromBase58(GASTANKS[14]);
     const sender = deployer.toPublicKey();
     const args = JSON.parse(transaction);
     const id: number = parseInt(args.id);

@@ -1,3 +1,7 @@
+function a() {
+  console.log("a");
+}
+/*
 import {
   MinaNFTTreeVerifierFunction,
   TreeElement,
@@ -117,3 +121,4 @@ export class MinaNFTTreeVerifierPlugin extends BackendPlugin {
     throw new Error("not implemented");
   }
 }
+*/
