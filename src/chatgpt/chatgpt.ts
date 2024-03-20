@@ -269,7 +269,7 @@ export default class ChatGPTMessage {
       await users.updateImageUsage(id);
       console.log("Image result", imageUrl, image.data);
     } catch (error: any) {
-      console.error("createImage error");
+      console.error("createImage error", error);
       if (
         error?.response?.data?.error?.message !== undefined &&
         error?.response?.data?.error?.message !== null
@@ -277,7 +277,7 @@ export default class ChatGPTMessage {
         console.error(error.response.data.error);
         answer.text =
           errorMsg + " : " + error.response.data.error.message.toString();
-      }
+      } else answer.text = errorMsg + ": " + fullPrompt;
       return answer;
     }
 
