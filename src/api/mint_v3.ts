@@ -306,7 +306,7 @@ export async function mint_v3(
       return;
     }
     Memory.info("deployed");
-    const hash: string | undefined = tx.hash();
+    const hash: string | undefined = tx.hash;
     if (hash === undefined) {
       console.error("Error deploying NFT");
       await bot.tmessage("ErrordeployingNFT");
@@ -502,7 +502,7 @@ export async function post_v3(
       return;
     }
     Memory.info("deployed");
-    const hash: string | undefined = tx.hash();
+    const hash: string | undefined = tx.hash;
     if (hash === undefined) {
       console.error("Error deploying NFT");
       await bot.tmessage("ErrordeployingNFT");

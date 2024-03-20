@@ -122,7 +122,7 @@ export class MapProofPlugin extends BackendPlugin {
     });
 
     if (tx === undefined) throw new Error("tx is undefined");
-    const hash: string | undefined = tx.hash();
+    const hash: string | undefined = tx.hash;
     if (hash === undefined) throw new Error("hash is undefined");
     return hash;
   }

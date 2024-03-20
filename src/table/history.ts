@@ -50,12 +50,20 @@ export default class History extends Table<HistoryData> {
 
     const timeLimit: number = Date.now() - HISTORY_HOURS * 60 * 60 * 1000;
     const subset: HistoryData[] = [];
+    let stop = false;
     for (const item of history) {
       const msgSize: number = (item.message.content || "").length;
-      if (item.time > timeLimit && size + msgSize < HISTORY_CHARS) {
+      if (
+        item.time > timeLimit &&
+        size + msgSize < HISTORY_CHARS &&
+        stop === false
+      ) {
         size += msgSize;
         subset.push(item);
-      } else await this.remove(item.time);
+      } else {
+        stop = true;
+        await this.remove(item.time);
+      }
     }
 
     subset.sort((a, b) => a.time - b.time);

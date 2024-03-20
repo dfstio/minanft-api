@@ -284,7 +284,7 @@ export async function deployNFT(params: BotMintData): Promise<void> {
     });
     console.timeEnd("mint");
     Memory.info("mint");
-    const txId = tx?.hash();
+    const txId = tx?.hash;
     if (tx === undefined || txId === undefined) {
       console.error("Error deploying NFT");
       await bot.smessage("ErrordeployingNFT");
@@ -566,7 +566,7 @@ export async function deployPost1(params: BotMintData): Promise<void> {
     });
     console.timeEnd("mint");
     Memory.info("mint");
-    const txId = tx?.hash();
+    const txId = tx?.hash;
     if (tx === undefined || txId === undefined) {
       console.error("Error deploying NFT");
       await bot.smessage("ErrordeployingNFT");
@@ -842,7 +842,7 @@ async function updateNFT(params: {
   });
   console.timeEnd("commit");
   Memory.info("mint");
-  const txId = tx?.hash();
+  const txId = tx?.hash;
   if (tx === undefined || txId === undefined) {
     console.error("Error deploying NFT");
     await bot.smessage("ErrordeployingNFT");
