@@ -1,5 +1,6 @@
 import type { Handler, Context, Callback } from "aws-lambda";
 import { cloud as cloudFunc, runZip } from "./src//api/cloud";
+import os from "os";
 import {
   Field,
   PublicKey,
@@ -59,6 +60,13 @@ const cloud: Handler = async (
     console.time("test");
     console.log("event", event);
     console.log("test started");
+    const cpuCores = os.cpus();
+    console.log(cpuCores);
+    for (const core of cpuCores) {
+      console.log(core.times);
+    }
+    const numberOfCPUCores = cpuCores.length;
+    console.log("CPU cores:", numberOfCPUCores);
     /*
     try {
       const result = await runZip({
@@ -72,7 +80,7 @@ const cloud: Handler = async (
     }
     */
 
-    const ELEMENTS_NUMBER = 1000;
+    const ELEMENTS_NUMBER = 10;
     const elements: MapElement[] = [];
 
     console.time(`prepared data of ${ELEMENTS_NUMBER} items`);
