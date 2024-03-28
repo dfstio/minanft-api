@@ -48,7 +48,7 @@ export default class ChatGPTMessage {
     }
     if (
       message.length > 9 &&
-      message.substr(0, 8).toLowerCase() === "immagine"
+      message.substr(0, 8).toLowerCase() === "imagine"
     ) {
       isImage = true;
       prompt = message.substr(9);
@@ -271,12 +271,12 @@ export default class ChatGPTMessage {
     } catch (error: any) {
       console.error("createImage error", error);
       if (
-        error?.response?.data?.error?.message !== undefined &&
-        error?.response?.data?.error?.message !== null
+        error?.error?.message !== undefined &&
+        error?.error?.message !== null
       ) {
-        console.error(error.response.data.error);
-        answer.text =
-          errorMsg + " : " + error.response.data.error.message.toString();
+        console.error("Full image creation error:", error);
+        console.error("Image creating error message:", error.error.message);
+        answer.text = errorMsg + " : " + error.error.message.toString();
       } else answer.text = errorMsg + ": " + fullPrompt;
       return answer;
     }
