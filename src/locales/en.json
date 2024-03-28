@@ -58,5 +58,6 @@
   "proof.generated": "Proof is generated",
   "proof.is.valid": "Proof is valid",
   "proof.is.not.valid": "Proof is NOT valid",
-  "no.translation": "No translation"
+  "no.translation": "No translation",
+  "image.not.generated": "Image generation error: {{message}}"
 }

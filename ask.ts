@@ -181,6 +181,18 @@ const image: Handler = async (
           const image = `https://minanft-storage.s3.eu-west-1.amazonaws.com/${event.id}/${filename}`;
           await bot.image(image, {});
         }
+      } else if (event.id && result.image === "") {
+        await initLanguages();
+        const language = await getLanguage(event.id);
+        const T = getT(language);
+        const history = new HistoryTable(HISTORY_TABLE, event.id);
+
+        await history.add(
+          T("image.not.generated", { message: result.text }),
+          false
+        );
+        const bot = new BotMessage(event.id, language);
+        bot.message(T("image.not.generated", { message: result.text }));
       }
     }
 
