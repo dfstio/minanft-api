@@ -36,7 +36,7 @@
   "ErrordeployingNFT": "Despliegue de NFT: Error al desplegar el NFT en la blockchain de MINA. Por favor intenta de nuevo más tarde escribiendo el comando \"nuevo\"",
   "ErrorconvertingIPFShash": "Despliegue de NFT: Error al convertir el hash de IPFS del NFT. Por favor intenta de nuevo más tarde escribiendo el comando \"nuevo\"",
   "Cannotsetnewpasssword": "Despliegue de NFT: Error al desplegar el NFT en la blockchain de MINA. No se puede establecer una nueva contraseña para el NFT. Por favor intenta de nuevo más tarde escribiendo el comando \"nuevo\"",
-  "sucessDeploymentMessage": "¡Éxito! El NFT {{nftname}} se ha registrado en la blockchain de MINA: https://minascan.io/berkeley/tx/{{hash}}\n\nPuedes verlo en https://minanft.io/{{nftname}}\nSi quieres crear otro NFT, escribe el comando \"nuevo\"",
+  "sucessDeploymentMessage": "¡Éxito! El NFT {{nftname}} se ha registrado en la blockchain de MINA: https://minascan.io/devnet/tx/{{hash}}\n\nPuedes verlo en https://minanft.io/{{nftname}}\nSi quieres crear otro NFT, escribe el comando \"nuevo\"",
   "Transactionhasfailed": "La transacción ha fallado",
   "ErrorloadingNFT": "Error al cargar el NFT",
   "Iwanttosell": "Quiero vender mi NFT de Mina",
