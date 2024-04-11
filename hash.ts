@@ -5,7 +5,7 @@ import { MinaNFT, sleep, fetchMinaAccount } from "minanft";
 import { minaInit } from "./src/mina/init";
 
 const FAUCET_AMOUNT = 25_000_000_000n;
-const MINIMUM_BALANCE = 22;
+const MINIMUM_BALANCE = 30;
 
 const calculate: Handler = async (
   event: any,
@@ -63,12 +63,13 @@ const calculate: Handler = async (
       const sender = deployer.toPublicKey();
       await fetchMinaAccount({ publicKey: sender });
       await fetchMinaAccount({ publicKey });
+      const hasAccount = Mina.hasAccount(publicKey);
 
       const transaction = await Mina.transaction(
         { sender, fee: "100000000", memo: "minanft.io faucet" },
         async () => {
           const senderUpdate = AccountUpdate.createSigned(sender);
-          senderUpdate.balance.subInPlace(FAUCET_AMOUNT);
+          if (!hasAccount) senderUpdate.balance.subInPlace(1_000_000_000n);
           senderUpdate.send({ to: publicKey, amount: FAUCET_AMOUNT });
         }
       );
