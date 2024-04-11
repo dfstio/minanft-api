@@ -1,10 +1,10 @@
 import type { Handler, Context, Callback } from "aws-lambda";
-import { PublicKey, Poseidon, fetchAccount, Mina, AccountUpdate } from "o1js";
+import { PublicKey, Poseidon, Mina, AccountUpdate } from "o1js";
 import { getDeployer } from "./src/mina/deployers";
-import { MinaNFT, sleep } from "minanft";
+import { MinaNFT, sleep, fetchMinaAccount } from "minanft";
 import { minaInit } from "./src/mina/init";
 
-const FAUCET_AMOUNT = 20_000_000_000n;
+const FAUCET_AMOUNT = 25_000_000_000n;
 const MINIMUM_BALANCE = 22;
 
 const calculate: Handler = async (
@@ -61,20 +61,17 @@ const calculate: Handler = async (
         return;
       }
       const sender = deployer.toPublicKey();
-      await fetchAccount({ publicKey: sender });
-      await fetchAccount({ publicKey });
-      const hasAccount = Mina.hasAccount(publicKey);
+      await fetchMinaAccount({ publicKey: sender });
+      await fetchMinaAccount({ publicKey });
 
       const transaction = await Mina.transaction(
-        { sender, fee: "100000000", memo: "faucet" },
-        () => {
-          if (!hasAccount) AccountUpdate.fundNewAccount(sender);
-          const senderUpdate = AccountUpdate.create(sender);
-          senderUpdate.requireSignature();
+        { sender, fee: "100000000", memo: "minanft.io faucet" },
+        async () => {
+          const senderUpdate = AccountUpdate.createSigned(sender);
+          senderUpdate.balance.subInPlace(FAUCET_AMOUNT);
           senderUpdate.send({ to: publicKey, amount: FAUCET_AMOUNT });
         }
       );
-      await transaction.prove();
       transaction.sign([deployer]);
       const tx = await transaction.send();
       await MinaNFT.transactionInfo(tx, "faucet", false);
