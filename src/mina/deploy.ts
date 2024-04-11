@@ -1449,11 +1449,12 @@ async function check(json: any) {
   minaInit();
   const nameServiceAddress = PublicKey.fromBase58(MINANFT_NAME_SERVICE);
   const zkNames = new MinaNFTNameServiceContract(nameServiceAddress);
+  const tokenId = zkNames.deriveTokenId();
   const zkApp = new MinaNFTContract(
     PublicKey.fromBase58(json.address),
-    zkNames.token.id
+    tokenId
   );
-  await fetchAccount({ publicKey: zkApp.address, tokenId: zkNames.token.id });
+  await fetchAccount({ publicKey: zkApp.address, tokenId });
   const metadata = zkApp.metadata.get();
   const version = zkApp.version.get();
   if (

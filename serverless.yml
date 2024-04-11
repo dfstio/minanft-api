@@ -9,7 +9,7 @@ plugins:
 provider:
   name: aws
   versionFunctions: false
-  runtime: nodejs18.x
+  runtime: nodejs20.x
   region: eu-west-1
   logRetentionInDays: 7
   environment:
@@ -41,7 +41,6 @@ provider:
     SUPPORT_CHAT: ${file(./env.json):SUPPORT_CHAT, env:SUPPORT_CHAT}
     JWT_PRIVATEKEY: ${file(./env.json):JWT_PRIVATEKEY, env:JWT_PRIVATEKEY}
     BOTAPIAUTH: ${file(./env.json):BOTAPIAUTH, env:BOTAPIAUTH}
-    ZKCLOUDWORKER_AUTH: ${file(./env.json):ZKCLOUDWORKER_AUTH, env:ZKCLOUDWORKER_AUTH}
     CHATGPTPLUGINAUTH: ${file(./env.json):CHATGPTPLUGINAUTH, env:CHATGPTPLUGINAUTH}
     NFT_STORAGE_TOKEN: ${file(./env.json):NFT_STORAGE_TOKEN, env:NFT_STORAGE_TOKEN}
     PINATA_JWT: ${file(./env.json):PINATA_JWT, env:PINATA_JWT}
@@ -50,7 +49,6 @@ provider:
     ALGOLIA_PROJECT: ${file(./env.json):ALGOLIA_PROJECT, env:ALGOLIA_PROJECT}
     AWS_KMS_ENCRYPTION_KEY_ID: ${file(./env.json):AWS_KMS_ENCRYPTION_KEY_ID, env:AWS_KMS_ENCRYPTION_KEY_ID}
     NAMES_ORACLE_SK: ${file(./env.json):NAMES_ORACLE_SK, env:NAMES_ORACLE_SK}
-    DEPLOYER: ${file(./env.json):DEPLOYER, env:DEPLOYER}
     DEPLOYER_LIB: ${file(./env.json):DEPLOYER_LIB, env:DEPLOYER_LIB}
     PROVER_KEYS_BUCKET: ${file(./env.json):PROVER_KEYS_BUCKET, env:PROVER_KEYS_BUCKET}
   iamRoleStatements:
@@ -263,29 +261,6 @@ functions:
           path: api
           method: post
           cors: true
-  zkcloudworker:
-    handler: zkcloudworker.api
-    timeout: 30
-    memorySize: 1024
-    events:
-      - http:
-          path: zkcloudworker
-          method: post
-          cors: true
-  worker:
-    handler: zkcloudworker.worker
-    timeout: 900
-    memorySize: 8192
-    fileSystemConfig:
-      localMountPath: /mnt/efs
-      arn: arn:aws:elasticfilesystem:eu-west-1:615834060610:access-point/fsap-0424e24fcb8a4b112
-    vpc:
-      securityGroupIds:
-        - sg-07cb6569b6537753d
-      subnetIds:
-        - subnet-0def2b77c0fca2e95
-        - subnet-067d779572f8cf00d
-        - subnet-0b2c3a1af7dd7aa46
   ask:
     handler: ask.chatgpt
     timeout: 900
@@ -304,8 +279,8 @@ functions:
     memorySize: 512
   test:
     handler: test.cloud
-    timeout: 900
-    memorySize: 8192
+    timeout: 300
+    memorySize: 10240
     fileSystemConfig:
       localMountPath: /mnt/efs
       arn: arn:aws:elasticfilesystem:eu-west-1:615834060610:access-point/fsap-0424e24fcb8a4b112
@@ -337,7 +312,7 @@ functions:
   deploynft:
     handler: mina.deploynft
     timeout: 900
-    memorySize: 8192
+    memorySize: 10240
     fileSystemConfig:
       localMountPath: /mnt/efs
       arn: arn:aws:elasticfilesystem:eu-west-1:615834060610:access-point/fsap-0424e24fcb8a4b112
@@ -351,7 +326,7 @@ functions:
   keys:
     handler: mina.keys
     timeout: 900
-    memorySize: 8192
+    memorySize: 10240
     fileSystemConfig:
       localMountPath: /mnt/efs
       arn: arn:aws:elasticfilesystem:eu-west-1:615834060610:access-point/fsap-0424e24fcb8a4b112
@@ -365,7 +340,7 @@ functions:
   mint_v3:
     handler: mina.mint_v3
     timeout: 900
-    memorySize: 8192
+    memorySize: 10240
     fileSystemConfig:
       localMountPath: /mnt/efs
       arn: arn:aws:elasticfilesystem:eu-west-1:615834060610:access-point/fsap-0424e24fcb8a4b112
@@ -379,7 +354,7 @@ functions:
   post_v3:
     handler: mina.post_v3
     timeout: 900
-    memorySize: 8192
+    memorySize: 10240
     fileSystemConfig:
       localMountPath: /mnt/efs
       arn: arn:aws:elasticfilesystem:eu-west-1:615834060610:access-point/fsap-0424e24fcb8a4b112
@@ -393,7 +368,7 @@ functions:
   sequencer:
     handler: sequencer.run
     timeout: 900
-    memorySize: 4096
+    memorySize: 512
     vpc:
       securityGroupIds:
         - sg-07cb6569b6537753d
@@ -404,7 +379,7 @@ functions:
   step:
     handler: sequencer.step
     timeout: 900
-    memorySize: 8192
+    memorySize: 10240
     fileSystemConfig:
       localMountPath: /mnt/efs
       arn: arn:aws:elasticfilesystem:eu-west-1:615834060610:access-point/fsap-0424e24fcb8a4b112
@@ -621,3 +596,6 @@ package:
 
 custom:
   s3Bucket: formbucket-${self:provider.environment.BUCKET}
+  prune:
+    automatic: true
+    number: 10

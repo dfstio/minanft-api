@@ -22,7 +22,7 @@ class RealTimeVoting extends SmartContract {
   @state(Field) root = State<Field>();
   @state(Field) counter = State<Field>();
 
-  @method addVoteToMerkleTree(
+  @method async addVoteToMerkleTree(
     guaranteedState: Field,
     newState: Field,
     witness: MerkleTreeWitness20,
@@ -79,8 +79,8 @@ export class RFCvoting extends BackendPlugin {
     await fetchAccount({ publicKey: votingPublicKey });
     const tx = await Mina.transaction(
       { sender, fee: transactionFee, nonce: nonce + id, memo: "zkCloudWorker" },
-      () => {
-        zkApp.addVoteToMerkleTree(oldRoot, newRoot, witness, value);
+      async () => {
+        await zkApp.addVoteToMerkleTree(oldRoot, newRoot, witness, value);
       }
     );
     await tx.prove();

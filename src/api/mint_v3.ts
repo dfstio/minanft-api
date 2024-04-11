@@ -11,6 +11,7 @@ import {
   sleep,
   MinaNFTCommitData,
   Update,
+  Storage,
 } from "minanft";
 import { listFiles } from "../mina/cache";
 import { algoliaWriteToken } from "../nft/algolia";
@@ -522,7 +523,7 @@ export async function post_v3(
     const update = Update.fromFields(
       JSON.parse(commitData.update).update.map((f: string) => Field.fromJSON(f))
     );
-    const storage = MinaNFT.stringFromFields(update.storage.toFields());
+    const storage = MinaNFT.stringFromFields(Storage.toFields(update.storage));
     const url = MinaNFT.urlFromStorageString(storage);
     console.log("post storage:", storage, url);
     const uri = (await axios.get(url)).data;

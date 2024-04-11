@@ -2,7 +2,6 @@ import Steps from "../table/steps";
 import Proofs from "../table/proofs";
 import Jobs from "../table/jobs";
 import { StepsData } from "../model/stepsData";
-import callLambda from "../lambda/lambda";
 import { BackendPlugin, Memory } from "minanft";
 import { Cache } from "o1js";
 import { listFiles } from "../mina/cache";
@@ -85,17 +84,6 @@ export async function runStep(
       jobId: step.jobId,
       stepId: step.stepId,
     });
-
-    /*
-    await callLambda(
-      "sequencer",
-      JSON.stringify({
-        task: "run",
-        username: step.username,
-        jobId: step.jobId,
-      })
-    );
-    */
   } catch (error) {
     console.error("runStep error:", (<any>error).toString());
     await StepsTable.updateStatus({

@@ -1,17 +1,17 @@
-import { initBlockchain, MinaNetwork, Berkeley } from "minanft";
+import { initBlockchain, MinaNetworkInstance, Devnet } from "minanft";
 
-export function minaInit(): MinaNetwork {
-  return initBlockchain("berkeley");
+export function minaInit(): MinaNetworkInstance {
+  return initBlockchain("devnet");
 }
 
 export function explorerAccount(): string {
-  return Berkeley.explorerAccountUrl!;
+  return Devnet.explorerAccountUrl!;
 }
 
 export function explorerTransaction(): string {
-  return Berkeley.explorerTransactionUrl!;
+  return Devnet.explorerTransactionUrl!;
 }
 
 export function chainId(): string {
-  return Berkeley.chainId!;
+  return Devnet.chainId!;
 }
