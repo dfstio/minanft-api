@@ -15,7 +15,7 @@ function mintInvoice(id: string, T: any, username: string, image: string) {
     //is_flexible: true,
     prices: [
       { label: price.description, amount: price.price * 100 },
-      { label: T("NFTtokendeployment"), amount: 9 * 100 }, // "NFTtokendeployment": "NFT token deployment",
+      //{ label: T("NFTtokendeployment"), amount: 9 * 100 }, // "NFTtokendeployment": "NFT token deployment",
     ],
     payload: JSON.stringify({ username, id }),
   };

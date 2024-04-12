@@ -26,14 +26,14 @@ const prices = [
   },
   {
     price: 99,
-    description: "Short Avatar NFT Name",
-  },
-  {
-    price: 49,
-    description: "Short Avatar NFT name",
+    description: "Super Short Avatar NFT Name",
   },
   {
     price: 19,
+    description: "Short Avatar NFT name",
+  },
+  {
+    price: 10,
     description: "Avatar NFT name",
   },
 ];
