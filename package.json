@@ -27,7 +27,7 @@
   "devDependencies": {
     "@types/aws-lambda": "^8.10.137",
     "@types/jsonwebtoken": "^9.0.6",
-    "@types/node": "^20.12.7",
+    "@types/node": "^20.12.11",
     "@types/remove-markdown": "^0.3.4",
     "@types/serverless": "^3.12.22",
     "serverless": "^3.38.0",
@@ -36,23 +36,23 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.554.0",
-    "@aws-sdk/client-elastic-transcoder": "^3.554.0",
-    "@aws-sdk/client-kms": "^3.554.0",
-    "@aws-sdk/client-lambda": "^3.554.0",
-    "@aws-sdk/client-polly": "^3.554.0",
-    "@aws-sdk/client-s3": "^3.554.0",
-    "@aws-sdk/util-dynamodb": "^3.554.0",
+    "@aws-sdk/client-dynamodb": "^3.574.0",
+    "@aws-sdk/client-elastic-transcoder": "^3.574.0",
+    "@aws-sdk/client-kms": "^3.574.0",
+    "@aws-sdk/client-lambda": "^3.574.0",
+    "@aws-sdk/client-polly": "^3.574.0",
+    "@aws-sdk/client-s3": "^3.574.0",
+    "@aws-sdk/util-dynamodb": "^3.574.0",
     "algoliasearch": "^4.23.3",
     "axios": "^1.6.8",
     "form-data": "^4.0.0",
-    "i18next": "^23.11.1",
+    "i18next": "^23.11.4",
     "jsonwebtoken": "^9.0.2",
-    "minanft": "^1.9.0",
-    "o1js": "^0.18.0",
-    "openai": "^4.33.0",
+    "minanft": "^1.11.0",
+    "o1js": "^1.1.0",
+    "openai": "^4.45.0",
     "remove-markdown": "^0.5.0",
     "telegraf": "4.15.3"
   },
-  "packageManager": "yarn@4.1.1"
+  "packageManager": "yarn@4.2.2"
 }
