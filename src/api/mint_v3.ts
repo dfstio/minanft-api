@@ -173,7 +173,11 @@ export async function mint_v3(
       status: "started",
     });
 
-    const metadata = JSON.parse(uri);
+    console.log("uri", uri);
+    if (typeof uri !== "string" && typeof uri !== "object") {
+      throw new Error("Invalid uri");
+    }
+    const metadata = typeof uri === "string" ? JSON.parse(uri) : uri;
     const names = new Names(NAMES_TABLE);
     const name = await names.get({ username: metadata.name });
     if (name) {

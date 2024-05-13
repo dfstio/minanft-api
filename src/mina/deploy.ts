@@ -259,15 +259,23 @@ export async function deployNFT(params: BotMintData): Promise<void> {
     await sleep(2000);
     await bot.image(image, { caption: username.slice(1) });
 
-    const uri = nft.toJSON({
-      increaseVersion: true,
-      includePrivateData: false,
-    });
+    const uri = JSON.stringify(
+      nft.toJSON({
+        increaseVersion: true,
+        includePrivateData: false,
+      }),
+      null,
+      2
+    );
 
-    const privateUri = nft.toJSON({
-      increaseVersion: true,
-      includePrivateData: true,
-    });
+    const privateUri = JSON.stringify(
+      nft.toJSON({
+        increaseVersion: true,
+        includePrivateData: true,
+      }),
+      null,
+      2
+    );
 
     const deployer = await getDeployer();
     console.log(
@@ -541,15 +549,23 @@ export async function deployPost1(params: BotMintData): Promise<void> {
     await sleep(2000);
     await bot.image(image, { caption: username.slice(1) });
 
-    const uri = nft.toJSON({
-      increaseVersion: true,
-      includePrivateData: false,
-    });
+    const uri = JSON.stringify(
+      nft.toJSON({
+        increaseVersion: true,
+        includePrivateData: false,
+      }),
+      null,
+      2
+    );
 
-    const privateUri = nft.toJSON({
-      increaseVersion: true,
-      includePrivateData: true,
-    });
+    const privateUri = JSON.stringify(
+      nft.toJSON({
+        increaseVersion: true,
+        includePrivateData: true,
+      }),
+      null,
+      2
+    );
 
     const deployer = await getDeployer();
     console.log(
@@ -822,15 +838,23 @@ async function updateNFT(params: {
     ownerPrivateKey,
     pinataJWT,
   } = params;
-  const uri = nft.toJSON({
-    increaseVersion: true,
-    includePrivateData: false,
-  });
+  const uri = JSON.stringify(
+    nft.toJSON({
+      increaseVersion: true,
+      includePrivateData: false,
+    }),
+    null,
+    2
+  );
 
-  const privateUri = nft.toJSON({
-    increaseVersion: true,
-    includePrivateData: true,
-  });
+  const privateUri = JSON.stringify(
+    nft.toJSON({
+      increaseVersion: true,
+      includePrivateData: true,
+    }),
+    null,
+    2
+  );
 
   console.log(`privateUri:`, privateUri);
   console.time("commit");
