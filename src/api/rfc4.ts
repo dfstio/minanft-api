@@ -58,7 +58,7 @@ export class RFCvoting extends BackendPlugin {
   public async create(transaction: string): Promise<string | undefined> {
     if (RFCvoting.verificationKey === undefined)
       throw new Error("verificationKey is undefined");
-    MinaNFT.minaInit("zeko");
+    await MinaNFT.minaInit("zeko");
     const deployer = PrivateKey.fromBase58(process.env.DEPLOYER_LIB!);
     //const deployer = PrivateKey.fromBase58(GASTANKS[14]);
     const sender = deployer.toPublicKey();

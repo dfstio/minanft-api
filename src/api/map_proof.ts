@@ -74,9 +74,13 @@ export class MapProofPlugin extends BackendPlugin {
       throw new Error("verificationKey is undefined");
 
     const sourceProof1: RedactedMinaNFTMapStateProof =
-      RedactedMinaNFTMapStateProof.fromJSON(JSON.parse(proof1) as JsonProof);
+      await RedactedMinaNFTMapStateProof.fromJSON(
+        JSON.parse(proof1) as JsonProof
+      );
     const sourceProof2: RedactedMinaNFTMapStateProof =
-      RedactedMinaNFTMapStateProof.fromJSON(JSON.parse(proof2) as JsonProof);
+      await RedactedMinaNFTMapStateProof.fromJSON(
+        JSON.parse(proof2) as JsonProof
+      );
     const state = RedactedMinaNFTMapState.merge(
       sourceProof1.publicInput,
       sourceProof2.publicInput
@@ -102,9 +106,9 @@ export class MapProofPlugin extends BackendPlugin {
   }
 
   public async send(transaction: string): Promise<string | undefined> {
-    minaInit();
+    await minaInit();
     const proof: RedactedMinaNFTMapStateProof =
-      RedactedMinaNFTMapStateProof.fromJSON(
+      await RedactedMinaNFTMapStateProof.fromJSON(
         JSON.parse(transaction) as JsonProof
       );
     const nameServiceAddress = PublicKey.fromBase58(MINANFT_NAME_SERVICE);

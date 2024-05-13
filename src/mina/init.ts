@@ -1,7 +1,7 @@
 import { initBlockchain, MinaNetworkInstance, Devnet } from "minanft";
 
-export function minaInit(): MinaNetworkInstance {
-  return initBlockchain("devnet");
+export async function minaInit(): Promise<MinaNetworkInstance> {
+  return await initBlockchain("devnet");
 }
 
 export function explorerAccount(): string {

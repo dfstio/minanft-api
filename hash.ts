@@ -42,7 +42,7 @@ const calculate: Handler = async (
     const publicKey = PublicKey.fromBase58(body.publicKey);
     console.log("publicKey", publicKey.toBase58());
     if (body.faucet === "true") {
-      minaInit();
+      await minaInit();
       const deployer = await getDeployer(MINIMUM_BALANCE);
       if (deployer === undefined) {
         console.error("Faucet: No deployer available");

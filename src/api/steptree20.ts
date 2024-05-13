@@ -61,10 +61,10 @@ export class MinaNFTTreeVerifierPlugin20 extends BackendPlugin {
 
     class TreeStateProof extends RedactedMinaNFTTreeStateProof20 {}
 
-    const sourceProof1: TreeStateProof = TreeStateProof.fromJSON(
+    const sourceProof1: TreeStateProof = await TreeStateProof.fromJSON(
       JSON.parse(proof1) as JsonProof
     );
-    const sourceProof2: TreeStateProof = TreeStateProof.fromJSON(
+    const sourceProof2: TreeStateProof = await TreeStateProof.fromJSON(
       JSON.parse(proof2) as JsonProof
     );
     const state = RedactedMinaNFTTreeState20.merge(

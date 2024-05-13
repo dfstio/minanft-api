@@ -111,7 +111,7 @@ export async function indexName(
   if (nftName.length > 30) return { success: false, reason: "name too long" };
 
   try {
-    minaInit();
+    await minaInit();
     const names = new Names(NAMES_TABLE);
     const nftData = await names.get({ username: nftName });
     if (nftData === undefined || nftData.publicKey === undefined) {
@@ -232,7 +232,7 @@ export async function mint_v3(
       return;
     }
 
-    minaInit();
+    await minaInit();
 
     const pinataJWT: string = PINATA_JWT!;
     const arweaveKey: string = ARWEAVE_KEY_STRING!;
@@ -446,7 +446,7 @@ export async function post_v3(
       address: nameServiceAddress,
     });
 
-    minaInit();
+    await minaInit();
 
     const cacheDir = "/mnt/efs/cache";
     await listFiles(cacheDir);

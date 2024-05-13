@@ -109,7 +109,7 @@ export async function deployNFT(params: BotMintData): Promise<void> {
 
     console.time("all");
     Memory.info("start");
-    minaInit();
+    await minaInit();
 
     let filesToAdd: FileData[] = [];
     let imageMimeType: string = "";
@@ -259,12 +259,12 @@ export async function deployNFT(params: BotMintData): Promise<void> {
     await sleep(2000);
     await bot.image(image, { caption: username.slice(1) });
 
-    const uri = nft.exportToString({
+    const uri = nft.toJSON({
       increaseVersion: true,
       includePrivateData: false,
     });
 
-    const privateUri = nft.exportToString({
+    const privateUri = nft.toJSON({
       increaseVersion: true,
       includePrivateData: true,
     });
@@ -391,7 +391,7 @@ export async function deployPost1(params: BotMintData): Promise<void> {
 
     console.time("all");
     Memory.info("start");
-    minaInit();
+    await minaInit();
 
     let filesToAdd: FileData[] = [];
     let imageMimeType: string = "";
@@ -541,12 +541,12 @@ export async function deployPost1(params: BotMintData): Promise<void> {
     await sleep(2000);
     await bot.image(image, { caption: username.slice(1) });
 
-    const uri = nft.exportToString({
+    const uri = nft.toJSON({
       increaseVersion: true,
       includePrivateData: false,
     });
 
-    const privateUri = nft.exportToString({
+    const privateUri = nft.toJSON({
       increaseVersion: true,
       includePrivateData: true,
     });
@@ -677,7 +677,7 @@ async function loadNFT(params: {
 
     console.time("all");
     Memory.info("start");
-    minaInit();
+    await minaInit();
 
     const oraclePrivateKey = PrivateKey.fromBase58(NAMES_ORACLE_SK!);
     const nameServiceAddress = PublicKey.fromBase58(MINANFT_NAME_SERVICE);
@@ -822,12 +822,12 @@ async function updateNFT(params: {
     ownerPrivateKey,
     pinataJWT,
   } = params;
-  const uri = nft.exportToString({
+  const uri = nft.toJSON({
     increaseVersion: true,
     includePrivateData: false,
   });
 
-  const privateUri = nft.exportToString({
+  const privateUri = nft.toJSON({
     increaseVersion: true,
     includePrivateData: true,
   });
@@ -1326,7 +1326,7 @@ export async function listKeys(params: {
     }
 
     /*
-    minaInit();;
+    await minaInit();;
     const nameServiceAddress = PublicKey.fromBase58(MINANFT_NAME_SERVICE);
     const nft = new MinaNFT({
       name: username,
@@ -1446,7 +1446,7 @@ async function check(json: any) {
     return false;
   }
 
-  minaInit();
+  await minaInit();
   const nameServiceAddress = PublicKey.fromBase58(MINANFT_NAME_SERVICE);
   const zkNames = new MinaNFTNameServiceContract(nameServiceAddress);
   const tokenId = zkNames.deriveTokenId();
