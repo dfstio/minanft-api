@@ -81,7 +81,9 @@ const api: Handler = async (
             }
             const { args } = body.data;
             const names = new Names(NAMES_TABLE);
-            const checkName = await names.get({ username: args[0] });
+            const checkName = await names.getReservedName({
+              username: args[0],
+            });
             if (checkName !== undefined) console.log("Found name", checkName);
             else console.log("No name found", args[0]);
             callback(null, {
@@ -90,7 +92,16 @@ const api: Handler = async (
                 "Access-Control-Allow-Origin": "*",
                 "Access-Control-Allow-Credentials": true,
               },
-              body: checkName?.publicKey ?? "error",
+              body: JSON.stringify(
+                {
+                  found: checkName !== undefined,
+                  publicKey: checkName?.publicKey,
+                  chain: checkName?.chain,
+                  contract: checkName?.contract,
+                },
+                null,
+                2
+              ),
             });
           }
           return;
@@ -103,9 +114,9 @@ const api: Handler = async (
               body.data.name === undefined ||
               body.data.task === undefined ||
               body.data.args === undefined ||
-              body.data.args.length !== 2
+              body.data.args.length !== 4
             ) {
-              console.error("Wrong reserveName request");
+              console.error("Wrong reserveName request", body.data);
               callback(null, {
                 statusCode: 200,
                 headers: {
@@ -116,9 +127,13 @@ const api: Handler = async (
               });
               return;
             }
-            const { args } = body.data;
+            const [name, publicKey, chain, contract] = body.data.args;
             const language = await getLanguage(id);
-            const result = await reserveName(id, args[0], args[1], language);
+            const result = await reserveName(
+              id,
+              { name, publicKey, chain, contract },
+              language
+            );
             console.log("reserveName result", result);
 
             callback(null, {

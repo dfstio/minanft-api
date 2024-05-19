@@ -1,11 +1,12 @@
 import type { Handler, Context, Callback } from "aws-lambda";
-import { PublicKey, Poseidon, Mina, AccountUpdate } from "o1js";
+import { PublicKey, Poseidon, Mina, AccountUpdate, PrivateKey } from "o1js";
 import { getDeployer } from "./src/mina/deployers";
-import { MinaNFT, sleep, fetchMinaAccount } from "minanft";
+import { MinaNFT, sleep, fetchMinaAccount, initBlockchain } from "minanft";
 import { minaInit } from "./src/mina/init";
+import { GASTANKS } from "./src/mina/gastanks";
 
-const FAUCET_AMOUNT = 25_000_000_000n;
-const MINIMUM_BALANCE = 30;
+const FAUCET_AMOUNT = 50_000_000_000n;
+const MINIMUM_BALANCE = 70;
 
 const calculate: Handler = async (
   event: any,
@@ -42,8 +43,19 @@ const calculate: Handler = async (
     const publicKey = PublicKey.fromBase58(body.publicKey);
     console.log("publicKey", publicKey.toBase58());
     if (body.faucet === "true") {
-      await minaInit();
-      const deployer = await getDeployer(MINIMUM_BALANCE);
+      let deployer: PrivateKey | undefined;
+      let amount = FAUCET_AMOUNT;
+      if (body.chain === "zeko") {
+        await initBlockchain("zeko");
+        deployer = PrivateKey.fromBase58(
+          GASTANKS[Math.floor(Math.random() * (GASTANKS.length - 1))]
+        );
+        amount = 1_000_000_000_000n;
+      } else {
+        await minaInit();
+        deployer = await getDeployer(MINIMUM_BALANCE);
+      }
+
       if (deployer === undefined) {
         console.error("Faucet: No deployer available");
         callback(null, {
@@ -55,7 +67,7 @@ const calculate: Handler = async (
           body: JSON.stringify({
             hash: "",
             isCalculated: false,
-            reason: "Faucet is empty",
+            reason: "Grahql endpoint error",
           }),
         });
         return;
@@ -64,18 +76,33 @@ const calculate: Handler = async (
       await fetchMinaAccount({ publicKey: sender });
       await fetchMinaAccount({ publicKey });
       const hasAccount = Mina.hasAccount(publicKey);
+      const hasFunds = Mina.hasAccount(sender);
+      if (!hasFunds) {
+        callback(null, {
+          statusCode: 200,
+          headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Credentials": true,
+          },
+          body: JSON.stringify({
+            hash: "",
+            isCalculated: false,
+            reason: "Grahql endpoint error",
+          }),
+        });
+      }
 
       const transaction = await Mina.transaction(
         { sender, fee: "100000000", memo: "minanft.io faucet" },
         async () => {
           const senderUpdate = AccountUpdate.createSigned(sender);
           if (!hasAccount) senderUpdate.balance.subInPlace(1_000_000_000n);
-          senderUpdate.send({ to: publicKey, amount: FAUCET_AMOUNT });
+          senderUpdate.send({ to: publicKey, amount });
         }
       );
       transaction.sign([deployer]);
-      const tx = await transaction.send();
-      await MinaNFT.transactionInfo(tx, "faucet", false);
+      const tx = await transaction.safeSend();
+      console.log("tx", tx);
       const hash = tx.hash;
       console.log("tx hash", hash);
       await sleep(1000);

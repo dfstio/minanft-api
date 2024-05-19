@@ -4,11 +4,10 @@ import S3File from "./storage/s3";
 import oggToMP3 from "./voice/ElasticTranscoder";
 import FormData from "form-data";
 import callLambda from "./lambda/lambda";
-import BotMessage from "./mina/message";
+import BotMessage from "./chatgpt/message";
 import { initLanguages, getLanguage } from "./lang/lang";
 
 const CHATGPT_TOKEN = process.env.CHATGPT_TOKEN!;
-const CHATGPTPLUGINAUTH = process.env.CHATGPTPLUGINAUTH!;
 
 export default class VoiceHandler {
   voiceData: VoiceData;
@@ -16,10 +15,7 @@ export default class VoiceHandler {
     this.voiceData = voiceData;
   }
 
-  public async copyVoiceToS3(
-    id: string,
-    parentMessage: string
-  ): Promise<string | undefined> {
+  public async copyVoiceToS3(id: string): Promise<string | undefined> {
     try {
       const botToken = process.env.BOT_TOKEN!;
 

@@ -2,8 +2,9 @@ import VoiceData from "./model/voiceData";
 import axios from "axios";
 import S3File from "./storage/s3";
 import FormData from "form-data";
-import BotMessage from "./mina/message";
+import BotMessage from "./chatgpt/message";
 import { initLanguages, getLanguage } from "./lang/lang";
+import { splitMarkdown } from "./chatgpt/split";
 
 const CHATGPT_TOKEN = process.env.CHATGPT_TOKEN!;
 const CHATGPTPLUGINAUTH = process.env.CHATGPTPLUGINAUTH!;
@@ -82,15 +83,11 @@ export default class AudioHandler {
             await initLanguages();
             const language = await getLanguage(id);
             const bot = new BotMessage(id, language);
-            const str = chatGPT.match(/.{1,4000}/g);
-            if (str) {
-              console.log("Length", str.length);
-              let i;
-              for (i = 0; i < str.length; i++) {
-                await bot.message(str[i]);
-                await sleep(2000);
-              }
-            } else console.error("match error");
+            const parts = splitMarkdown(chatGPT);
+            for (const part of parts) {
+              await bot.message(part);
+              await sleep(2000);
+            }
           }
         } catch (e: any) {
           console.error("whisper error - transcript", e);

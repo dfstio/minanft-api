@@ -84,6 +84,7 @@ const aiFunctions = {
       },
     },
   },
+  /*
   sell: {
     type: "function",
     function: {
@@ -179,6 +180,7 @@ const aiFunctions = {
       },
     },
   },
+  */
   create_nft: {
     type: "function",
     function: {
@@ -363,12 +365,14 @@ async function getAIfunctions(id: string): Promise<any[]> {
   if (names.length > 0) {
     functions.push(aiFunctions.list_NFTs);
     functions.push(aiFunctions.list_files);
+    /*
     const sell = aiFunctions.sell;
     sell.function.parameters.properties.nft_name.enum = names;
     functions.push(aiFunctions.sell);
     const post = aiFunctions.create_post;
     post.function.parameters.properties.nft_name.enum = names;
     functions.push(post);
+    */
     const add_keys = aiFunctions.add_keys;
     add_keys.function.parameters.properties.nft_name.enum = names;
     functions.push(add_keys);
@@ -859,7 +863,9 @@ async function validateName(
   if (nft_name === undefined || nft_name === "")
     return { validated: false, reason: "Error: nft_name is empty" };
   const names = new Names(NAMES_TABLE);
-  const name: NamesData | undefined = await names.get({ username: nft_name });
+  const name: NamesData | undefined = await names.getReservedName({
+    username: nft_name,
+  });
   if (name === undefined) {
     console.error("Error: nft is not found", id, nft_name);
     return { validated: false, reason: `Error: NFT ${nft_name} is not found` };
@@ -889,7 +895,9 @@ async function validateNewName(
   if (nft_name === undefined || nft_name === "")
     return { validated: false, reason: "Error: nft_name is empty" };
   const names = new Names(NAMES_TABLE);
-  const name: NamesData | undefined = await names.get({ username: nft_name });
+  const name: NamesData | undefined = await names.getReservedName({
+    username: nft_name,
+  });
   if (name !== undefined) {
     console.error("Error: nft already exists", id, nft_name);
     return {
@@ -899,91 +907,6 @@ async function validateNewName(
   }
   return { validated: true };
 }
-
-/*
-async function handleFunctionCall(
-  id: string,
-  message: any,
-  username: string | undefined,
-  language: string
-): Promise<string> {
-  console.log("handleFunctionCall", id, message, username, language);
-  if (message && message.name) {
-    try {
-      const request = JSON.parse(message.arguments);
-      const bot = new BotMessage(id, language);
-      console.log("Function request", request);
-
-      if (message.name == "view") {
-        console.log("Function view:", request);
-        if (request.nft_name)
-          await bot.tmessage("letmeshowyou", {
-            nftname: "NFT" + request.nft_name,
-          });
-        else await bot.tmessage("letmeshowyouall");
-        await botCommandList(id, language, request.nft_name);
-        return "User have got the list of NFTs";
-      }
-
-      if (message.name == "post") {
-        console.log("Function post:", request);
-        await bot.message(
-          `Post function: ${JSON.stringify(request, null, 2)} `
-        );
-        return "Post have been created";
-      }
-
-      if (message.name == "edit") {
-        console.log("Function edit:", request);
-        await bot.message(
-          `Edit function: ${JSON.stringify(request, null, 2)} `
-        );
-        return "NFT have been edited";
-      }
-
-      if (message.name == "sell") {
-        console.log("Function sell:", request);
-        if (request.price && request.currency) {
-          if (
-            currencies.includes(request.currency) &&
-            username &&
-            username !== "" &&
-            Number(request.price)
-          ) {
-            const names = new Names(NAMES_TABLE);
-            //  "sellingnftforcurrencyprice": "Selling NFT {{name}} for {{currency}} {{price}}"
-            await bot.tmessage("sellingnftforcurrencyprice", {
-              name: username ? username.replaceAll("@", "") : "",
-              currency: request.currency,
-              price: request.price,
-            });
-            await names.sell(username, Number(request.price), request.currency);
-            console.log("Before sleep");
-            await sleep(5000);
-            console.log("After sleep");
-            const nft: NamesData | undefined = await names.get({ username });
-            console.log("NFT sale handleFunctionCall", nft);
-            if (nft && nft.onSale == true) await algoliaWriteToken(nft);
-            else console.error("Error NFT sale handleFunctionCall");
-          }
-          // "cannotsellnftforcurrencyprice": "Cannot sell NFT {{name}} for {{currency}} {{price}}"
-          else
-            await bot.tmessage("cannotsellnftforcurrencyprice", {
-              name: username ? username.replaceAll("@", "") : "",
-              currency: request.currency,
-              price: request.price,
-            });
-          return "NFT have been sold";
-        }
-      }
-    } catch (err) {
-      console.error("Function error:", err);
-      return "Function error";
-    }
-  }
-  return "Function error";
-}
-*/
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));

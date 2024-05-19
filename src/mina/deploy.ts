@@ -33,7 +33,7 @@ import axios from "axios";
 import { encrypt, decrypt, decryptJSON } from "../nft/kms";
 import { minaInit, explorerTransaction } from "../mina/init";
 
-import BotMessage from "./message";
+import BotMessage from "../chatgpt/message";
 import Names from "../table/names";
 import { NamesData, BotMintData, KeyData } from "../model/namesData";
 import { FilesTable } from "../table/files";
@@ -101,7 +101,7 @@ export async function deployNFT(params: BotMintData): Promise<void> {
 
   try {
     const names = new Names(NAMES_TABLE);
-    const name = await names.get({ username });
+    const name = await names.getReservedName({ username });
     if (name) {
       console.log("Found old deployment", name);
       return;
@@ -329,6 +329,8 @@ export async function deployNFT(params: BotMintData): Promise<void> {
 
     let deployedNFT: NamesData = {
       username: nft.name,
+      chain: "devnet",
+      contract: MINANFT_NAME_SERVICE,
       id,
       timeCreated: Date.now(),
       storage: nft.storage,
@@ -391,7 +393,7 @@ export async function deployPost1(params: BotMintData): Promise<void> {
 
   try {
     const names = new Names(NAMES_TABLE);
-    const name = await names.get({ username });
+    const name = await names.getReservedName({ username });
     if (name) {
       console.log("Found old deployment", name);
       return;
@@ -619,6 +621,8 @@ export async function deployPost1(params: BotMintData): Promise<void> {
 
     let deployedNFT: NamesData = {
       username: nft.name,
+      chain: "devnet",
+      contract: MINANFT_NAME_SERVICE,
       id,
       timeCreated: Date.now(),
       storage: nft.storage,
@@ -674,7 +678,7 @@ async function loadNFT(params: {
 
   try {
     const names = new Names(NAMES_TABLE);
-    const name = await names.get({ username });
+    const name = await names.getReservedName({ username });
     if (
       name &&
       name.id === id &&
@@ -1334,7 +1338,7 @@ export async function listKeys(params: {
 
   try {
     const names = new Names(NAMES_TABLE);
-    const name = await names.get({ username });
+    const name = await names.getReservedName({ username });
     if (
       name &&
       name.id === id &&
