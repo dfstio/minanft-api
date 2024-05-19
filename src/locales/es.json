@@ -4,7 +4,7 @@
   "salutationWithNames": "¡Hola {{firstName}} {{lastName}}!",
   "commonError": "Desafortunadamente, ocurrió un error",
   "commonLongStringError": "Desafortunadamente, ocurrió un error. El campo no debe tener más de 300 caracteres",
-  "welcomeWords": "Bienvenido a MinaNFT. Te ayudaré a crear un NFT Avatar en la blockchain de MINA",
+  "welcomeWords": "Bienvenido a MinaNFT. Te ayudaré a crear un NFT en la blockchain de MINA. Por favor, elige el nombre de tu avatar Mina NFT y sube una imagen o describe la imagen que quieres que cree.",
   "finalWords": "¡Gracias! Tu NFT se está creando y se desplegará en la blockchain de MINA. Mientras tanto, puedes hacerme preguntas sobre Mina NFT, y responderé con la ayuda de la AI",
   "afterFinalWords": "¡Gracias por la información adicional!",
   "typeError": "Lo siento, pero no admito este tipo de archivo. Acepto: pdf, doc, docx, odt y txt. Además, el archivo no debe tener más de 15 Mb",

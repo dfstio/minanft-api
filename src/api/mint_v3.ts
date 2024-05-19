@@ -12,13 +12,14 @@ import {
   MinaNFTCommitData,
   Update,
   Storage,
+  NAMES_ORACLE,
 } from "minanft";
 import { listFiles } from "../mina/cache";
 import { algoliaWriteToken } from "../nft/algolia";
 import { getDeployer } from "../mina/deployers";
 import axios from "axios";
 
-import BotMessage from "../mina/message";
+import BotMessage from "../chatgpt/message";
 import Names from "../table/names";
 import { NamesData } from "../model/namesData";
 import { isReservedName } from "../nft/reservednames";
@@ -33,8 +34,12 @@ const NAMES_TABLE = process.env.NAMES_TABLE!;
 
 export async function reserveName(
   id: string,
-  name: string,
-  publicKey: string,
+  args: {
+    name: string;
+    publicKey: string;
+    chain: string;
+    contract: string;
+  },
   language: string
 ): Promise<{
   success: boolean;
@@ -42,6 +47,7 @@ export async function reserveName(
   price?: string;
   reason: string;
 }> {
+  const { name, publicKey, chain, contract } = args;
   if (name === "" || name === "@")
     return { success: false, signature: "", reason: "empty name" };
   const nftName = name[0] === "@" ? name : "@" + name;
@@ -52,10 +58,10 @@ export async function reserveName(
 
   try {
     const names = new Names(NAMES_TABLE);
-    const checkName = await names.get({ username: nftName });
+    const checkName = await names.getReservedName({ username: nftName });
     if (checkName !== undefined) {
       console.log("Found old deployment", checkName);
-      if (checkName.id !== id) {
+      if (checkName.id !== id || checkName.publicKey !== publicKey) {
         return {
           success: false,
           signature: "",
@@ -77,6 +83,8 @@ export async function reserveName(
 
     const nft: NamesData = {
       id,
+      chain,
+      contract,
       publicKey,
       signature: signature.toBase58(),
       username: nftName,
@@ -113,7 +121,7 @@ export async function indexName(
   try {
     await minaInit();
     const names = new Names(NAMES_TABLE);
-    const nftData = await names.get({ username: nftName });
+    const nftData = await names.getReservedName({ username: nftName });
     if (nftData === undefined || nftData.publicKey === undefined) {
       console.log("No deployment");
       return {
@@ -179,7 +187,7 @@ export async function mint_v3(
     }
     const metadata = typeof uri === "string" ? JSON.parse(uri) : uri;
     const names = new Names(NAMES_TABLE);
-    const name = await names.get({ username: metadata.name });
+    const name = await names.getReservedName({ username: metadata.name });
     if (name) {
       console.log("Found name record", name);
     }
@@ -356,6 +364,8 @@ export async function mint_v3(
 
     let deployedNFT: NamesData = {
       username: nft.name,
+      chain: "devnet",
+      contract: MINANFT_NAME_SERVICE,
       id,
       timeCreated: Date.now(),
       storage: nft.storage,

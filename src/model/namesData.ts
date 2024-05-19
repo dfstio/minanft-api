@@ -1,5 +1,7 @@
 export interface NamesData {
   username: string;
+  chain: string;
+  contract: string;
   //description?: string;
   //url?: string;
   id: string;

@@ -26,22 +26,22 @@ export default class ChatGPTMessage {
     this.language = language;
   }
 
-  public async message(params: any): Promise<ImageGPT> {
-    const { message, id, image, username } = params;
-
+  public async message(id: string): Promise<ImageGPT> {
     const users = new Users(process.env.DYNAMODB_TABLE!);
     const history: History = new History(HISTORY_TABLE, id);
-    let isImage: boolean = false;
 
-    let prompt = message;
-    let role = params.role === "system" ? "system" : "user";
     const errorMsg = "ChatGPT error. Please try again in few minutes";
     let answer: ImageGPT = {
       image: "",
       answerType: "text",
       text: errorMsg,
     } as ImageGPT;
-    if (image !== "") isImage = true;
+    /*
+    let isImage: boolean = false;
+
+    let prompt = message;
+    let role = params.role === "system" ? "system" : "user";
+    //if (image !== "") isImage = true;
     if (message.length > 6 && message.substr(0, 5).toLowerCase() === "image") {
       isImage = true;
       prompt = message.substr(6);
@@ -85,6 +85,7 @@ export default class ChatGPTMessage {
         text: prompt,
       } as ImageGPT;
     }
+    */
 
     const chatcontext = [
       {

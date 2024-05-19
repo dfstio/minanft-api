@@ -4,7 +4,7 @@
   "salutationWithNames": "Merhaba {{firstName}} {{lastName}}!",
   "commonError": "Maalesef bir hata oluştu",
   "commonLongStringError": "Maalesef bir hata oluştu. Alanın 300 karakterden fazla olmaması gerekiyor",
-  "welcomeWords": "MinaNFT'ye hoş geldiniz. Sizi MINA blockchain üzerinde Avatar NFT oluşturmada yardımcı olacağım",
+  "welcomeWords": "MinaNFT'e hoş geldiniz. MINA blockchain üzerinde bir NFT oluşturmanıza yardımcı olacağım. Lütfen Mina NFT avatar adınızı seçin ve bir resim yükleyin veya yaratmamı istediğiniz resmi tarif edin.",
   "finalWords": "Teşekkürler! NFT'niz oluşturuluyor ve MINA blok zincirine konuşlandırılacak. Bu arada, Mina NFT hakkında bana sorular sorabilir ve ben de yapay zeka yardımıyla yanıt vereceğim",
   "afterFinalWords": "Ek bilgi için teşekkürler!",
   "typeError": "Özür dilerim, bu dosya türünü desteklemiyorum. Kabul edilenler: pdf, doc, docx, odt ve txt. Ayrıca dosyanın 15 Mb'tan fazla olmamalıdır",

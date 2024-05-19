@@ -12,6 +12,7 @@
     "noImplicitThis": true,
     "strictNullChecks": true,
     "strict": true,
+    "typeRoots": ["./types", "./node_modules/@types"],
     "noUnusedLocals": false,
     "noImplicitReturns": true,
     "preserveConstEnums": true,

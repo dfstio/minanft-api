@@ -1,54 +1,26 @@
 /* eslint-disable @typescript-eslint/consistent-type-imports */
 import { Telegraf, Context } from "telegraf";
-import Questions from "./questions";
-import { getT, initLanguages, getVoice, setVoice } from "./lang/lang";
+import { getT, initLanguages, setVoice } from "./lang/lang";
 import Users from "./table/users";
-import Names from "./table/names";
 import History from "./table/history";
-import {
-  startDeployment,
-  generateFilename,
-  getFormattedDateTime,
-} from "./nft/nft";
-import { BotMintData } from "./model/namesData";
+import { getFormattedDateTime } from "./nft/nft";
 import DocumentData from "./model/documentData";
 import FileHandler from "./fileHandler";
 import VoiceData from "./model/voiceData";
 import { copyTelegramImageToS3 } from "./imageHandler";
 import VoiceHandler from "./voiceHandler";
 import Validator from "./validator";
-import FormQuestion from "./model/formQuestion";
 import callLambda from "./lambda/lambda";
-import { reservedNames } from "./nft/reservednames";
 import { generateJWT } from "./api/jwt";
 import { algoliaWriteTokens } from "./nft/algolia";
-import {
-  supportTicket,
-  botCommandList,
-  botCommandBuy,
-  botCommandCallback,
-} from "./payments/botcommands";
 import UserData from "./model/userData";
-import { FileData } from "./model/fileData";
 import { FilesTable } from "./table/files";
 
 const CHATGPTPLUGINAUTH = process.env.CHATGPTPLUGINAUTH!;
-const NAMES_TABLE = process.env.NAMES_TABLE!;
 const HISTORY_TABLE = process.env.HISTORY_TABLE!;
 const FILES_TABLE = process.env.FILES_TABLE!;
 const LANG = process.env.LANG ? process.env.LANG : "en";
 console.log("Language", LANG);
-
-interface KeyboardButton {
-  text: string;
-  request_contact?: boolean;
-  request_location?: boolean;
-}
-
-interface ReplyKeyboardRemove {
-  remove_keyboard: true;
-  selective?: boolean;
-}
 
 export default class BotLogic {
   bot: Telegraf<Context>;
@@ -58,7 +30,6 @@ export default class BotLogic {
   //chat: ChatGPTMessage;
   users: Users;
   validator: Validator;
-  questions: Questions;
 
   constructor(
     token: string = process.env.BOT_TOKEN!,
@@ -66,17 +37,7 @@ export default class BotLogic {
   ) {
     this.bot = new Telegraf(token);
     this.supportId = supportId;
-    this.bot.on("callback_query", async (ctx: any) => {
-      await botCommandCallback(ctx);
-    });
-    this.bot.hears("name", async (ctx: any) => {
-      return await ctx.reply("MinaNFT");
-    });
-    this.bot.hears("link", async (ctx: any) => {
-      return await ctx.reply("https://minanft.io");
-    });
-    this.bot.hears("Name", (ctx: any) => ctx.reply("MinaNFT"));
-    this.bot.hears("Link", (ctx: any) => ctx.reply("https://minanft.io"));
+
     this.bot.on("message", async (ctx) => {
       try {
         return await this.handleMessage(ctx);
@@ -94,8 +55,6 @@ export default class BotLogic {
     this.bot.catch((err, ctx: any) => {
       console.error(`Telegraf error for ${ctx.updateType}`, err);
     });
-    //this.chat = new ChatGPTMessage(CHATGPT_TOKEN, context, functions);
-    this.questions = new Questions();
     this.users = new Users(process.env.DYNAMODB_TABLE!);
     this.validator = new Validator();
     this.id = undefined;
@@ -107,7 +66,7 @@ export default class BotLogic {
 
   public async message(msg: string, logHistory = true): Promise<void> {
     if (this.id) {
-      this.bot.telegram.sendMessage(this.id, msg).catch((error) => {
+      await this.bot.telegram.sendMessage(this.id, msg).catch((error) => {
         console.error("Telegraf error", error);
       });
       if (this.history != null && logHistory)
@@ -116,7 +75,7 @@ export default class BotLogic {
 
     if (logHistory) {
       const supportMsg: string = `Message for ${this.id}: ${msg}`;
-      this.bot.telegram
+      await this.bot.telegram
         .sendMessage(this.supportId, supportMsg)
         .catch((error) => {
           console.error("Telegraf error", error);
@@ -129,7 +88,7 @@ export default class BotLogic {
     console.log("handleMessage", body);
     if (body.update?.pre_checkout_query) {
       console.log("pre_checkout_query", body);
-      this.bot.telegram
+      await this.bot.telegram
         .answerPreCheckoutQuery(
           body.update.pre_checkout_query.id,
           true,
@@ -141,7 +100,6 @@ export default class BotLogic {
       return;
     }
 
-    const formQuestions = this.questions.questions;
     const chatId = body.message && body.message.chat && body.message.chat.id;
 
     let username =
@@ -173,7 +131,7 @@ export default class BotLogic {
         const replyChat = parseInt(reply.text.split("\n")[0]);
         console.log("replyChat", replyChat);
         if (replyChat) {
-          this.bot.telegram
+          await this.bot.telegram
             .copyMessage(
               replyChat,
               body.message.chat.id,
@@ -213,13 +171,15 @@ export default class BotLogic {
       return;
     }
     console.log("Message:", body.message);
+
     const forwarded = await this.bot.telegram.forwardMessage(
       process.env.SUPPORT_CHAT!,
       chatId,
       body.message.message_id
     );
     //console.log("Forwarded", forwarded);
-    this.bot.telegram
+
+    await this.bot.telegram
       .sendMessage(
         process.env.SUPPORT_CHAT!,
         body.message.from.id.toString() +
@@ -234,7 +194,10 @@ export default class BotLogic {
             : "") +
           "\nReply to this message",
         {
-          reply_to_message_id: forwarded.message_id,
+          reply_parameters: {
+            message_id: forwarded.message_id,
+          },
+          //reply_to_message_id: forwarded.message_id,
           disable_notification: true,
         }
       )
@@ -243,11 +206,7 @@ export default class BotLogic {
       });
 
     let currState = await this.users.getItem(chatIdString);
-    let currIndexAnswer = currState && currState.currentAnswer;
-    if (!currIndexAnswer) currIndexAnswer = 0;
     let current_message_id = currState && currState.message_id;
-    let parentMessage: string = "";
-    if (currState && currState.message) parentMessage = currState.message;
     if (!current_message_id) current_message_id = "";
     console.log(
       "current_message_id",
@@ -265,7 +224,6 @@ export default class BotLogic {
       LANGUAGE = body.message.from.language_code;
     else LANGUAGE = await this.users.getCurrentLanguage(chatIdString);
     const T = getT(LANGUAGE);
-    const currQuestion: FormQuestion = formQuestions[currIndexAnswer];
 
     if (
       command == "new" ||
@@ -273,7 +231,7 @@ export default class BotLogic {
       command == "\\new" ||
       command == "/new"
     ) {
-      await this.users.resetAnswer(chatIdString);
+      //await this.users.resetAnswer(chatIdString);
       await this.message(T("createNFT"));
       return;
     }
@@ -291,13 +249,9 @@ export default class BotLogic {
         "ask",
         JSON.stringify({
           id: chatIdString,
-          message: "voice is on", //  "Iwanttosell": "I want to sell my Mina NFT"
-          parentMessage: parentMessage,
-          image: "",
           auth: CHATGPTPLUGINAUTH,
         })
       );
-      //await this.message(T("voiceon"));
       return;
     }
 
@@ -313,63 +267,9 @@ export default class BotLogic {
         "ask",
         JSON.stringify({
           id: chatIdString,
-          message: "voice is off", //  "Iwanttosell": "I want to sell my Mina NFT"
-          parentMessage: parentMessage,
-          image: "",
           auth: CHATGPTPLUGINAUTH,
         })
       );
-      //await this.message(T("voiceoff"));
-      return;
-    }
-
-    if (command == "sell" || command == "/sell") {
-      console.log("Sell function calling");
-      await callLambda(
-        "ask",
-        JSON.stringify({
-          id: chatIdString,
-          message: T("Iwanttosell"), //  "Iwanttosell": "I want to sell my Mina NFT"
-          parentMessage: parentMessage,
-          image: "",
-          auth: CHATGPTPLUGINAUTH,
-        })
-      );
-      return;
-    }
-
-    if (command == "buy" || command == "/buy") {
-      await this.message(T("buyNFT"));
-
-      await botCommandBuy(chatIdString, LANGUAGE);
-      return;
-    }
-
-    if (
-      command.substring(0, 9) == "archetype" ||
-      command.substring(0, 10) == "/archetype"
-    ) {
-      await this.message(T("archetype"));
-
-      await callLambda(
-        "archetype",
-        JSON.stringify({
-          id: chatIdString,
-          message: command.substring(0, 10),
-          username: currState && currState.username ? currState.username : "",
-          auth: CHATGPTPLUGINAUTH,
-        })
-      );
-      return;
-    }
-
-    if (command == "list" || command == "/list") {
-      await botCommandList(chatIdString, LANGUAGE);
-      return;
-    }
-
-    if (command == "support" || body.message.text == "/support") {
-      await supportTicket(chatIdString, LANGUAGE);
       return;
     }
 
@@ -380,25 +280,12 @@ export default class BotLogic {
     }
 
     if (body.message.location) {
-      await this.message(T(this.questions.typeError));
+      await this.message(T("typeError"));
       return;
     }
 
-    if (body.message.contact && currQuestion.type === "phone") {
-      console.log("Contact", body.message.contact);
-      if (body.message.contact.phone_number) {
-        await this.users.updateAnswer(
-          chatIdString,
-          currIndexAnswer,
-          body.message.contact.phone_number.toString()
-        );
-        currIndexAnswer++;
-      }
-      const optionsRemove = <ReplyKeyboardRemove>{
-        remove_keyboard: true,
-        selective: false,
-      };
-      await this.message(T(this.questions.questions[currIndexAnswer].text));
+    if (body.message.contact) {
+      await this.message(T("typeError"));
     }
 
     if (body.message.photo) {
@@ -417,78 +304,26 @@ export default class BotLogic {
       }
       const fileTable = new FilesTable(FILES_TABLE);
       await fileTable.create(file);
-      if (currIndexAnswer == 1) {
-        if (!(currState && currState.username)) {
-          console.log("No username", currState);
-          await this.message(T("chooseNFTname"));
-          return;
-        }
-        console.log("Image  data:", body.message.caption, photo);
-        try {
-          /*
-          const timeNow = Date.now();
-          const filename = generateFilename(timeNow) + ".jpg";
-          await copyTelegramImageToS3(
-            chatIdString,
-            filename,
-            photo.file_id,
-            false
-          );
-          */
-          await startDeployment({
+
+      try {
+        const urlBase = process.env.STORAGE_URL;
+        if (!urlBase) throw new Error("STORAGE_URL is not defined");
+        await this.history.addImage(
+          T("file.uploaded", { filedata: JSON.stringify(file) }),
+          urlBase + chatIdString + "/" + filename
+        );
+        //await this.message(T("fileSuccess"));
+
+        await callLambda(
+          "ask",
+          JSON.stringify({
             id: chatIdString,
-            language: LANGUAGE,
-            timeNow,
-            filename,
-            username: currState.username,
-            creator:
-              currState.user && currState.user.username
-                ? currState.user.username
-                : "",
-            keys: [],
-            files: [],
-            description: "",
-          } as BotMintData);
-          this.users.updateAnswer(
-            chatIdString,
-            currIndexAnswer,
-            "image uploaded"
-          );
-          await this.message(T(this.questions.finalWords));
-          return;
-        } catch (error) {
-          console.error("Image catch", (<any>error).toString());
-        }
-      } else if (currIndexAnswer > 1) {
-        try {
-          await this.history.add(
-            T("file.uploaded", { filedata: JSON.stringify(file) }),
-            false
-          );
-          await this.message(T(this.questions.fileSuccess));
-          await callLambda(
-            "ask",
-            JSON.stringify({
-              id: chatIdString,
-              message: "photo is uploaded", //  "Iwanttosell": "I want to sell my Mina NFT"
-              parentMessage: parentMessage,
-              image: "",
-              auth: CHATGPTPLUGINAUTH,
-            })
-          );
-          return;
-        } catch (error) {
-          console.error("Image catch", (<any>error).toString());
-        }
-      } else {
-        await this.message(
-          `${
-            currQuestion.error
-              ? T(currQuestion.error)
-              : T(this.questions.commonError)
-          }`
+            auth: CHATGPTPLUGINAUTH,
+          })
         );
         return;
+      } catch (error) {
+        console.error("Image catch", (<any>error).toString());
       }
     }
 
@@ -508,7 +343,7 @@ export default class BotLogic {
       try {
         const voiceHandler = new VoiceHandler(voiceData);
         const voiceResult: string | undefined =
-          await voiceHandler.copyVoiceToS3(chatIdString, parentMessage);
+          await voiceHandler.copyVoiceToS3(chatIdString);
         if (voiceResult) {
           console.log("voiceResult", voiceResult);
           userInput = voiceResult;
@@ -555,58 +390,19 @@ export default class BotLogic {
         T("file.uploaded", { filedata: JSON.stringify(file) }),
         false
       );
-      await this.message(T(this.questions.fileSuccess));
+      //await this.message(T("fileSuccess"));
       await callLambda(
         "ask",
         JSON.stringify({
           id: chatIdString,
-          message: "file is uploaded", //  "Iwanttosell": "I want to sell my Mina NFT"
-          parentMessage: parentMessage,
-          image: "",
           auth: CHATGPTPLUGINAUTH,
         })
       );
       return;
-
-      /*
-      if (this.validator.validateWrittenDocument(documentData)) {
-        //await this.users.updateAnswer(chatIdString, currIndexAnswer, documentData.file_name);
-        //const item = await this.users.getItem(chatIdString);
-        const fileHandler = new FileHandler(chatIdString, documentData);
-        const file = await fileHandler.copyFileToS3(chatIdString); //, this.parseObjectToHtml(item));
-        await this.message(T(this.questions.fileSuccess));
-        //currIndexAnswer++;
-      } else {
-        await this.message(T(this.questions.typeError));
-      }
-      */
-    }
-
-    if (
-      currIndexAnswer >= formQuestions.length &&
-      userInput &&
-      userInput.substring(0, 6) !== "/start"
-    ) {
-      console.log("currIndexAnswer", currIndexAnswer);
-      const askChatGPT = userInput;
-      if (askChatGPT) {
-        console.log("ChatGPT question:", askChatGPT);
-        await callLambda(
-          "ask",
-          JSON.stringify({
-            id: chatIdString,
-            message: askChatGPT,
-            image: "",
-            username: currState && currState.username ? currState.username : "",
-            auth: CHATGPTPLUGINAUTH,
-          })
-        );
-      }
-      return;
     }
 
     if (userInput) {
-      if (userInput.substring(0, 6) === "/start" && currIndexAnswer === 0) {
+      if (userInput.substring(0, 6) === "/start") {
         console.log(
           "New user",
           body.message.chat,
@@ -615,28 +411,17 @@ export default class BotLogic {
         const user: UserData = <UserData>{
           id: chatIdString,
           username,
-          minanft: [],
           message_id: body.message.message_id.toString(),
           message: "",
-          currentAnswer: 0,
           user: body.message.chat,
           language_code: body.message.from.language_code
             ? body.message.from.language_code
             : "en",
-          chatGPTinit: false,
         };
         this.users.create(user);
-        /*
-    const options = <ReplyKeyboardMarkup>{keyboard: [[<KeyboardButton>{text: T(this.questions.phoneButton), request_contact: true}]], 
-                                          resize_keyboard: true,
-                                          one_time_keyboard: true};
-                                          
-        add it back if the phone number is needed for KYC								  
-*/
-        await this.message(
-          `${T(this.questions.welcomeWords)}\n\n${T(currQuestion.text)}`
-        );
-        this.bot.telegram
+
+        await this.message(T("welcomeWords"));
+        await this.bot.telegram
           .sendMessage(
             process.env.SUPPORT_CHAT!,
             "New user:\n" +
@@ -667,77 +452,18 @@ export default class BotLogic {
             );
           }
           return;
-        }
-        if (
-          userInput &&
-          this.validator.validate(currQuestion.type, userInput)
-        ) {
-          if (currIndexAnswer == 0) {
-            userInput =
-              userInput[0] == "@"
-                ? userInput.toLowerCase()
-                : "@" + userInput.toLowerCase();
-
-            const names = new Names(NAMES_TABLE);
-            const name = await names.get(userInput);
-            if (name) {
-              console.log("Found the same name", name);
-              await this.message(T("nameTaken"));
-              return;
-            }
-            if (reservedNames.includes(userInput.toLowerCase().substr(1, 30))) {
-              console.log("Name is reserved", name);
-              await this.message(T("nameReserved"));
-              return;
-            }
-          }
-          this.users.updateAnswer(
-            chatIdString,
-            currIndexAnswer,
-            currIndexAnswer == 0 ? userInput.toLowerCase() : userInput
-          );
-          currIndexAnswer++;
-          if (currIndexAnswer < formQuestions.length)
-            await this.message(
-              T(this.questions.questions[currIndexAnswer].text)
-            );
         } else {
-          await this.message(
-            `${
-              currQuestion.error
-                ? T(currQuestion.error)
-                : T(this.questions.commonError)
-            }`
-          );
-        }
-      }
-
-      if (currIndexAnswer === formQuestions.length) {
-        if (!(currState && currState.username)) {
-          console.error("No username", currState);
-          return;
-        }
-        const askChatGPT = userInput;
-        if (askChatGPT)
           await callLambda(
-            "image",
+            "ask",
             JSON.stringify({
               id: chatIdString,
-              message: askChatGPT,
-              username: currState.username,
-              creator:
-                currState.user && currState.user.username
-                  ? currState.user.username
-                  : "",
-              image: "",
+              username:
+                currState && currState.username ? currState.username : "",
               auth: CHATGPTPLUGINAUTH,
             })
           );
-
-        await this.message(T(this.questions.finalWords));
-        await this.users.increaseCounter(chatIdString, ++currIndexAnswer);
+        }
       }
-      return;
     }
   }
 }

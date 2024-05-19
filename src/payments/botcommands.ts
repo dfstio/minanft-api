@@ -1,5 +1,5 @@
 import { Telegraf, Markup } from "telegraf";
-import BotMessage from "../mina/message";
+import BotMessage from "../chatgpt/message";
 import { getToken, getTokenByIndex, getSaleTokenByIndex } from "../nft/algolia";
 import { buyInvoice } from "../payments/stripe";
 import { initLanguages, getLanguage, getT } from "../lang/lang";
@@ -17,7 +17,7 @@ new - Create new NFT
 auth - Get authorisation JWT token
 voiceon - Enable voice messages
 voiceoff - Disable voice messages	
-*/
+
 
 async function supportTicket(id: string, language: string): Promise<void> {
   const bot = new BotMessage(id, language);
@@ -255,3 +255,4 @@ async function botCommandCallback(ctx: any): Promise<void> {
 }
 
 export { supportTicket, botCommandList, botCommandBuy, botCommandCallback };
+*/

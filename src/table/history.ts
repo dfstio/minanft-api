@@ -19,6 +19,20 @@ export default class History extends Table<HistoryData> {
     await this.addAnswer(message);
   }
 
+  public async addImage(msg: string, imageUrl: string): Promise<void> {
+    const message = {
+      role: "user",
+      content: [
+        { type: "text", text: msg },
+        {
+          type: "image_url",
+          image_url: { url: imageUrl },
+        },
+      ],
+    };
+    await this.addAnswer(message);
+  }
+
   public async addAnswer(message: any): Promise<void> {
     await this.create({
       id: this.id,

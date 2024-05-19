@@ -51,6 +51,7 @@ provider:
     NAMES_ORACLE_SK: ${file(./env.json):NAMES_ORACLE_SK, env:NAMES_ORACLE_SK}
     DEPLOYER_LIB: ${file(./env.json):DEPLOYER_LIB, env:DEPLOYER_LIB}
     PROVER_KEYS_BUCKET: ${file(./env.json):PROVER_KEYS_BUCKET, env:PROVER_KEYS_BUCKET}
+    STORAGE_URL: ${file(./env.json):STORAGE_URL, env:STORAGE_URL}
   iamRoleStatements:
     - Effect: "Allow"
       Action:
@@ -269,10 +270,6 @@ functions:
     handler: ask.image
     timeout: 900
     memorySize: 512
-  archetype:
-    handler: ask.archetype
-    timeout: 900
-    memorySize: 256
   audio:
     handler: audio.transcribe
     timeout: 900
@@ -596,6 +593,3 @@ package:
 
 custom:
   s3Bucket: formbucket-${self:provider.environment.BUCKET}
-  prune:
-    automatic: true
-    number: 10

@@ -3,7 +3,7 @@ import { PublicKey, Poseidon, Mina, AccountUpdate, PrivateKey } from "o1js";
 import { getDeployer } from "./src/mina/deployers";
 import { MinaNFT, sleep, fetchMinaAccount, initBlockchain } from "minanft";
 import { minaInit } from "./src/mina/init";
-import { GASTANKS_ZEKO } from "./src/mina/gastanks";
+import { GASTANKS } from "./src/mina/gastanks";
 
 const FAUCET_AMOUNT = 50_000_000_000n;
 const MINIMUM_BALANCE = 70;
@@ -48,7 +48,7 @@ const calculate: Handler = async (
       if (body.chain === "zeko") {
         await initBlockchain("zeko");
         deployer = PrivateKey.fromBase58(
-          GASTANKS_ZEKO[Math.floor(Math.random() * (GASTANKS_ZEKO.length - 1))]
+          GASTANKS[Math.floor(Math.random() * (GASTANKS.length - 1))]
         );
         amount = 1_000_000_000_000n;
       } else {
