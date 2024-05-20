@@ -1,6 +1,7 @@
 import Table from "./table";
 import MetadataData from "../model/metadata";
 import { encryptJSON, decryptJSON } from "../nft/kms";
+import { blockchain } from "minanft";
 
 export default class MetadataTable extends Table<MetadataData> {
   public async createNewVersion(params: {
@@ -8,14 +9,18 @@ export default class MetadataTable extends Table<MetadataData> {
     version: number;
     uri: any;
     txId: string;
+    chain: blockchain;
+    contractAddress: string;
   }): Promise<void> {
-    const { username, version, uri, txId } = params;
+    const { username, version, uri, txId, chain, contractAddress } = params;
     const encrypted = await encryptJSON(uri, username);
     await this.create({
       username,
       version,
       metadata: encrypted,
       txId,
+      chain,
+      contractAddress,
     } as MetadataData);
   }
 

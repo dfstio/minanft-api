@@ -8,7 +8,8 @@
     "marek",
     "staketab",
     "tmessage",
-    "ZKCLOUDWORKER"
+    "ZKCLOUDWORKER",
+    "ZKCW"
   ],
   "editor.defaultFormatter": "esbenp.prettier-vscode"
 }
