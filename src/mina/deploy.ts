@@ -542,7 +542,7 @@ export async function deployNFT(params: BotMintData): Promise<void> {
         contract: MINANFT_NAME_SERVICE,
         id,
         timeCreated: Date.now(),
-        storage: nft.storage.toIpfsHash(),
+        storage: "i:" + nft.storage.toIpfsHash(),
         uri,
         creator: "@MinaNFT_bot",
         language: language,
