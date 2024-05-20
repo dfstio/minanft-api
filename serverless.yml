@@ -52,6 +52,9 @@ provider:
     DEPLOYER_LIB: ${file(./env.json):DEPLOYER_LIB, env:DEPLOYER_LIB}
     PROVER_KEYS_BUCKET: ${file(./env.json):PROVER_KEYS_BUCKET, env:PROVER_KEYS_BUCKET}
     STORAGE_URL: ${file(./env.json):STORAGE_URL, env:STORAGE_URL}
+    ZKCW_AUTH: ${file(./env.json):ZKCW_AUTH, env:ZKCW_AUTH}
+    ZKCW_JWT: ${file(./env.json):ZKCW_JWT, env:ZKCW_JWT}
+    ZKCW_ENDPOINT: ${file(./env.json):ZKCW_ENDPOINT, env:ZKCW_ENDPOINT}
   iamRoleStatements:
     - Effect: "Allow"
       Action:

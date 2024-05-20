@@ -32,6 +32,7 @@ export interface BotMintData {
   timeNow: number;
   filename: string;
   username: string;
+  chain: string;
   postname?: string;
   creator: string;
   description?: string;

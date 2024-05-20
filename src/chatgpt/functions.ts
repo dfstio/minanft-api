@@ -200,6 +200,11 @@ const aiFunctions = {
             description:
               "The filename of the image to be used as NFT avatar. Must be one of the files uploaded by the user and have image mime type",
           },
+          nft_chain: {
+            type: "string",
+            description:
+              "The chain on which mint the NFT. Must be one of the chains supported by MinaNFT: zeko or devnet. Default is zeko",
+          },
           nft_description: {
             type: "string",
             description: "The NFT description, can be long",
@@ -715,6 +720,7 @@ async function create_nftPostProcess(data: any) {
     timeNow: Date.now(),
     filename: data.request.nft_image,
     username: data.request.nft_name,
+    chain: data.request.nft_chain,
     creator: "@MinaNFT_bot",
     description: data.request.nft_description,
     keys: data.request.keys,
@@ -739,6 +745,7 @@ async function create_postPostProcess(data: any) {
     username: data.request.nft_name,
     postname: data.request.post_name,
     creator: "@MinaNFT_bot",
+    chain: "devnet",
     description: data.request.post_description,
     keys: data.request.keys,
     files: data.request.files ?? [],

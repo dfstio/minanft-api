@@ -40,17 +40,19 @@ async function copyTelegramImageToS3(
   }
 }
 
-async function copyAIImageToS3(
-  id: string,
-  filename: string,
-  url: string,
-  ai: boolean = false
-): Promise<FileData | undefined> {
+async function copyAIImageToS3(params: {
+  id: string;
+  filename: string;
+  url: string;
+  ai?: boolean;
+  mimeType?: string;
+}): Promise<FileData | undefined> {
+  const { id, filename, url, ai, mimeType } = params;
   try {
     console.log("copyAIImageToS3", id, filename, url, ai);
-    const key = ai ? id + "/" + filename : filename;
+    const key = ai === true ? id + "/" + filename : filename;
     const file = new S3File(process.env.BUCKET!, key);
-    await file.upload(url, "image/jpeg");
+    await file.upload(url, mimeType ?? "image/png");
     console.log("Saved", filename);
     await file.wait();
     console.log("File is uploaded:", filename);
