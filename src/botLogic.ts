@@ -313,6 +313,10 @@ export default class BotLogic {
           urlBase + chatIdString + "/" + filename
         );
         //await this.message(T("fileSuccess"));
+        const text = body.message.caption;
+        if (text && text.length > 0) {
+          await this.history.add(text, true);
+        }
 
         await callLambda(
           "ask",
