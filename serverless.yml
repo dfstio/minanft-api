@@ -306,7 +306,7 @@ functions:
     memorySize: 192
     events:
       - schedule:
-          rate: rate(60 minutes)
+          rate: rate(24 hours)
           enabled: true
           name: ts
   deploynft:
