@@ -89,7 +89,7 @@ export default class VoiceHandler {
           await bot.tmessage("thankyouforprompt", { prompt: chatGPT });
           return chatGPT;
         } else {
-          console.error("Chat GPT error", response.data.error);
+          console.error("Chat GPT error", response.data ?? response);
           return undefined;
         }
       } catch (error: any) {
