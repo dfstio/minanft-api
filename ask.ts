@@ -14,6 +14,7 @@ import HistoryTable from "./src/table/history";
 import { getFormattedDateTime } from "./src/nft/nft";
 import callLambda from "./src/lambda/lambda";
 import { splitMarkdown } from "./src/chatgpt/split";
+import Users from "./src/table/users";
 import axios from "axios";
 
 const FILES_TABLE = process.env.FILES_TABLE!;
@@ -40,6 +41,37 @@ const chatgpt: Handler = async (
     if (event && event.auth && event.id && event.auth === CHATGPTPLUGINAUTH) {
       await initLanguages();
       const language = await getLanguage(event.id);
+      const users = new Users(process.env.DYNAMODB_TABLE!);
+      const user = await users.getItem(event.id);
+      if (user === undefined) {
+        console.error("User not found");
+        return 200;
+      }
+      let allowed_images = 10;
+      if (user.allowed_images !== undefined)
+        allowed_images = user.allowed_images;
+      let allowed_tokens = 100000;
+      if (user.allowed_tokens !== undefined)
+        allowed_tokens = user.allowed_tokens;
+      if (user.images_created === undefined) user.images_created = 0;
+      if (user.total_tokens === undefined) user.total_tokens = 0;
+      if (
+        user.images_created >= allowed_images ||
+        user.total_tokens >= allowed_tokens
+      ) {
+        console.error("ask: User reached the limit", {
+          user,
+          allowed_images,
+          allowed_tokens,
+        });
+        const bot = new BotMessage(event.id, language);
+        await sleep(1000);
+        await bot.message(
+          "You have reached the limit of bot use. Please contact support@minanft.io to increase the limit."
+        );
+        await sleep(1000);
+        return 200;
+      }
       const chat = new ChatGPTMessage(
         CHATGPT_TOKEN,
         language,
@@ -90,6 +122,38 @@ const image: Handler = async (
       if (event.message && event.id) {
         await initLanguages();
         const language = await getLanguage(event.id);
+        const users = new Users(process.env.DYNAMODB_TABLE!);
+        const user = await users.getItem(event.id);
+        if (user === undefined) {
+          console.error("User not found");
+          return 200;
+        }
+        let allowed_images = 10;
+        if (user.allowed_images !== undefined)
+          allowed_images = user.allowed_images;
+        let allowed_tokens = 100000;
+        if (user.allowed_tokens !== undefined)
+          allowed_tokens = user.allowed_tokens;
+        if (user.images_created === undefined) user.images_created = 0;
+        if (user.total_tokens === undefined) user.total_tokens = 0;
+        if (
+          user.images_created >= allowed_images ||
+          user.total_tokens >= allowed_tokens
+        ) {
+          console.error("image: User reached the limit", {
+            user,
+            allowed_images,
+            allowed_tokens,
+          });
+          const bot = new BotMessage(event.id, language);
+          await sleep(1000);
+          await bot.message(
+            "You have reached the limit of bot use. Please contact support@minanft.io to increase the limit."
+          );
+
+          await sleep(1000);
+          return 200;
+        }
         const chat = new ChatGPTMessage(
           CHATGPT_TOKEN,
           language,
@@ -119,7 +183,7 @@ const image: Handler = async (
         });
         if (file === undefined) {
           console.error("Image is undefined");
-          return;
+          return 200;
         }
         const fileTable = new FilesTable(FILES_TABLE);
         await fileTable.create(file);

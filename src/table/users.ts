@@ -55,30 +55,40 @@ export default class Users extends Table<UserData> {
   }
 
   public async updateUsage(id: string, usage: AIUsage): Promise<void> {
+    const lastSeen: number = Date.now();
+    const lastSeenDate: string = new Date(lastSeen).toISOString();
     await this.updateData(
       { id: id },
       {
         "#P": "prompt_tokens",
         "#C": "completion_tokens",
         "#T": "total_tokens",
+        "#L": "lastSeen",
+        "#LD": "lastSeenDate",
       },
       {
         ":p": usage.prompt_tokens,
         ":c": usage.completion_tokens,
         ":t": usage.total_tokens,
+        ":l": lastSeen,
+        ":ld": lastSeenDate,
       },
-      `ADD #P :p, #C :c, #T :t`
+      `ADD #P :p, #C :c, #T :t SET #L = :l, #LD = :ld`
     );
   }
 
   public async updateImageUsage(id: string): Promise<void> {
+    const lastSeen: number = Date.now();
+    const lastSeenDate: string = new Date(lastSeen).toISOString();
     await this.updateData(
       { id: id },
       {
         "#I": "images_created",
+        "#L": "lastSeen",
+        "#LD": "lastSeenDate",
       },
-      { ":i": 1 },
-      `ADD #I :i`
+      { ":i": 1, ":l": lastSeen, ":ld": lastSeenDate },
+      `ADD #I :i SET #L = :l, #LD = :ld`
     );
   }
 }
