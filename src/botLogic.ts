@@ -412,6 +412,8 @@ export default class BotLogic {
           body.message.chat,
           body.message.from.language_code
         );
+        const firstSeen = Date.now();
+        const firstSeenDate = new Date(firstSeen).toISOString();
         const user: UserData = <UserData>{
           id: chatIdString,
           username,
@@ -421,6 +423,10 @@ export default class BotLogic {
           language_code: body.message.from.language_code
             ? body.message.from.language_code
             : "en",
+          firstSeen,
+          firstSeenDate,
+          images_created: 0,
+          total_tokens: 0,
         };
         this.users.create(user);
 
