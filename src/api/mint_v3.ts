@@ -57,7 +57,7 @@ export async function reserveName(
     const names = new Names(NAMES_TABLE);
     const checkName = await names.getReservedName({ username: nftName });
     if (checkName !== undefined) {
-      console.log("Found old deployment", checkName);
+      console.log("Found old deployment", { checkName, id, publicKey });
       if (checkName.id !== id || checkName.publicKey !== publicKey) {
         return {
           success: false,
