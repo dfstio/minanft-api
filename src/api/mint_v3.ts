@@ -1,18 +1,19 @@
-import { PrivateKey, PublicKey, Signature, Field, Mina } from "o1js";
+import { PrivateKey, PublicKey, Signature, Field, Mina, UInt64 } from "o1js";
 import Jobs from "../table/jobs";
 import {
   MinaNFT,
   MinaNFTNameService,
+  MinaNFTNameServiceV2,
   MINANFT_NAME_SERVICE,
+  MINANFT_NAME_SERVICE_V2,
   VERIFICATION_KEY_HASH,
   accountBalanceMina,
   Memory,
-  blockchain,
   sleep,
   MinaNFTCommitData,
   Update,
   Storage,
-  NAMES_ORACLE,
+  wallet,
 } from "minanft";
 import { listFiles } from "../mina/cache";
 import { algoliaWriteToken } from "../nft/algolia";
@@ -34,12 +35,7 @@ const NAMES_TABLE = process.env.NAMES_TABLE!;
 
 export async function reserveName(
   id: string,
-  args: {
-    name: string;
-    publicKey: string;
-    chain: string;
-    contract: string;
-  },
+  args: string,
   language: string
 ): Promise<{
   success: boolean;
@@ -47,16 +43,17 @@ export async function reserveName(
   price?: string;
   reason: string;
 }> {
-  const { name, publicKey, chain, contract } = args;
-  if (name === "" || name === "@")
-    return { success: false, signature: "", reason: "empty name" };
-  const nftName = name[0] === "@" ? name : "@" + name;
-  if (nftName.length > 30)
-    return { success: false, signature: "", reason: "name too long" };
-  if (isReservedName(name))
-    return { success: false, signature: "", reason: "reserved name" };
-
   try {
+    const { name, publicKey, chain, contract, version, developer, repo } =
+      JSON.parse(args);
+    if (name === "" || name === "@")
+      return { success: false, signature: "", reason: "empty name" };
+    const nftName = name[0] === "@" ? name : "@" + name;
+    if (nftName.length > 30)
+      return { success: false, signature: "", reason: "name too long" };
+    if (isReservedName(name))
+      return { success: false, signature: "", reason: "reserved name" };
+
     const names = new Names(NAMES_TABLE);
     const checkName = await names.getReservedName({ username: nftName });
     if (checkName !== undefined) {
@@ -65,40 +62,83 @@ export async function reserveName(
         return {
           success: false,
           signature: "",
-          reason: "Already deployed by another user",
+          reason: "Already used by another user",
         };
       }
     }
-    const oraclePrivateKey = PrivateKey.fromBase58(NAMES_ORACLE_SK!);
-    const nameServiceAddress = PublicKey.fromBase58(MINANFT_NAME_SERVICE);
-    const verificationKeyHash = Field.fromJSON(VERIFICATION_KEY_HASH);
-    const address = PublicKey.fromBase58(publicKey);
 
-    const signature: Signature = Signature.create(oraclePrivateKey, [
-      ...address.toFields(),
-      MinaNFT.stringToField(nftName),
-      verificationKeyHash,
-      ...nameServiceAddress.toFields(),
-    ]);
+    if (version === "v2") {
+      const oraclePrivateKey = PrivateKey.fromBase58(NAMES_ORACLE_SK!);
+      const nameServiceAddress = PublicKey.fromBase58(MINANFT_NAME_SERVICE_V2);
+      //const verificationKeyHash = Field.fromJSON(VERIFICATION_KEY_HASH_V2);
+      const owner = PublicKey.fromBase58(publicKey);
+      const nameService = new MinaNFTNameServiceV2({
+        address: nameServiceAddress,
+        oraclePrivateKey,
+      });
+      const fee = UInt64.from(nftPrice(name).price * 1_000_000_000);
 
-    const nft: NamesData = {
-      id,
-      chain,
-      contract,
-      publicKey,
-      signature: signature.toBase58(),
-      username: nftName,
-      language,
-      timeCreated: Date.now(),
-    };
-    await names.create(nft);
+      const signature = await nameService.issueNameSignature({
+        fee,
+        feeMaster: wallet,
+        name: MinaNFT.stringToField(name),
+        owner,
+      });
 
-    return {
-      success: true,
-      signature: signature.toBase58(),
-      price: JSON.stringify(nftPrice(name)),
-      reason: "",
-    };
+      const nft: NamesData = {
+        id,
+        chain,
+        contract,
+        publicKey,
+        signature: signature.toBase58(),
+        username: nftName,
+        language,
+        timeCreated: Date.now(),
+        version,
+        developer,
+        repo,
+      };
+      await names.create(nft);
+
+      return {
+        success: true,
+        signature: signature.toBase58(),
+        price: JSON.stringify(nftPrice(name)),
+        reason: "",
+      };
+    } else {
+      const oraclePrivateKey = PrivateKey.fromBase58(NAMES_ORACLE_SK!);
+      const nameServiceAddress = PublicKey.fromBase58(MINANFT_NAME_SERVICE);
+      const verificationKeyHash = Field.fromJSON(VERIFICATION_KEY_HASH);
+      const address = PublicKey.fromBase58(publicKey);
+
+      const signature: Signature = Signature.create(oraclePrivateKey, [
+        ...address.toFields(),
+        MinaNFT.stringToField(nftName),
+        verificationKeyHash,
+        ...nameServiceAddress.toFields(),
+      ]);
+
+      const nft: NamesData = {
+        id,
+        chain,
+        contract,
+        publicKey,
+        signature: signature.toBase58(),
+        username: nftName,
+        language,
+        timeCreated: Date.now(),
+        version: "v1",
+      };
+      await names.create(nft);
+
+      return {
+        success: true,
+        signature: signature.toBase58(),
+        price: JSON.stringify(nftPrice(name)),
+        reason: "",
+      };
+    }
   } catch (err) {
     console.error(err);
     return { success: false, signature: "", reason: "error" };

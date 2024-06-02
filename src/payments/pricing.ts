@@ -12,7 +12,7 @@ function nftPrice(name: string): NFTPriceData {
   let price: NFTPriceData = <NFTPriceData>{
     username: username,
     price: prices[category].price,
-    currency: "usd",
+    currency: "MINA",
     description: prices[category].description,
   };
 
