@@ -114,7 +114,7 @@ const api: Handler = async (
               body.data.name === undefined ||
               body.data.task === undefined ||
               body.data.args === undefined ||
-              body.data.args.length !== 4
+              body.data.args.length !== 1
             ) {
               console.error("Wrong reserveName request", body.data);
               callback(null, {
@@ -127,13 +127,8 @@ const api: Handler = async (
               });
               return;
             }
-            const [name, publicKey, chain, contract] = body.data.args;
             const language = await getLanguage(id);
-            const result = await reserveName(
-              id,
-              { name, publicKey, chain, contract },
-              language
-            );
+            const result = await reserveName(id, body.data.args, language);
             console.log("reserveName result", result);
 
             callback(null, {

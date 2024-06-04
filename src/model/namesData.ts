@@ -18,6 +18,10 @@ export interface NamesData {
   price?: number;
   currency?: string;
   creator?: string;
+
+  version?: string;
+  developer?: string;
+  repo?: string;
 }
 
 export interface KeyData {
