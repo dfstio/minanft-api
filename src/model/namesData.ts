@@ -6,6 +6,7 @@ export interface NamesData {
   //url?: string;
   id: string;
   signature?: string;
+  signatureExpiry?: string;
   privateKey?: string;
   publicKey?: string;
   ownerPrivateKey?: string;
