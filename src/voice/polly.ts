@@ -39,7 +39,7 @@ export async function textToVoice(
   if (text.length === 0) return undefined;
   try {
     const polly = new PollyClient({});
-    const voiceId = voices[language] ?? "Joanna";
+    const voiceId = (voices as any)[language] ?? "Joanna";
     //console.log("textToVoice", { language, voiceId, text });
 
     const pollyParams: StartSpeechSynthesisTaskCommandInput = {

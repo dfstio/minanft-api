@@ -6,6 +6,8 @@ import {
   MinaNFTNameServiceV2,
   MINANFT_NAME_SERVICE,
   MINANFT_NAME_SERVICE_V2,
+  KYCSignatureData,
+  MintSignatureData,
   VERIFICATION_KEY_HASH,
   accountBalanceMina,
   Memory,
@@ -14,6 +16,7 @@ import {
   Update,
   Storage,
   wallet,
+  initBlockchain,
 } from "minanft";
 import { listFiles } from "../mina/cache";
 import { algoliaWriteToken } from "../nft/algolia";
@@ -40,6 +43,7 @@ export async function reserveName(
 ): Promise<{
   success: boolean;
   signature: string;
+  expiry?: string;
   price?: string;
   reason: string;
 }> {
@@ -53,12 +57,17 @@ export async function reserveName(
       return { success: false, signature: "", reason: "name too long" };
     if (isReservedName(name))
       return { success: false, signature: "", reason: "reserved name" };
+    await initBlockchain(chain);
 
     const names = new Names(NAMES_TABLE);
     const checkName = await names.getReservedName({ username: nftName });
     if (checkName !== undefined) {
       console.log("Found old deployment", { checkName, id, publicKey });
-      if (checkName.id !== id || checkName.publicKey !== publicKey) {
+      if (
+        (checkName.id !== id || checkName.publicKey !== publicKey) &&
+        (checkName.chain === "mainnet" || chain !== "mainnet")
+      ) {
+        // TODO: analyze signatureExpiry
         return {
           success: false,
           signature: "",
@@ -78,12 +87,22 @@ export async function reserveName(
       });
       const fee = UInt64.from(nftPrice(name).price * 1_000_000_000);
 
-      const signature = await nameService.issueNameSignature({
+      const { signature, expiry } = await nameService.issueNameSignature({
         fee,
         feeMaster: wallet,
         name: MinaNFT.stringToField(name),
         owner,
+        chain,
+        expiryInBlocks: 100,
       });
+      if (expiry === undefined || signature === undefined) {
+        return {
+          success: false,
+          signature: "",
+          reason: "error",
+        };
+      }
+      console.log("Signature", signature.toBase58(), expiry.toBigint());
 
       const nft: NamesData = {
         id,
@@ -91,6 +110,7 @@ export async function reserveName(
         contract,
         publicKey,
         signature: signature.toBase58(),
+        signatureExpiry: expiry.toBigint().toString(),
         username: nftName,
         language,
         timeCreated: Date.now(),
@@ -103,6 +123,7 @@ export async function reserveName(
       return {
         success: true,
         signature: signature.toBase58(),
+        expiry: expiry.toBigint().toString(),
         price: JSON.stringify(nftPrice(name)),
         reason: "",
       };
