@@ -203,7 +203,7 @@ const aiFunctions = {
           nft_chain: {
             type: "string",
             description:
-              "The chain on which mint the NFT. Must be one of the chains supported by MinaNFT: zeko or devnet. Default is zeko",
+              "The chain on which mint the NFT. Must be one of the chains supported by MinaNFT: devnet. Only devnet is supported now. Default: devnet",
           },
           nft_description: {
             type: "string",
