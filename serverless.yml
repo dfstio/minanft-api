@@ -55,6 +55,8 @@ provider:
     ZKCW_AUTH: ${file(./env.json):ZKCW_AUTH, env:ZKCW_AUTH}
     ZKCW_JWT: ${file(./env.json):ZKCW_JWT, env:ZKCW_JWT}
     ZKCW_ENDPOINT: ${file(./env.json):ZKCW_ENDPOINT, env:ZKCW_ENDPOINT}
+    IPFS_URL: ${file(./env.json):IPFS_URL, env:IPFS_URL}
+    IPFS_TOKEN: ${file(./env.json):IPFS_TOKEN, env:IPFS_TOKEN}
   iamRoleStatements:
     - Effect: "Allow"
       Action:

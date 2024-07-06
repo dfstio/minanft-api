@@ -1,6 +1,6 @@
 import Table from "./table";
 import { JobsData, JobStatus } from "../model/jobsData";
-import { makeString } from "minanft";
+import { generateId } from "../api/hash";
 
 export default class Jobs extends Table<JobsData> {
   public async createJob(params: {
@@ -25,8 +25,11 @@ export default class Jobs extends Table<JobsData> {
       timeStarted,
     } = params;
     const timeCreated: number = timeStarted ?? Date.now();
-    const jobId: string =
-      username + "." + timeCreated.toString() + "." + makeString(32);
+    const jobId: string = generateId({
+      username,
+      timeCreated,
+    });
+
     const item: JobsData = {
       id: username,
       jobId,

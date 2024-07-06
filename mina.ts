@@ -1,6 +1,6 @@
 import { Handler, Context } from "aws-lambda";
 import {
-  deployNFT,
+  //deployNFT,
   addKeys,
   proveKeys,
   verifyKeys,
@@ -11,13 +11,14 @@ import {
   post_v3 as post_v3_func,
 } from "./src/api/mint_v3";
 import { initLanguages, getLanguage } from "./src/lang/lang";
+import { deployNFTV4 } from "./src/mina/deploy-v4";
 
 const deploynft: Handler = async (event: any, context: Context) => {
   try {
     console.log("deploy nft", event);
     await initLanguages();
     if (event.postname && event.postname.length > 0) await deployPost(event);
-    else await deployNFT(event);
+    else await deployNFTV4(event);
 
     //context.succeed(event.id);
     return {
