@@ -160,9 +160,13 @@ export async function reserveName(
         reason: "",
       };
     }
-  } catch (err) {
+  } catch (err: any) {
     console.error(err);
-    return { success: false, signature: "", reason: "error" };
+    return {
+      success: false,
+      signature: "",
+      reason: (err?.toString ? err?.toString() : undefined) ?? "error",
+    };
   }
 }
 
