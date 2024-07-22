@@ -11,6 +11,7 @@ deperciated/
 
 env.json
 src/mina/gastanks.ts
+src/mina/list.ts
 test/
 proof.json
 output.txt
