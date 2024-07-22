@@ -32,6 +32,7 @@ import { use } from "i18next";
 import { ARWEAVE_KEY_STRING } from "../mina/gastanks";
 import { encrypt, decrypt } from "../nft/kms";
 import { explorerTransaction, minaInit } from "../mina/init";
+import { LIST } from "../mina/list";
 
 const { PINATA_JWT, NAMES_ORACLE_SK } = process.env;
 const NAMES_TABLE = process.env.NAMES_TABLE!;
@@ -50,6 +51,10 @@ export async function reserveName(
   try {
     const { name, publicKey, chain, contract, version, developer, repo } =
       JSON.parse(args);
+    if (LIST.includes(publicKey)) {
+      console.error("reserveName ERR3817", publicKey);
+      return { success: false, signature: "", reason: "ERR3817" };
+    }
     if (name === "" || name === "@")
       return { success: false, signature: "", reason: "empty name" };
     const nftName = name[0] === "@" ? name : "@" + name;
