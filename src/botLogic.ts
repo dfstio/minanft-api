@@ -15,6 +15,7 @@ import { generateJWT } from "./api/jwt";
 import { algoliaWriteTokens } from "./nft/algolia";
 import UserData from "./model/userData";
 import { FilesTable } from "./table/files";
+import { MAX_IMAGES, MAX_TOKENS } from "./model/userData";
 
 const CHATGPTPLUGINAUTH = process.env.CHATGPTPLUGINAUTH!;
 const HISTORY_TABLE = process.env.HISTORY_TABLE!;
@@ -427,6 +428,8 @@ export default class BotLogic {
           firstSeenDate,
           images_created: 0,
           total_tokens: 0,
+          allowed_images: MAX_IMAGES,
+          allowed_tokens: MAX_TOKENS,
         };
         this.users.create(user);
 

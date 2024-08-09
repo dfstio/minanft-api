@@ -16,12 +16,16 @@ import callLambda from "./src/lambda/lambda";
 import { splitMarkdown } from "./src/chatgpt/split";
 import Users from "./src/table/users";
 import axios from "axios";
+import { MAX_IMAGES, MAX_TOKENS } from "./src/model/userData";
 
 const FILES_TABLE = process.env.FILES_TABLE!;
 const HISTORY_TABLE = process.env.HISTORY_TABLE!;
 
 const CHATGPT_TOKEN = process.env.CHATGPT_TOKEN!;
 const CHATGPTPLUGINAUTH = process.env.CHATGPTPLUGINAUTH!;
+
+const LIMIT_MESSAGE =
+  "You have reached the limit of bot use. To increase the limit, send 10 MINA to B62qqRwyFetYpTRbFYtKTTJBYEgErzsuFZL2JWoG7PEHrkYtibLsRT8 and then send your name and payment transaction hash to support@minanft.io";
 
 const chatgpt: Handler = async (
   event: any,
@@ -47,10 +51,10 @@ const chatgpt: Handler = async (
         console.error("User not found");
         return 200;
       }
-      let allowed_images = 10;
+      let allowed_images = MAX_IMAGES;
       if (user.allowed_images !== undefined)
         allowed_images = user.allowed_images;
-      let allowed_tokens = 100000;
+      let allowed_tokens = MAX_TOKENS;
       if (user.allowed_tokens !== undefined)
         allowed_tokens = user.allowed_tokens;
       if (user.images_created === undefined) user.images_created = 0;
@@ -60,15 +64,18 @@ const chatgpt: Handler = async (
         user.total_tokens >= allowed_tokens
       ) {
         console.error("ask: User reached the limit", {
-          user,
+          id: user.id,
+          username: user.username,
+
           allowed_images,
           allowed_tokens,
+          images_created: user.images_created,
+          total_tokens: user.total_tokens,
+          user,
         });
         const bot = new BotMessage(event.id, language);
         await sleep(1000);
-        await bot.message(
-          "You have reached the limit of bot use. Please contact support@minanft.io to increase the limit."
-        );
+        await bot.message(LIMIT_MESSAGE);
         await sleep(1000);
         return 200;
       }
@@ -128,10 +135,10 @@ const image: Handler = async (
           console.error("User not found");
           return 200;
         }
-        let allowed_images = 10;
+        let allowed_images = MAX_IMAGES;
         if (user.allowed_images !== undefined)
           allowed_images = user.allowed_images;
-        let allowed_tokens = 100000;
+        let allowed_tokens = MAX_TOKENS;
         if (user.allowed_tokens !== undefined)
           allowed_tokens = user.allowed_tokens;
         if (user.images_created === undefined) user.images_created = 0;
@@ -141,15 +148,18 @@ const image: Handler = async (
           user.total_tokens >= allowed_tokens
         ) {
           console.error("image: User reached the limit", {
-            user,
+            id: user.id,
+            username: user.username,
+
             allowed_images,
             allowed_tokens,
+            images_created: user.images_created,
+            total_tokens: user.total_tokens,
+            user,
           });
           const bot = new BotMessage(event.id, language);
           await sleep(1000);
-          await bot.message(
-            "You have reached the limit of bot use. Please contact support@minanft.io to increase the limit."
-          );
+          await bot.message(LIMIT_MESSAGE);
 
           await sleep(1000);
           return 200;

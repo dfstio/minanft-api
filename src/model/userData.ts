@@ -20,3 +20,6 @@ export default interface UserData {
   total_tokens?: number;
   allowed_tokens?: number;
 }
+
+export const MAX_IMAGES = 5;
+export const MAX_TOKENS = 100000;

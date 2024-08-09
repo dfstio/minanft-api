@@ -28,11 +28,10 @@ import Names from "../table/names";
 import { NamesData } from "../model/namesData";
 import { isReservedName } from "../nft/reservednames";
 import { nftPrice } from "../payments/pricing";
-import { use } from "i18next";
 import { ARWEAVE_KEY_STRING } from "../mina/gastanks";
 import { encrypt, decrypt } from "../nft/kms";
 import { explorerTransaction, minaInit } from "../mina/init";
-import { LIST } from "../mina/list";
+import { LIST, DEVELOPERS, KEYS } from "../mina/list";
 
 const { PINATA_JWT, NAMES_ORACLE_SK } = process.env;
 const NAMES_TABLE = process.env.NAMES_TABLE!;
@@ -49,7 +48,7 @@ export async function reserveName(
   reason: string;
 }> {
   try {
-    const { name, publicKey, chain, contract, version, developer, repo } =
+    const { name, publicKey, chain, contract, version, developer, repo, key } =
       JSON.parse(args);
     if (LIST.includes(publicKey)) {
       console.error("reserveName ERR3817", publicKey);
@@ -90,7 +89,13 @@ export async function reserveName(
         address: nameServiceAddress,
         oraclePrivateKey,
       });
-      const fee = UInt64.from(nftPrice(name).price * 1_000_000_000);
+      let fee = UInt64.from(nftPrice(name).price * 1_000_000_000);
+      if (
+        DEVELOPERS.includes(publicKey) ||
+        (key !== undefined && KEYS.includes(key))
+      ) {
+        fee = UInt64.from(1_000_000_000);
+      }
 
       const { signature, expiry } = await nameService.issueNameSignature({
         fee,
