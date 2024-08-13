@@ -25,7 +25,9 @@ const CHATGPT_TOKEN = process.env.CHATGPT_TOKEN!;
 const CHATGPTPLUGINAUTH = process.env.CHATGPTPLUGINAUTH!;
 
 const LIMIT_MESSAGE =
-  "You have reached the limit of bot use. To increase the limit, send 10 MINA to B62qqRwyFetYpTRbFYtKTTJBYEgErzsuFZL2JWoG7PEHrkYtibLsRT8 and then send your name and payment transaction hash to support@minanft.io";
+  "You have reached the limit of bot use. To increase the limit, please contact support@minanft.io";
+
+//  "You have reached the limit of bot use. To increase the limit, send 10 MINA to B62qqRwyFetYpTRbFYtKTTJBYEgErzsuFZL2JWoG7PEHrkYtibLsRT8 and then send your name and payment transaction hash to support@minanft.io";
 
 const chatgpt: Handler = async (
   event: any,

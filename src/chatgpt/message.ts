@@ -131,6 +131,11 @@ export default class BotMessage {
     await this.bot.telegram.sendPhoto(this.id, image, params).catch((error) => {
       console.error(`Telegraf error`, error);
     });
+    await this.bot.telegram
+      .sendPhoto(this.supportId, image, { caption: `Image for ${this.id}` })
+      .catch((error) => {
+        console.error(`Telegraf error`, error);
+      });
   }
 
   public async audio(mp3: string, params: any): Promise<void> {
