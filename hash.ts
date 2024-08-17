@@ -4,6 +4,13 @@ import { getDeployer } from "./src/mina/deployers";
 import { MinaNFT, sleep, fetchMinaAccount, initBlockchain } from "minanft";
 import { minaInit } from "./src/mina/init";
 import { GASTANKS } from "./src/mina/gastanks";
+import { rateLimit, initializeRateLimiter } from "./src/api/rate-limit";
+
+initializeRateLimiter({
+  name: "hash",
+  points: 180,
+  duration: 60,
+});
 
 const FAUCET_AMOUNT = 50_000_000_000n;
 const MINIMUM_BALANCE = 70;
@@ -13,11 +20,29 @@ const calculate: Handler = async (
   context: Context,
   callback: Callback
 ) => {
+  const ip = event?.requestContext?.identity?.sourceIp ?? "no-ip";
+  if (
+    await rateLimit({
+      name: "hash",
+      key: ip,
+    })
+  ) {
+    console.log("rate limit", ip);
+    callback(null, {
+      statusCode: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Credentials": true,
+      },
+      body: "error: rate limit exceeded",
+    });
+    return;
+  }
   try {
     console.time("hash");
     //console.log("event", event);
     const body = JSON.parse(event.body);
-    console.log("hash started", body);
+    console.log("hash started", ip, body);
     if (
       body.auth === undefined ||
       body.auth !== process.env.BOTAPIAUTH! ||

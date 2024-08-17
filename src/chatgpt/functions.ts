@@ -71,7 +71,7 @@ const aiFunctions = {
     function: {
       name: "generate_image",
       description:
-        "Generate am image using DALL-E based on description and save it to user's files",
+        "Generate am image using DALL-E based on description and save it to user's files. You should wait always for the previous image to be generated and shown to the user before starting generating the next image. Only one image generation process can be running at any moment.",
       parameters: {
         type: "object",
         properties: {

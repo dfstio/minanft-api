@@ -7,6 +7,13 @@ import Names from "./src/table/names";
 import { getBackupPlugin } from "./src/api/plugin";
 import { reserveName, indexName } from "./src/api/mint_v3";
 import { getLanguage } from "./src/lang/lang";
+import { rateLimit, initializeRateLimiter } from "./src/api/rate-limit";
+
+initializeRateLimiter({
+  name: "api",
+  points: 180,
+  duration: 60,
+});
 
 const BOTAPIAUTH = process.env.BOTAPIAUTH!;
 const NAMES_TABLE = process.env.NAMES_TABLE!;
@@ -16,8 +23,26 @@ const api: Handler = async (
   context: Context,
   callback: Callback
 ) => {
+  const ip = event?.requestContext?.identity?.sourceIp ?? "no-ip";
+  if (
+    await rateLimit({
+      name: "api",
+      key: ip,
+    })
+  ) {
+    console.log("rate limit", ip);
+    callback(null, {
+      statusCode: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Credentials": true,
+      },
+      body: "error: rate limit exceeded",
+    });
+    return;
+  }
   try {
-    console.log("event", event);
+    console.log("event", ip, event.body);
     const body = JSON.parse(event.body);
     if (
       body &&

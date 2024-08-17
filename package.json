@@ -51,6 +51,7 @@
     "minanft": "^1.19.2",
     "o1js": "^1.4.0",
     "openai": "^4.52.2",
+    "rate-limiter-flexible": "^5.0.3",
     "remove-markdown": "^0.5.0",
     "telegraf": "4.16.3",
     "telegramify-markdown": "^1.1.3"
