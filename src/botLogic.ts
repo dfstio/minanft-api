@@ -62,6 +62,12 @@ export default class BotLogic {
   }
 
   public async activate(body: any) {
+    if (body?.channel_post?.sender_chat?.id) {
+      console.error("Leaving telegram channel", body);
+      return await this.bot.telegram.leaveChat(
+        body.channel_post.sender_chat.id
+      );
+    }
     return await this.bot.handleUpdate(body);
   }
 
