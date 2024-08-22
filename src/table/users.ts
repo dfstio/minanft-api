@@ -2,6 +2,7 @@ import Table from "./table";
 import UserData from "../model/userData";
 import AccountData from "../model/accountData";
 import AIUsage from "../model/aiusage";
+import { MAX_IMAGES, MAX_TOKENS } from "../model/userData";
 
 export default class Users extends Table<UserData> {
   constructor(tableName: string) {
@@ -89,6 +90,19 @@ export default class Users extends Table<UserData> {
       },
       { ":i": 1, ":l": lastSeen, ":ld": lastSeenDate },
       `ADD #I :i SET #L = :l, #LD = :ld`
+    );
+  }
+  public async updateAllowedUsage(id: string): Promise<void> {
+    const lastSeen: number = Date.now();
+    const lastSeenDate: string = new Date(lastSeen).toISOString();
+    await this.updateData(
+      { id: id },
+      {
+        "#I": "allowed_images",
+        "#T": "allowed_tokens",
+      },
+      { ":i": MAX_IMAGES, ":t": MAX_TOKENS },
+      `ADD #I :i, #T :t`
     );
   }
 }

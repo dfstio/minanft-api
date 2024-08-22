@@ -25,13 +25,14 @@ import axios from "axios";
 
 import BotMessage from "../chatgpt/message";
 import Names from "../table/names";
+import Users from "../table/users";
 import { NamesData } from "../model/namesData";
 import { isReservedName } from "../nft/reservednames";
 import { nftPrice } from "../payments/pricing";
 import { ARWEAVE_KEY_STRING } from "../mina/gastanks";
 import { encrypt, decrypt } from "../nft/kms";
 import { explorerTransaction, minaInit } from "../mina/init";
-import { LIST, DEVELOPERS, KEYS } from "../mina/list";
+import { LIST, DEVELOPERS, KEYS, getPrice } from "../mina/list";
 
 const { PINATA_JWT, NAMES_ORACLE_SK } = process.env;
 const NAMES_TABLE = process.env.NAMES_TABLE!;
@@ -89,17 +90,38 @@ export async function reserveName(
         address: nameServiceAddress,
         oraclePrivateKey,
       });
-      let fee = UInt64.from(nftPrice(name).price * 1_000_000_000);
+      let nftPriceData = nftPrice(name);
+      let fee = UInt64.from(nftPriceData.price * 1_000_000_000);
+      let feeMaster = wallet;
+      /*
       if (
         DEVELOPERS.includes(publicKey) ||
         (key !== undefined && KEYS.includes(key))
       ) {
         fee = UInt64.from(1_000_000_000);
       }
+      */
+
+      if (KEYS[0] === key) {
+        const price = await getPrice(name);
+        if (price !== undefined) {
+          console.error("Price 0 found", name, price);
+          feeMaster = PublicKey.fromBase58(DEVELOPERS[0]);
+          nftPriceData.price = price;
+          fee = UInt64.from(price * 1_000_000_000);
+        } else {
+          console.error("Price 0 not found");
+          return {
+            success: false,
+            signature: "",
+            reason: "error 0",
+          };
+        }
+      }
 
       const { signature, expiry } = await nameService.issueNameSignature({
         fee,
-        feeMaster: wallet,
+        feeMaster,
         name: MinaNFT.stringToField(name),
         owner,
         chain,
@@ -134,7 +156,7 @@ export async function reserveName(
         success: true,
         signature: signature.toBase58(),
         expiry: expiry.toBigint().toString(),
-        price: JSON.stringify(nftPrice(name)),
+        price: JSON.stringify(nftPriceData),
         reason: "",
       };
     } else {
@@ -454,6 +476,8 @@ export async function mint_v3(
     console.log("Writing deployment to Names", deployedNFT);
     await names.create(deployedNFT);
     await algoliaWriteToken(deployedNFT);
+    const users = new Users(process.env.DYNAMODB_TABLE!);
+    await users.updateAllowedUsage(id);
     Memory.info("end");
     await JobsTable.updateStatus({
       username: id,
