@@ -105,12 +105,12 @@ export async function reserveName(
       if (KEYS[0] === key) {
         const price = await getPrice(name);
         if (price !== undefined) {
-          console.error("Price 0 found", name, price);
+          console.error("Price 0 found", { chain, name, price });
           feeMaster = PublicKey.fromBase58(DEVELOPERS[0]);
           nftPriceData.price = price;
           fee = UInt64.from(price * 1_000_000_000);
         } else {
-          console.error("Price 0 not found");
+          console.error("Price 0 not found", { chain, name, price });
           return {
             success: false,
             signature: "",
