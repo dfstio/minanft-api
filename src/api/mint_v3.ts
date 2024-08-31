@@ -53,7 +53,7 @@ export async function reserveName(
     const { name, publicKey, chain, contract, version, developer, repo, key } =
       JSON.parse(args);
     if (LIST.includes(publicKey)) {
-      console.error("reserveName ERR3817", publicKey);
+      console.error("reserveName ERR3817", { publicKey, name, chain });
       return { success: false, signature: "", reason: "ERR3817" };
     }
     if (name === "" || name === "@")
