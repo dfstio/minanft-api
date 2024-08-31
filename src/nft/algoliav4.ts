@@ -129,3 +129,35 @@ export async function algoliaV4Transaction(params: {
     return false;
   }
 }
+
+export async function algoliaIsExist(params: {
+  name: string;
+  contractAddress: string;
+  chain: string;
+}): Promise<boolean> {
+  try {
+    const { name, chain, contractAddress } = params;
+    if (!ALGOLIA_KEY || !ALGOLIA_PROJECT) {
+      console.error("ALGOLIA_KEY or ALGOLIA_PROJECT not set");
+      return false;
+    }
+    const client = algoliasearch(ALGOLIA_PROJECT, ALGOLIA_KEY);
+    if (chain !== "devnet" && chain !== "mainnet" && chain !== "zeko") {
+      console.error("Invalid chain", chain);
+      return false;
+    }
+    const index = client.initIndex(chain);
+    const objectID = chain + "." + contractAddress + "." + name;
+
+    const existing = await index.getObject(objectID);
+    console.log("algoliaIsExist: existing object", existing);
+    if (existing !== undefined) {
+      console.error("algoliaIsExist: object already exists", params);
+      return true;
+    } else {
+      return false;
+    }
+  } catch (error) {
+    return false;
+  }
+}

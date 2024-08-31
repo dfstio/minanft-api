@@ -20,6 +20,7 @@ import {
 } from "minanft";
 import { listFiles } from "../mina/cache";
 import { algoliaWriteToken } from "../nft/algolia";
+import { algoliaIsExist } from "../nft/algoliav4";
 import { getDeployer } from "../mina/deployers";
 import axios from "axios";
 
@@ -73,11 +74,39 @@ export async function reserveName(
         (checkName.chain === "mainnet" || chain !== "mainnet")
       ) {
         // TODO: analyze signatureExpiry
-        return {
-          success: false,
-          signature: "",
-          reason: "Already used by another user",
-        };
+        if (KEYS[0] === key) {
+          const isExist = await algoliaIsExist({
+            name,
+            contractAddress: MINANFT_NAME_SERVICE_V2,
+            chain,
+          });
+          if (isExist) {
+            return {
+              success: false,
+              signature: "",
+              reason: "NFT already used by another user",
+            };
+          } else if (checkName.timeCreated + 1000 * 60 * 2 > Date.now()) {
+            return {
+              success: false,
+              signature: "",
+              reason: "NFT is being minted by another user",
+            };
+          } else {
+            console.error(
+              "Reusing the NFT name after",
+              (Date.now() - checkName.timeCreated) / 1000,
+              "sec:",
+              checkName
+            );
+          }
+        } else {
+          return {
+            success: false,
+            signature: "",
+            reason: "Already used by another user",
+          };
+        }
       }
     }
 
