@@ -86,7 +86,13 @@ export async function reserveName(
               signature: "",
               reason: "NFT already used by another user",
             };
-          } else if (checkName.timeCreated + 1000 * 60 * 2 > Date.now()) {
+          } else if (checkName.timeCreated + 1000 * 60 * 10 > Date.now()) {
+            console.error(
+              "NFT is being minted by another user, passed",
+              (Date.now() - checkName.timeCreated) / 1000 / 60,
+              "min:",
+              checkName
+            );
             return {
               success: false,
               signature: "",
@@ -95,8 +101,8 @@ export async function reserveName(
           } else {
             console.error(
               "Reusing the NFT name after",
-              (Date.now() - checkName.timeCreated) / 1000,
-              "sec:",
+              (Date.now() - checkName.timeCreated) / 1000 / 60,
+              "min:",
               checkName
             );
           }
