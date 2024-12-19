@@ -74,7 +74,7 @@ export async function reserveName(
         (checkName.chain === "mainnet" || chain !== "mainnet")
       ) {
         // TODO: analyze signatureExpiry
-        if (KEYS[0] === key) {
+        if (KEYS[0] === key || KEYS[1] === key) {
           const isExist = await algoliaIsExist({
             name,
             contractAddress: MINANFT_NAME_SERVICE_V2,
@@ -86,7 +86,13 @@ export async function reserveName(
               signature: "",
               reason: "NFT already used by another user",
             };
-          } else if (checkName.timeCreated + 1000 * 60 * 2 > Date.now()) {
+          } else if (checkName.timeCreated + 1000 * 60 * 10 > Date.now()) {
+            console.error(
+              "NFT is being minted by another user, passed",
+              (Date.now() - checkName.timeCreated) / 1000 / 60,
+              "min:",
+              checkName
+            );
             return {
               success: false,
               signature: "",
@@ -95,8 +101,8 @@ export async function reserveName(
           } else {
             console.error(
               "Reusing the NFT name after",
-              (Date.now() - checkName.timeCreated) / 1000,
-              "sec:",
+              (Date.now() - checkName.timeCreated) / 1000 / 60,
+              "min:",
               checkName
             );
           }
@@ -131,11 +137,13 @@ export async function reserveName(
       }
       */
 
-      if (KEYS[0] === key) {
+      if (KEYS[0] === key || KEYS[1] === key) {
         const price = await getPrice(name);
         if (price !== undefined) {
           console.error("Price 0 found", { chain, name, price });
-          feeMaster = PublicKey.fromBase58(DEVELOPERS[0]);
+          feeMaster = PublicKey.fromBase58(
+            KEYS[1] === key ? DEVELOPERS[1] : DEVELOPERS[0]
+          );
           nftPriceData.price = price;
           fee = UInt64.from(price * 1_000_000_000);
         } else {
