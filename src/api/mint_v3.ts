@@ -113,6 +113,14 @@ export async function reserveName(
             reason: "Already used by another user",
           };
         }
+      } else if (checkName.id === id && checkName.publicKey === publicKey) {
+        if (checkName.timeCreated + 1000 * 60 * 10 > Date.now())
+          return {
+            success: false,
+            signature: "",
+            reason:
+              "Already used by the same user, please wait 10 minutes before sending second mint request",
+          };
       }
     }
 
