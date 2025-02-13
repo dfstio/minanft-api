@@ -26,16 +26,16 @@ export async function runStep(
     });
 
     let result: string | undefined = undefined;
-    const cacheDir = "/mnt/efs/cache";
-    await listFiles(cacheDir);
-    const cache: Cache = Cache.FileSystem(cacheDir);
+    //const cacheDir = "/mnt/efs/cache";
+    //await listFiles(cacheDir);
+    const cache: Cache = Cache.FileSystemDefault;
 
     console.log(`Compiling...`);
     console.time(`compiled`);
     await plugin.compile(cache);
     console.timeEnd(`compiled`);
     Memory.info(`compiled`);
-    await listFiles(cacheDir);
+    //await listFiles(cacheDir);
 
     if (step.task === "create") {
       if (step.stepData.length !== 1)

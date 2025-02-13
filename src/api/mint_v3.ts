@@ -22,6 +22,7 @@ import { listFiles } from "../mina/cache";
 import { algoliaWriteToken } from "../nft/algolia";
 import { algoliaIsExist } from "../nft/algoliav4";
 import { getDeployer } from "../mina/deployers";
+import { getContext } from "../nft/context";
 import axios from "axios";
 
 import BotMessage from "../chatgpt/message";
@@ -35,7 +36,7 @@ import { encrypt, decrypt } from "../nft/kms";
 import { explorerTransaction, minaInit } from "../mina/init";
 import { LIST, DEVELOPERS, KEYS, getPrice } from "../mina/list";
 
-const { PINATA_JWT, NAMES_ORACLE_SK } = process.env;
+const { PINATA_JWT } = process.env;
 const NAMES_TABLE = process.env.NAMES_TABLE!;
 
 export async function reserveName(
@@ -113,11 +114,21 @@ export async function reserveName(
             reason: "Already used by another user",
           };
         }
+      } else if (checkName.id === id && checkName.publicKey === publicKey) {
+        if (checkName.timeCreated + 1000 * 60 * 10 > Date.now())
+          return {
+            success: false,
+            signature: "",
+            reason:
+              "Already used by the same user, please wait 10 minutes before sending second mint request",
+          };
       }
     }
 
     if (version === "v2") {
-      const oraclePrivateKey = PrivateKey.fromBase58(NAMES_ORACLE_SK!);
+      const oraclePrivateKey = PrivateKey.fromBase58(
+        await getContext(process.env.CONTEXT_1!)
+      );
       const nameServiceAddress = PublicKey.fromBase58(MINANFT_NAME_SERVICE_V2);
       //const verificationKeyHash = Field.fromJSON(VERIFICATION_KEY_HASH_V2);
       const owner = PublicKey.fromBase58(publicKey);
@@ -197,7 +208,9 @@ export async function reserveName(
         reason: "",
       };
     } else {
-      const oraclePrivateKey = PrivateKey.fromBase58(NAMES_ORACLE_SK!);
+      const oraclePrivateKey = PrivateKey.fromBase58(
+        await getContext(process.env.CONTEXT_1!)
+      );
       const nameServiceAddress = PublicKey.fromBase58(MINANFT_NAME_SERVICE);
       const verificationKeyHash = Field.fromJSON(VERIFICATION_KEY_HASH);
       const address = PublicKey.fromBase58(publicKey);
@@ -326,7 +339,9 @@ export async function mint_v3(
       console.log("Found name record", name);
     }
 
-    const oraclePrivateKey = PrivateKey.fromBase58(NAMES_ORACLE_SK!);
+    const oraclePrivateKey = PrivateKey.fromBase58(
+      await getContext(process.env.CONTEXT_1!)
+    );
     const oraclePublicKey = oraclePrivateKey.toPublicKey();
     const zkAppPrivateKey = PrivateKey.fromBase58(privateKey);
     const address = zkAppPrivateKey.toPublicKey();
@@ -383,12 +398,12 @@ export async function mint_v3(
     const pinataJWT: string = PINATA_JWT!;
     const arweaveKey: string = ARWEAVE_KEY_STRING!;
 
-    const cacheDir = "/mnt/efs/cache";
-    await listFiles(cacheDir);
+    //const cacheDir = "/mnt/efs/cache";
+    //await listFiles(cacheDir);
 
     Memory.info("before compiling");
     console.log("Compiling...");
-    MinaNFT.setCacheFolder(cacheDir);
+    //MinaNFT.setCacheFolder(cacheDir);
     console.time("compiled");
     await MinaNFT.compile();
     console.timeEnd("compiled");
@@ -586,7 +601,9 @@ export async function post_v3(
     }
     */
 
-    const oraclePrivateKey = PrivateKey.fromBase58(NAMES_ORACLE_SK!);
+    const oraclePrivateKey = PrivateKey.fromBase58(
+      await getContext(process.env.CONTEXT_1!)
+    );
     const oraclePublicKey = oraclePrivateKey.toPublicKey();
     const nameServiceAddress = PublicKey.fromBase58(MINANFT_NAME_SERVICE);
     const verificationKeyHash = Field.fromJSON(VERIFICATION_KEY_HASH);
@@ -598,12 +615,12 @@ export async function post_v3(
 
     await minaInit();
 
-    const cacheDir = "/mnt/efs/cache";
-    await listFiles(cacheDir);
+    //const cacheDir = "/mnt/efs/cache";
+    //await listFiles(cacheDir);
 
     Memory.info("before compiling");
     console.log("Compiling...");
-    MinaNFT.setCacheFolder(cacheDir);
+    //MinaNFT.setCacheFolder(cacheDir);
     console.time("compiled");
     await MinaNFT.compile();
     console.timeEnd("compiled");

@@ -45,8 +45,8 @@ import { FilesTable } from "../table/files";
 import { FileData } from "../model/fileData";
 import MetadataTable from "../table/metadata";
 import { Job } from "../table/job";
-
-const { PINATA_JWT, NAMES_ORACLE_SK, METADATA_TABLE } = process.env;
+import { getContext } from "../nft/context";
+const { PINATA_JWT, METADATA_TABLE } = process.env;
 const NAMES_TABLE = process.env.NAMES_TABLE!;
 const FILES_TABLE = process.env.FILES_TABLE!;
 
@@ -156,7 +156,9 @@ export async function deployNFT(params: BotMintData): Promise<void> {
     }
 
     if (chain === "devnet") {
-      const oraclePrivateKey = PrivateKey.fromBase58(NAMES_ORACLE_SK!);
+      const oraclePrivateKey = PrivateKey.fromBase58(
+        await getContext(process.env.CONTEXT_1!)
+      );
       const nameServiceAddress = PublicKey.fromBase58(MINANFT_NAME_SERVICE);
       const ownerPrivateKey = PrivateKey.random();
       const ownerPublicKey = ownerPrivateKey.toPublicKey();
@@ -226,12 +228,12 @@ export async function deployNFT(params: BotMintData): Promise<void> {
       console.log(`json:`, JSON.stringify(nft.toJSON(), null, 2));
       Memory.info("json");
 
-      const cacheDir = "/mnt/efs/cache";
-      await listFiles(cacheDir);
+      //const cacheDir = "/mnt/efs/cache";
+      //await listFiles(cacheDir);
 
       Memory.info("before compiling");
       console.log("Compiling...");
-      MinaNFT.setCacheFolder(cacheDir);
+      //MinaNFT.setCacheFolder(cacheDir);
       console.time("compiled");
       await MinaNFT.compile();
       console.timeEnd("compiled");
@@ -651,7 +653,9 @@ export async function deployPost1(params: BotMintData): Promise<void> {
       return;
     }
 
-    const oraclePrivateKey = PrivateKey.fromBase58(NAMES_ORACLE_SK!);
+    const oraclePrivateKey = PrivateKey.fromBase58(
+      await getContext(process.env.CONTEXT_1!)
+    );
     const nameServiceAddress = PublicKey.fromBase58(MINANFT_NAME_SERVICE);
     const ownerPrivateKey = PrivateKey.random();
     const ownerPublicKey = ownerPrivateKey.toPublicKey();
@@ -721,12 +725,12 @@ export async function deployPost1(params: BotMintData): Promise<void> {
     console.log(`json:`, JSON.stringify(nft.toJSON(), null, 2));
     Memory.info("json");
 
-    const cacheDir = "/mnt/efs/cache";
-    await listFiles(cacheDir);
+    //const cacheDir = "/mnt/efs/cache";
+    //await listFiles(cacheDir);
 
     Memory.info("before compiling");
     console.log("Compiling...");
-    MinaNFT.setCacheFolder(cacheDir);
+    //MinaNFT.setCacheFolder(cacheDir);
     console.time("compiled");
     await MinaNFT.compile();
     console.timeEnd("compiled");
@@ -912,7 +916,9 @@ async function loadNFT(params: {
     Memory.info("start");
     await minaInit();
 
-    const oraclePrivateKey = PrivateKey.fromBase58(NAMES_ORACLE_SK!);
+    const oraclePrivateKey = PrivateKey.fromBase58(
+      await getContext(process.env.CONTEXT_1!)
+    );
     const nameServiceAddress = PublicKey.fromBase58(MINANFT_NAME_SERVICE);
     const ownerPrivateKeyStr = await decrypt(name.ownerPrivateKey, username);
     if (
@@ -976,9 +982,9 @@ async function loadNFT(params: {
     await nft.loadMetadata(metadataURI.privateUri);
     let deployer: PrivateKey | undefined = undefined;
 
-    const cacheDir = "/mnt/efs/cache";
-    await listFiles(cacheDir);
-    MinaNFT.setCacheFolder(cacheDir);
+    //const cacheDir = "/mnt/efs/cache";
+    //await listFiles(cacheDir);
+    //MinaNFT.setCacheFolder(cacheDir);
 
     if (skipCompilation !== true) {
       Memory.info("before compiling");
@@ -1436,8 +1442,9 @@ export async function verifyKeys(params: {
       await failed();
       return;
     } else console.log(`Metadata check  passed, compiling contract...`);
-    const cacheDir = "/mnt/efs/cache";
-    const cache: Cache = Cache.FileSystem(cacheDir);
+    //const cacheDir = "/mnt/efs/cache";
+    //const cache: Cache = Cache.FileSystem(cacheDir);
+    const cache: Cache = Cache.FileSystemDefault;
     const verificationKey = (
       await RedactedMinaNFTMapCalculation.compile({ cache })
     ).verificationKey;
