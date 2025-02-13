@@ -51,8 +51,8 @@ import MetadataTable from "../table/metadata";
 import { Job } from "../table/job";
 import { nftPrice } from "../payments/pricing";
 import { algoliaV4 } from "../nft/algoliav4";
-
-const { PINATA_JWT, NAMES_ORACLE_SK, METADATA_TABLE } = process.env;
+import { getContext } from "../nft/context";
+const { PINATA_JWT, METADATA_TABLE } = process.env;
 const NAMES_TABLE = process.env.NAMES_TABLE!;
 const FILES_TABLE = process.env.FILES_TABLE!;
 let nftVerificationKey: VerificationKey | undefined = undefined;
@@ -173,7 +173,9 @@ export async function deployNFTV4(params: BotMintData): Promise<void> {
 
     if (chain === "devnet") {
       const net = await await initBlockchain(chain);
-      const oraclePrivateKey = PrivateKey.fromBase58(NAMES_ORACLE_SK!);
+      const oraclePrivateKey = PrivateKey.fromBase58(
+        await getContext(process.env.CONTEXT_1!)
+      );
       const nameServiceAddress = PublicKey.fromBase58(MINANFT_NAME_SERVICE_V2);
       const ownerPrivateKey = PrivateKey.random();
       const ownerPublicKey = ownerPrivateKey.toPublicKey();
@@ -250,18 +252,17 @@ export async function deployNFTV4(params: BotMintData): Promise<void> {
       console.log(`json:`, JSON.stringify(nft.toJSON(), null, 2));
       Memory.info("json");
 
-      const cacheDir = "/mnt/efs/cache";
-      const cache = Cache.FileSystem(cacheDir);
-      await listFiles(cacheDir);
+      //const cacheDir = "/mnt/efs/cache";
+      //const cache = Cache.FileSystem(cacheDir);
+      //await listFiles(cacheDir);
 
       Memory.info("before compiling");
       console.log("Compiling...");
       console.time("compiled");
 
-      MinaNFT.setCacheFolder(cacheDir);
+      //MinaNFT.setCacheFolder(cacheDir);
       if (nameVerificationKey === undefined) {
-        nftVerificationKey = (await NFTContractV2.compile({ cache }))
-          .verificationKey;
+        nftVerificationKey = (await NFTContractV2.compile()).verificationKey;
         if (
           nftVerificationKey.hash.toJSON() !==
           VERIFICATION_KEY_V2_JSON[chain]?.hash
@@ -276,8 +277,7 @@ export async function deployNFTV4(params: BotMintData): Promise<void> {
           console.timeEnd("all");
           return;
         }
-        nameVerificationKey = (await NameContractV2.compile({ cache }))
-          .verificationKey;
+        nameVerificationKey = (await NameContractV2.compile()).verificationKey;
         if (
           nameVerificationKey.hash.toJSON() !==
           VERIFICATION_KEY_V2_JSON[chain]?.nameHash
