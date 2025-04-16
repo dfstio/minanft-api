@@ -20,7 +20,7 @@
   "scripts": {
     "deploy": "serverless deploy --aws-profile minanft  --use-local-credentials",
     "prune": "serverless prune --aws-profile minanft -n 5",
-    "compile": "serverless package --aws-profile minanft",
+    "build": "serverless package --aws-profile minanft",
     "info": "serverless info --aws-profile minanft",
     "org": "serverless --org=dfstio --aws-profile minanft"
   },
