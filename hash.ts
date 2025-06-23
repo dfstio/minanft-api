@@ -75,7 +75,7 @@ const calculate: Handler = async (
         deployer = PrivateKey.fromBase58(
           GASTANKS[Math.floor(Math.random() * (GASTANKS.length - 1))]
         );
-        amount = 1_000_000_000_000n;
+        //amount = 1_000_000_000_000n;
       } else {
         await minaInit();
         deployer = await getDeployer(MINIMUM_BALANCE);
@@ -118,10 +118,13 @@ const calculate: Handler = async (
       }
 
       const transaction = await Mina.transaction(
-        { sender, fee: "100000000", memo: "minanft.io faucet" },
+        { sender, fee: 200_000_000, memo: "minanft.io faucet" },
         async () => {
           const senderUpdate = AccountUpdate.createSigned(sender);
-          if (!hasAccount) senderUpdate.balance.subInPlace(1_000_000_000n);
+          if (!hasAccount)
+            senderUpdate.balance.subInPlace(
+              body.chain === "zeko" ? 100_000_000n : 1_000_000_000n
+            );
           senderUpdate.send({ to: publicKey, amount });
         }
       );

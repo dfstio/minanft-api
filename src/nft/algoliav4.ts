@@ -151,7 +151,12 @@ export async function algoliaIsExist(params: {
 
     const existing = await index.getObject(objectID);
     console.log("algoliaIsExist: existing object", existing);
-    if (existing !== undefined) {
+    if (
+      existing !== undefined &&
+      ((existing as any)?.status !== "created" ||
+        ((existing as any)?.time &&
+          (existing as any)?.time > Date.now() - 1000 * 60 * 60))
+    ) {
       console.error("algoliaIsExist: object already exists", params);
       return true;
     } else {
