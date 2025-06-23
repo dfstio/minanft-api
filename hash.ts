@@ -121,7 +121,10 @@ const calculate: Handler = async (
         { sender, fee: "100000000", memo: "minanft.io faucet" },
         async () => {
           const senderUpdate = AccountUpdate.createSigned(sender);
-          if (!hasAccount) senderUpdate.balance.subInPlace(1_000_000_000n);
+          if (!hasAccount)
+            senderUpdate.balance.subInPlace(
+              body.chain === "zeko" ? 100_000_000n : 1_000_000_000n
+            );
           senderUpdate.send({ to: publicKey, amount });
         }
       );
