@@ -1,5 +1,5 @@
-org: dfstio
-app: minanft-telegram-bot
+# org: dfstio
+# app: minanft-telegram-bot
 service: minanft-telegram-bot
 
 plugins:
