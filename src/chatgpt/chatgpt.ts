@@ -87,86 +87,128 @@ export default class ChatGPTMessage {
     }
     */
 
-    const chatcontext = [
-      {
-        role: "system",
-        content: this.context,
-      },
-    ];
-
     try {
-      const messages = await history.build(chatcontext);
-      console.log("ChatGPT messages", messages);
+      // Responses API: the system prompt goes in `instructions`, so the history
+      // builds the conversation only. `input` accumulates Responses items
+      // (messages + function_call/function_call_output/reasoning) for this turn.
+      const input: any[] = await history.build([]);
 
       let needsReply = true;
       let count = 0;
       const toolsResults: AiData[] = [];
-      let message: OpenAI.Chat.Completions.ChatCompletionMessage | undefined =
-        undefined;
+      let finalText = "";
 
       while (needsReply && count < 5) {
         count++;
         console.log("Request chatGptMessages count", count);
-        //console.log("Request chatGptMessages", messages);
-        const completion = await this.api.chat.completions.create({
-          model: "gpt-4o",
-          messages,
+        const response = await this.api.responses.create({
+          model: "gpt-5.5",
+          instructions: this.context,
+          input,
           tools: this.functions,
+          reasoning: { effort: "medium" },
+          // store:false keeps it stateless; encrypted reasoning lets the reasoning
+          // items in `response.output` be re-submitted in the next loop iteration.
+          include: ["reasoning.encrypted_content"],
+          store: false,
           user: id,
         });
-        console.log("ChatGPT full log", completion);
+        //console.log("ChatGPT full log", response);
 
-        if (completion.usage !== undefined && completion.usage !== null)
-          await users.updateUsage(id, completion.usage as AIUsage);
-        message = completion.choices[0].message;
-        if (message) {
-          //console.log("ChatGPT", message);
-          await history.addAnswer(message);
+        if (response.usage !== undefined && response.usage !== null)
+          await users.updateUsage(id, <AIUsage>{
+            prompt_tokens: response.usage.input_tokens,
+            completion_tokens: response.usage.output_tokens,
+            total_tokens: response.usage.total_tokens,
+          });
 
-          if (message.tool_calls === undefined) {
-            needsReply = false;
-          } else {
-            messages.push(message);
-            for (const tool of message.tool_calls) {
-              //console.log("ChatGPT tool", tool.id, tool.function);
-              let reply: AiData | undefined = undefined;
-              try {
-                reply = await aiTool(id, tool.function, this.language);
-                reply.functionName = tool.function.name;
-                toolsResults.push(reply);
-              } catch (error) {
-                console.error("ChatGPT handleFunctionCall", error);
-              }
-              if (reply === undefined)
-                reply = <AiData>{
-                  answer: "Function error",
-                  needsPostProcessing: false,
-                  data: {},
-                  message: "ChatGPT function error",
-                  messageParams: {},
-                  support: undefined,
-                };
+        // Carry reasoning + tool-call items forward (required with store: false).
+        input.push(...response.output);
 
-              const replyMessage = {
-                tool_call_id: tool.id,
-                role: "tool",
-                name: tool.function.name,
-                content: reply.answer,
-              };
-              //console.log("ChatGPT replyMessage", replyMessage);
-              await history.addAnswer(replyMessage);
-              messages.push(replyMessage);
+        const calls: any[] = response.output.filter(
+          (item: any) => item.type === "function_call"
+        );
+        if (calls.length === 0) {
+          needsReply = false;
+        } else {
+          for (const call of calls) {
+            //console.log("ChatGPT tool", call.call_id, call.name);
+            let reply: AiData | undefined = undefined;
+            try {
+              reply = await aiTool(id, call, this.language);
+              reply.functionName = call.name;
+              toolsResults.push(reply);
+            } catch (error) {
+              console.error("ChatGPT handleFunctionCall", error);
             }
-            answer.answerType = "function";
-            answer.text = "";
-          }
+            if (reply === undefined)
+              reply = <AiData>{
+                answer: "Function error",
+                needsPostProcessing: false,
+                data: {},
+                message: "ChatGPT function error",
+                messageParams: {},
+                support: undefined,
+              };
 
-          if (message.content !== undefined && message.content !== null) {
-            answer.text = message.content;
-            answer.answerType = "text";
+            input.push({
+              type: "function_call_output",
+              call_id: call.call_id,
+              output: reply.answer,
+            });
           }
+          answer.answerType = "function";
+          answer.text = "";
+        }
+
+        if (response.output_text && response.output_text.length > 0) {
+          finalText = response.output_text;
+          answer.text = finalText;
+          answer.answerType = "text";
         }
       }
+
+      // Exhausted the tool-call cap without a final text reply — force a
+      // text-only completion so the user is never left with silence.
+      if (needsReply && finalText.length === 0) {
+        try {
+          const finalResponse = await this.api.responses.create({
+            model: "gpt-5.5",
+            instructions: this.context,
+            input,
+            tools: this.functions,
+            tool_choice: "none",
+            reasoning: { effort: "medium" },
+            include: ["reasoning.encrypted_content"],
+            store: false,
+            user: id,
+          });
+          if (finalResponse.usage !== undefined && finalResponse.usage !== null)
+            await users.updateUsage(id, <AIUsage>{
+              prompt_tokens: finalResponse.usage.input_tokens,
+              completion_tokens: finalResponse.usage.output_tokens,
+              total_tokens: finalResponse.usage.total_tokens,
+            });
+          if (
+            finalResponse.output_text &&
+            finalResponse.output_text.length > 0
+          ) {
+            finalText = finalResponse.output_text;
+            answer.text = finalText;
+            answer.answerType = "text";
+          }
+        } catch (error) {
+          console.error("ChatGPT final completion error", error);
+        }
+        if (finalText.length === 0) {
+          answer.text = errorMsg;
+          answer.answerType = "text";
+        }
+      }
+
+      if (finalText.length > 0)
+        await history.addAnswer({ role: "assistant", content: finalText });
+
       await aiPostProcess(toolsResults, answer.text);
       return answer;
     } catch (error: any) {
@@ -211,7 +253,7 @@ export default class ChatGPTMessage {
 
       try {
         const completion = await this.api.chat.completions.create({
-          model: "gpt-4o", // "gpt-3.5-turbo"
+          model: "gpt-5.5",
           messages,
           user: id,
         });
@@ -226,7 +268,7 @@ export default class ChatGPTMessage {
         await users.updateUsage(id, completion.usage as AIUsage);
         if (isArchetype && fullPrompt.length > 999) {
           const completion = await this.api.chat.completions.create({
-            model: "gpt-4o",
+            model: "gpt-5.5",
             messages: [
               {
                 role: "system",
@@ -258,17 +300,20 @@ export default class ChatGPTMessage {
     let imageUrl = "";
 
     try {
-      const imageParams = {
-        model: "dall-e-3",
+      const imageParams: OpenAI.Images.ImageGenerateParams = {
+        model: "gpt-image-2",
         n: 1,
         prompt,
+        size: "1024x1024",
         user: id,
       };
 
+      // gpt-image models always return base64 (b64_json), never a URL
       const image = await this.api.images.generate(imageParams);
-      if (image?.data[0]?.url !== undefined) imageUrl = image.data[0].url;
+      if (image?.data?.[0]?.b64_json !== undefined)
+        imageUrl = image.data[0].b64_json;
       await users.updateImageUsage(id);
-      console.log("Image result", imageUrl, image.data);
+      console.log("Image result generated:", imageUrl !== "");
     } catch (error: any) {
       console.error("createImage error", error);
       if (

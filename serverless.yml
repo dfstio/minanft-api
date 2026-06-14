@@ -3,13 +3,12 @@
 service: minanft-telegram-bot
 
 plugins:
-  - serverless-plugin-typescript
   - serverless-prune-plugin
 
 provider:
   name: aws
   versionFunctions: false
-  runtime: nodejs20.x
+  runtime: nodejs22.x
   region: eu-west-1
   logRetentionInDays: 30
   environment:
@@ -238,7 +237,7 @@ provider:
 functions:
   send:
     handler: telegram.send
-    timeout: 30
+    timeout: 29
     memorySize: 512
     events:
       - http:
@@ -246,7 +245,7 @@ functions:
           method: post
   api:
     handler: api.api
-    timeout: 30
+    timeout: 29
     memorySize: 1024
     events:
       - http:
@@ -273,7 +272,7 @@ functions:
 
   hash:
     handler: hash.calculate
-    timeout: 30
+    timeout: 29
     memorySize: 512
     events:
       - http:

@@ -43,16 +43,23 @@ async function copyTelegramImageToS3(
 async function copyAIImageToS3(params: {
   id: string;
   filename: string;
-  url: string;
+  url?: string;
+  base64?: string;
   ai?: boolean;
   mimeType?: string;
 }): Promise<FileData | undefined> {
-  const { id, filename, url, ai, mimeType } = params;
+  const { id, filename, url, base64, ai, mimeType } = params;
   try {
-    console.log("copyAIImageToS3", id, filename, url, ai);
+    console.log("copyAIImageToS3", id, filename, url ?? "base64", ai);
     const key = ai === true ? id + "/" + filename : filename;
     const file = new S3File(process.env.BUCKET!, key);
-    await file.upload(url, mimeType ?? "image/png");
+    if (base64 !== undefined) {
+      await file.put(Buffer.from(base64, "base64"), mimeType ?? "image/png");
+    } else if (url !== undefined) {
+      await file.upload(url, mimeType ?? "image/png");
+    } else {
+      throw new Error("copyAIImageToS3: no url or base64 provided");
+    }
     console.log("Saved", filename);
     await file.wait();
     console.log("File is uploaded:", filename);
@@ -64,7 +71,7 @@ async function copyAIImageToS3(params: {
       id,
       filename,
       size: metadata.size,
-      mimeType: "image/jpeg",
+      mimeType: metadata.mimeType,
       timeUploaded,
     };
   } catch (error: any) {
