@@ -13,8 +13,8 @@ initializeRateLimiter({
 });
 let started: number = 0;
 
-const FAUCET_AMOUNT = 50_000_000_000n;
-const MINIMUM_BALANCE = 70;
+const FAUCET_AMOUNT = 10_000_000_000n;
+const MINIMUM_BALANCE = 10.5;
 
 const calculate: Handler = async (
   event: any,
@@ -70,18 +70,29 @@ const calculate: Handler = async (
 
     const publicKey = PublicKey.fromBase58(body.publicKey);
     console.log("publicKey", publicKey.toBase58());
+
     if (body.faucet === "true") {
       let deployer: PrivateKey | undefined;
       let amount = FAUCET_AMOUNT;
+      let url =
+        body.chain === "zeko"
+          ? "https://devnet.zeko.io/graphql"
+          : body.chain === "alphanet"
+          ? "https://alphanet.zeko.io/graphql"
+          : "https://devnet.zeko.io/graphql";
+
       if (body.chain === "zeko") {
-        await initBlockchain("zeko");
+        const networkInstance = Mina.Network({
+          mina: url,
+          archive: url,
+          networkId: "testnet",
+        });
+        Mina.setActiveInstance(networkInstance);
         deployer = PrivateKey.fromBase58(
           GASTANKS[Math.floor(Math.random() * (GASTANKS.length - 1))]
         );
         //amount = 1_000_000_000_000n;
       } else if (body.chain === "alphanet") {
-        const url = "http://m1.zeko.io/graphql";
-
         const networkInstance = Mina.Network({
           mina: url,
           archive: url,
@@ -131,8 +142,30 @@ const calculate: Handler = async (
         });
       }
 
+      const fee =
+        body.chain === "zeko" || body.chain === "alphanet"
+          ? await fetchZekoFee({ weight: 2, url: url })
+          : 200_000_000;
+
+      if (fee === undefined) {
+        console.error("Faucet: No zeko fee available, try later");
+        callback(null, {
+          statusCode: 200,
+          headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Credentials": true,
+          },
+          body: JSON.stringify({
+            hash: "",
+            isCalculated: false,
+            reason: "Zeko graphql endpoint error, try later",
+          }),
+        });
+        return;
+      }
+
       const transaction = await Mina.transaction(
-        { sender, fee: 200_000_000, memo: "Silvana faucet" },
+        { sender, fee, memo: "Silvana faucet" },
         async () => {
           const senderUpdate = AccountUpdate.createSigned(sender);
           if (!hasAccount)
@@ -197,5 +230,48 @@ const calculate: Handler = async (
     });
   }
 };
+
+/// txn.setFee(await fetchZekoFee(...));
+
+export async function fetchZekoFee(params: {
+  weight: number;
+  buffer?: number;
+  url: string;
+}): Promise<number | undefined> {
+  const { weight, buffer = 0.3, url } = params;
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        query: `
+        query FeePerWeight($weight: Int!) {
+          feePerWeightUnit(weight: $weight)
+        }
+      `,
+        variables: { weight },
+      }),
+    });
+    if (!response.ok) {
+      console.error(
+        "fetchZekoFee: Invalid response from Zeko",
+        response.status,
+        response.statusText
+      );
+      return undefined;
+    }
+
+    const { data } = await response.json();
+    if (!data || !data.feePerWeightUnit) {
+      console.error("fetchZekoFee: Invalid response from Zeko", data);
+      return undefined;
+    }
+    return Math.ceil(data.feePerWeightUnit) + buffer * 10e8;
+  } catch (error: any) {
+    console.error("fetchZekoFee error", error?.message ?? error);
+    return undefined;
+  }
+}
 
 export { calculate };
