@@ -6,9 +6,10 @@ import History from "./table/history";
 import { getFormattedDateTime } from "./nft/nft";
 import DocumentData from "./model/documentData";
 import FileHandler from "./fileHandler";
-import VoiceData from "./model/voiceData";
+// Voice-input feature disabled (deprecated Elastic Transcoder):
+// import VoiceData from "./model/voiceData";
 import { copyTelegramImageToS3 } from "./imageHandler";
-import VoiceHandler from "./voiceHandler";
+// import VoiceHandler from "./voiceHandler";
 import Validator from "./validator";
 import callLambda from "./lambda/lambda";
 import { generateJWT } from "./api/jwt";
@@ -338,32 +339,34 @@ export default class BotLogic {
       }
     }
 
-    if (body.message.voice) {
-      const voice = body.message.voice;
-      console.log(
-        "Voice  data:",
-        voice.duration,
-        voice.file_size,
-        voice.mime_type
-      );
-      const voiceData = <VoiceData>{
-        mime_type: voice.mime_type,
-        file_id: voice.file_id,
-        file_size: voice.file_size,
-      };
-      try {
-        const voiceHandler = new VoiceHandler(voiceData);
-        const voiceResult: string | undefined =
-          await voiceHandler.copyVoiceToS3(chatIdString);
-        if (voiceResult) {
-          console.log("voiceResult", voiceResult);
-          userInput = voiceResult;
-        }
-      } catch (error) {
-        console.error("Voice catch", (<any>error).toString());
-        return;
-      }
-    }
+    // Voice-input feature disabled — depends on deprecated AWS Elastic Transcoder
+    // (@aws-sdk/client-elastic-transcoder, not provided by the Lambda runtime).
+    // if (body.message.voice) {
+    //   const voice = body.message.voice;
+    //   console.log(
+    //     "Voice  data:",
+    //     voice.duration,
+    //     voice.file_size,
+    //     voice.mime_type
+    //   );
+    //   const voiceData = <VoiceData>{
+    //     mime_type: voice.mime_type,
+    //     file_id: voice.file_id,
+    //     file_size: voice.file_size,
+    //   };
+    //   try {
+    //     const voiceHandler = new VoiceHandler(voiceData);
+    //     const voiceResult: string | undefined =
+    //       await voiceHandler.copyVoiceToS3(chatIdString);
+    //     if (voiceResult) {
+    //       console.log("voiceResult", voiceResult);
+    //       userInput = voiceResult;
+    //     }
+    //   } catch (error) {
+    //     console.error("Voice catch", (<any>error).toString());
+    //     return;
+    //   }
+    // }
 
     if (body.message.audio) {
       const audio = body.message.audio;

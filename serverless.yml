@@ -5,6 +5,22 @@ service: minanft-telegram-bot
 plugins:
   - serverless-prune-plugin
 
+# Serverless v4 built-in ESBuild build tuning to keep the Lambda package under the
+# 250 MB unzipped limit. o1js is kept external (loaded as-installed from node_modules,
+# wasm-safe), source maps are dropped, and the AWS SDK is excluded (provided by the runtime).
+build:
+  esbuild:
+    minify: true
+    sourcemap: false
+    # o1js stays external (wasm-safe, shipped as-installed from node_modules). The
+    # @aws-sdk family is auto-externalized by serverless and provided by the Lambda
+    # runtime; deprecated clients the runtime lacks (elastic-transcoder) are removed
+    # in code rather than shipped.
+    external:
+      - o1js
+    exclude:
+      - "aws-sdk" # unused AWS SDK v2
+
 provider:
   name: aws
   versionFunctions: false
