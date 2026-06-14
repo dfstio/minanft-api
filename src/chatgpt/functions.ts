@@ -357,6 +357,19 @@ const aiFunctions = {
   },
 };
 
+// Convert a chat-completions nested tool ({type:"function", function:{name,...}})
+// to the Responses API flat FunctionTool shape ({type:"function", name, ...}).
+function toResponsesTool(t: any) {
+  const fn = t.function ?? t;
+  return {
+    type: "function",
+    name: fn.name,
+    description: fn.description,
+    parameters: fn.parameters ?? { type: "object", properties: {} },
+    strict: false,
+  };
+}
+
 async function getAIfunctions(id: string): Promise<any[]> {
   const functions = [];
   functions.push(aiFunctions.description);
@@ -388,7 +401,7 @@ async function getAIfunctions(id: string): Promise<any[]> {
     prove.function.parameters.properties.nft_name.enum = names;
     functions.push(prove);
   }
-  return functions;
+  return functions.map(toResponsesTool);
 }
 
 async function getDescription(): Promise<AiData> {

@@ -190,7 +190,7 @@ const image: Handler = async (
         const file = await copyAIImageToS3({
           id: event.id,
           filename,
-          url: result.image,
+          base64: result.image,
           ai: true,
         });
         if (file === undefined) {

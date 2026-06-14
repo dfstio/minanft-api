@@ -1,15 +1,30 @@
-org: dfstio
-app: minanft-telegram-bot
+# org: dfstio
+# app: minanft-telegram-bot
 service: minanft-telegram-bot
 
 plugins:
-  - serverless-plugin-typescript
   - serverless-prune-plugin
+
+# Serverless v4 built-in ESBuild build tuning to keep the Lambda package under the
+# 250 MB unzipped limit. o1js is kept external (loaded as-installed from node_modules,
+# wasm-safe), source maps are dropped, and the AWS SDK is excluded (provided by the runtime).
+build:
+  esbuild:
+    minify: true
+    sourcemap: false
+    # o1js stays external (wasm-safe, shipped as-installed from node_modules). The
+    # @aws-sdk family is auto-externalized by serverless and provided by the Lambda
+    # runtime; deprecated clients the runtime lacks (elastic-transcoder) are removed
+    # in code rather than shipped.
+    external:
+      - o1js
+    exclude:
+      - "aws-sdk" # unused AWS SDK v2
 
 provider:
   name: aws
   versionFunctions: false
-  runtime: nodejs20.x
+  runtime: nodejs22.x
   region: eu-west-1
   logRetentionInDays: 30
   environment:
@@ -238,7 +253,7 @@ provider:
 functions:
   send:
     handler: telegram.send
-    timeout: 30
+    timeout: 29
     memorySize: 512
     events:
       - http:
@@ -246,7 +261,7 @@ functions:
           method: post
   api:
     handler: api.api
-    timeout: 30
+    timeout: 29
     memorySize: 1024
     events:
       - http:
@@ -273,7 +288,7 @@ functions:
 
   hash:
     handler: hash.calculate
-    timeout: 30
+    timeout: 29
     memorySize: 512
     events:
       - http:

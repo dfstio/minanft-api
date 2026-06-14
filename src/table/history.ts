@@ -24,10 +24,11 @@ export default class History extends Table<HistoryData> {
     const message = {
       role: "user",
       content: [
-        { type: "text", text: msg },
+        { type: "input_text", text: msg },
         {
-          type: "image_url",
-          image_url: { url: imageUrl },
+          type: "input_image",
+          image_url: imageUrl,
+          detail: "auto",
         },
       ],
     };
@@ -88,7 +89,7 @@ export default class History extends Table<HistoryData> {
     const messages: any[] = [];
     let size: number = 0;
     for (const msg of context) {
-      const msgSize: number = (msg.content || "").length;
+      const msgSize: number = contentLength(msg.content);
       size += msgSize;
       messages.push(msg);
     }
@@ -100,7 +101,7 @@ export default class History extends Table<HistoryData> {
     const subset: HistoryData[] = [];
     let stop = false;
     for (const item of history) {
-      const msgSize: number = (item.message.content || "").length;
+      const msgSize: number = contentLength(item.message.content);
       if (
         item.time > timeLimit &&
         size + msgSize < HISTORY_CHARS &&
@@ -120,4 +121,16 @@ export default class History extends Table<HistoryData> {
     }
     return messages;
   }
+}
+
+// Character size of a stored message's content: plain string length, or the
+// summed text length of Responses content parts (input_text) for array content.
+function contentLength(content: any): number {
+  if (typeof content === "string") return content.length;
+  if (Array.isArray(content))
+    return content.reduce(
+      (n: number, p: any) => n + (p?.text?.length || 0),
+      0
+    );
+  return 0;
 }
